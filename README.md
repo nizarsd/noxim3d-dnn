@@ -78,14 +78,6 @@ the mesh (`DP_CYCLE = 2·nodes·(diameter+3)`):
 
 Results land in `results_*/` directories (gitignored — regenerate rather than commit).
 
-## Documentation
-
-- **[FINDINGS.md](FINDINGS.md)** — DP-vs-buffer-level research results, method, and
-  reproduction parameters (size/parity effects, vertical scaling, DP settle window).
-- **[PERFORMANCE.md](PERFORMANCE.md)** — profiling, correctness fixes, and validation of
-  the DP/routing implementation.
-- **[CLAUDE.md](CLAUDE.md)** — project brief and source-file map.
-
 ## Key source files
 
 - `TRouter.cpp` / `TRouter.h` — router, routing algorithms, selection policies.
