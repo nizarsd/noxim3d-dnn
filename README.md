@@ -91,8 +91,8 @@ Results land in `results_*/` directories (gitignored — regenerate rather than 
 Noxim3D builds on a lineage of NoC simulation work:
 
 - **Original Noxim** was created at the **University of Catania** (Italy) by Maurizio
-  Palesi and colleagues, as an open-source, SystemC-based, cycle-accurate NoC simulator.
-- The **3D deadlock-free adaptive routing** (3D odd–even and odd–even-balanced turn
+  Palesi and colleagues, as an open-source, SystemC-based, cycle-accurate simulator for 2D NoCs.
+- The **3D NoC extension and the 3D deadlock-free adaptive routing** (3D odd–even and odd–even-balanced turn
   models) and the congestion-aware routing/selection work — including the DP distributed
   cost-to-go selection policy — were developed at the **University of Newcastle upon
   Tyne** (UK); see the IET paper in [Citation](#citation).
