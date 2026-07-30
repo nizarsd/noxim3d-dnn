@@ -3,7 +3,7 @@
 A SystemC cycle-accurate Network-on-Chip (NoC) simulator for **3D mesh** topologies,
 extended from [Noxim](https://github.com/davidepatti/noxim). Noxim3D adds novel
 **deadlock-free 3D adaptive routing** and a distributed congestion-aware selection
-policy, and is used to study routing/selection trade-offs under DNN-style traffic.
+policy, and is used to study routing/selection trade-offs under various traffic scenarios.
 
 ## Highlights
 
