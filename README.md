@@ -115,5 +115,5 @@ If you use Noxim3D in academic work, please cite the paper above and the origina
 
 ## License
 
-Noxim3D inherits the license of the upstream Noxim project (GPL). See the original
+Noxim3D inherits the license of the upstream Noxim project (Licensed under the GNU GPL-2.0). See the original
 Noxim repository for details.
