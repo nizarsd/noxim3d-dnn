@@ -1,9 +1,27 @@
-# Noxim3D
+# Noxim3D-DNN
 
-A SystemC cycle-accurate Network-on-Chip (NoC) simulator for **3D mesh** topologies,
-extended from [Noxim](https://github.com/davidepatti/noxim). Noxim3D adds novel
-**deadlock-free 3D adaptive routing** and a distributed congestion-aware selection
-policy, and is used to study routing/selection trade-offs under various traffic scenarios.
+DNN-aware adaptive routing research on a 3D Network-on-Chip. This repository is the
+**Stage 2+ working line** of the "NoC for AI" project, extending the validated
+[noxim3d](https://github.com/nizarsd/noxim3d) simulator (itself forked from
+[Noxim](https://github.com/davidepatti/noxim)) with DNN inference traffic generation
+and, in later stages, reinforcement-learning selection policies.
+
+**Base simulator (frozen):** `nizarsd/noxim3d` holds the Stage 1 validated state — 3D
+deadlock-free odd–even routing and the DP congestion-aware selection policy, with the
+DP-vs-bufferlevel study complete. That repository is not modified further; all DNN-line
+work happens here.
+
+## Project stages
+
+1. Validate 3D Noxim + odd–even routing — **complete** (inherited from base repo).
+2. Generate DNN traffic traces (ResNet-50, VGG-16) — **in progress**.
+3. Baseline characterisation: DNN vs synthetic traffic.
+4. Minimal RL selection agent, generic congestion objective.
+5. Run generic RL agent on DNN traffic, unmodified.
+6. Analyse distinguishing features of DNN traffic (evidence-driven).
+7. DNN-aware RL router — the novel contribution.
+
+See `CLAUDE.md` for detailed design notes and open decisions.
 
 ## Highlights
 
@@ -96,9 +114,9 @@ Noxim3D builds on a lineage of NoC simulation work:
   models) and the congestion-aware routing/selection work — including the DP distributed
   cost-to-go selection policy — were developed at the **University of Newcastle upon
   Tyne** (UK); see the IET paper in [Citation](#citation).
-- **Recent work and sanity checks** for the NoC-for-DNN project — DNN-style traffic
-  modeling, and the performance and correctness work documented here — are being carried
-  out at the **University of Baghdad** (Iraq).
+- **The NoC-for-DNN line of work** — DNN-style traffic modeling and the
+  reinforcement-learning routing research documented here — is being carried out at the
+  **University of Baghdad** (Iraq), building on the frozen `nizarsd/noxim3d` base.
 
 ## Citation
 
