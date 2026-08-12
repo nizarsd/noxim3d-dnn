@@ -194,15 +194,91 @@ phased** DNN traffic (the very structure Stage 2 introduces) and Z-heavy or hots
 patterns. Only measured on transpose1 4×4×3 so far — **sweep each DNN pattern × mesh to its own
 knee**, reporting absolute delay *and* DP-vs-BL, before committing.
 
-## 9. Open items / what to build next
+## 9. Resolved decisions (Aug 2026 session)
 
-- **Converter (Stage 2 code)** implementing §7.1–7.5: `profile → map → table`.
-- **Mapping policy** — decide layer/tile → node assignment (the deferred #2). Options:
-  linear, tile-blocked, or congestion-aware; this dominates the spatial pattern and
-  deserves its own short note.
+### 9.1 Packet size — CLOSED, no simulator change
+
+`-size N N` (e.g. `-size 16 16`) yields an exactly fixed packet size: `getRandomSize()`
+→ `randInt(min,max)` returns `min` when `min == max` (verified empirically, 1M draws),
+and it passes both `CmdLineParser` validators. Size is **global per run**, not per-row,
+so per-flow volume differences are encoded in **`pir` (packet count)**, not size. Lost:
+message granularity only (a 64-flit message becomes four 16-flit packets), not volume.
+Hardware-realistic — real NoCs use fixed flit width and fixed/near-fixed packet formats;
+variable-size *messages* are segmented into fixed-size packets at the NI. Precedent:
+Krishnan et al. (ACM JETC 2021) use non-uniform per-pair injection rates with this model.
+
+### 9.2 Mapping policy — DECIDED
+
+**Partitioning: size-driven IMC crossbar model.** Tiles per weight matrix =
+`ceil(rows/xb) * ceil(cols/xb)` for an `xb × xb` crossbar; a conv layer's weight matrix
+is `(k·k·Cin) × Cout`. *Not* one-layer-per-node — that yields a sparse linear chain with
+no path contention (§3), so DP has nothing to exploit and the Stage-1 mechanism never
+activates. Citeable: Krishnan et al. (ACM JETC 2021), SIAM (ACM TECS 2021).
+**Stated assumption:** 1 crossbar per node. Real IMC designs often pack several
+crossbars per tile; 1:1 is the conservative end and is a modelling knob.
+
+**Placement: blocked/clustered in 3D.** Allocate each layer a compact 3D sub-volume
+(box) via `coord2Id` (`id = x + y·DIMX + z·DIMX·DIMY`), advancing the box origin per
+layer. *Not* sequential IDs: `id+1` walks along X and only reaches the Z neighbour after
+`DIMX·DIMY` steps, so intra-layer many-to-many exchange would barely use TSVs and the 3D
+findings (Z-series, vertical turn exclusivity) would stay dormant. A 3D box keeps a
+layer's tiles within 1–2 hops in all three dimensions.
+
+**Congestion-aware placement deliberately excluded** — that is j6 territory and would
+confound "does DNN traffic behave differently" with "does smart mapping help". Blocked
+placement is a *deliberately unoptimised* baseline and must be stated as such.
+
+### 9.3 Tile counts (1 crossbar/node) — full networks are infeasible
+
+| model | 128×128 xb | 256×256 xb |
+|---|---|---|
+| VGG-16 full | 8454 | 2121 |
+| ResNet-50 full | 1406 | 379 |
+| Transformer, 12 blocks | 5184 | 1296 |
+| ResNet-50 **one bottleneck block** | **60** | 15 |
+| Transformer **one encoder block** | 432 | **108** |
+
+All full networks exceed `DPSIZE = 260` — confirms §7's "use a representative block".
+Convenient fits: transformer encoder block @256×256 = 108 → **6×6×3** exactly;
+ResNet bottleneck block @128×128 = 60 → **5×5×3** (75 nodes, spare 15 absorbed by giving
+layers extra tiles).
+
+**Decided start:** ResNet-50 single bottleneck block, 128×128 crossbar, on 5×5×3
+(a mesh already swept in Stage 1, so DNN-vs-synthetic comparison is direct). Converter
+to be **hardcoded for this block first** (~50 lines, no PyTorch hooks) to get a runnable
+table fastest, then generalised. Order after: transformer encoder block (§7's recommended
+primary — richest congestion stimulus), then a VGG block as cheap contrast.
+
+### 9.4 Multicast / broadcast — source replication, no simulator change
+
+Multicast and broadcast are modelled as **source replication, entirely within the traffic
+table**: one unicast row per destination, all sharing the same `src` and the same
+`t_on/t_off/t_period` window. **Requires no Noxim modification** — it is pure converter-side
+table construction.
+
+Defensible because **Garnet (gem5) does exactly this**: it has no router-level multicast
+and breaks multicast messages into multiple unicasts at the network interface (per gem5
+docs). The field-standard detailed NoC model has the same limitation and the same
+workaround, so this is precedent, not a hack. noxim3d is unicast-only by the same measure
+(`TFlit` carries a single `dst_id`; `route()` returns one output port; DP cost-to-go is
+per single dst).
+
+**Two limitations to state explicitly in write-up:**
+1. Source replication loads the network *more* than true tree-based multicast would —
+   which is precisely the inefficiency j5/c5 (surface-wave multicast) measured.
+2. `getCumulativePirPor` picks **one dst per src per cycle** by weighted draw, so
+   guaranteed simultaneous fan-out is impossible. Volumes average out correctly over a
+   window — acceptable for CNN skip-connection fan-out, not for a hard synchronised burst.
+
+## 10. Remaining open items
+
+- **Converter (Stage 2 code)** implementing §7.1–7.5 for the ResNet bottleneck block
+  (§9.3), then generalised.
 - **Validation** — inject a known toy DNN, confirm the resulting table's steady-state
   hotspot map matches the profiled volume matrix, then run one DP-vs-BL sweep to see
   whether the knee/parity behavior from synthetic traffic ([FINDINGS.md](FINDINGS.md))
   persists under DNN-shaped traffic.
-- **Packet size** — decide whether the converter also fixes packet size per flow
-  (tensor-accurate) or leaves `getRandomSize()`; affects burst granularity.
+- **Routing choice for DNN traffic** (§8) — still open. Target metric provisionally
+  "absolute latency/throughput", but deferred until Stage 2 results exist. Must sweep each
+  DNN pattern × mesh to its **own** knee and report absolute delay **and** DP-vs-BL before
+  committing.
