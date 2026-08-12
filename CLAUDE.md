@@ -148,4 +148,4 @@ Produces the `noxim` binary. `.o` files and the binary are gitignored — rebuil
 - Repo-local identity is set (`user.name`/`user.email`), not global.
 - `.gitignore` excludes build artifacts (`*.o`, `noxim` binary), `results_*/`, simulation dumps
   (`.ptrace`, `.steady`, `.init`, etc.), `.svn/`, and Windows Zone.Identifier files.
-- Remote: `origin` → `https://github.com/nizarsd/noxim3d.git`.
+- Remote: `origin` → `https://github.com/nizarsd/noxim3d-dnn.git`.
