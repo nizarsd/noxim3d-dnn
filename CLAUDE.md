@@ -119,6 +119,105 @@ cost fields (complements the `settle=0` result).
 
 **See [PERFORMANCE.md](PERFORMANCE.md) for profiling, fixes, and validation.**
 
+## Traffic injection (Stage 2, in progress)
+
+DNN trace generation (Stage 2 of the execution plan) surfaced a format mismatch: the
+project proposal assumed a per-packet flit-level trace format, but the actual traffic
+input mechanism ([`TGlobalTrafficTable`](TGlobalTrafficTable.cpp)) is a **statistical**
+descriptor table — rows of `src dst pir por t_on t_off t_period` — consumed via
+per-cycle Bernoulli draws in `TProcessingElement::txProcess` against a cumulative PIR,
+not literal per-packet replay. Built-in `TRAFFIC_RANDOM` (uniform destination, global
+PIR, whole-run only — not phase-switchable) is also available as a distribution
+alongside `TRAFFIC_TABLE_BASED` ([`NoximDefs.h`](NoximDefs.h)).
+
+### Two hard limits of the table mechanism (code-as-written)
+
+1. **Packet size is never read from the table.** `canShot()` calls
+   `packet.make(local_id, dst, now, getRandomSize())` — the table format has no size
+   column and the value is always randomized.
+2. **One destination per source per cycle.** `getCumulativePirPor()` picks a single dst
+   by weighted random draw among rows active that cycle, so a source cannot fan out to
+   two dsts simultaneously (e.g. a ResNet skip connection to both the next sequential
+   tile and the merge tile).
+
+Timing itself is *not* a blocker: a narrow window (`t_on=C-1, t_off=C+1, pir=1.0`) forces
+near-deterministic single-shot firing at cycle C; `t_period` = inference-pass length repeats it.
+
+### Three candidate approaches
+
+- **(a) Statistical approximation** — DNN traffic as ordinary table rows. Lossy (no real
+  size, no fan-out), **zero simulator changes**.
+- **(b-lite) Table + fixed packet size** — *superseded, see "Fixed packet size" below.*
+- **(b-full) Dependency-gated dataflow firing** — per-PE state machine: track required
+  inputs, fire only once all have *actually arrived* in-sim, so congestion delays
+  propagate downstream. Architecturally correct for a layer DAG, and the only option
+  where routing improvements show up in true end-to-end inference latency. Large
+  `TProcessingElement` change — deferred to Stage 5/6.
+
+### Model-by-model fit
+
+| Model | Fit under (a) + fixed size | Notes |
+|-------|----------------------------|-------|
+| VGG-16 | Full fit | Purely sequential, one src→one dst per layer; FC burst is just high `pir` over a window. |
+| ResNet-50 | Mostly fits | Skip-connection fan-out served by weighted draw, not guaranteed simultaneous — OK for volume, imperfect for synchronised burst. |
+| Transformer | Poor fit | Attention is all-to-all/collective in one window; scatters as pairwise traffic. Needs `TRAFFIC_RANDOM` or ring/tree collective rows — separate path. Deferred. |
+
+### Fixed packet size — resolved, zero code changes
+
+(b-lite) is unnecessary. `-size N N` (e.g. `-size 16 16`) already yields an exactly fixed
+packet size: `getRandomSize()` → `randInt(min,max)` returns `min` exactly when `min==max`
+(verified empirically, 1M draws, zero deviation), and `-size 16 16` passes both CLI
+validators ([`CmdLineParser.cpp`](CmdLineParser.cpp)). The size is **global** (one value
+per run), not per-row — per-layer volume differences are encoded entirely in `pir`
+(packet *count*), not packet size. What's lost is message granularity only (a 64-flit
+message becomes four 16-flit packets), not total volume.
+
+This is also the more hardware-realistic model: real NoCs use fixed flit width and
+fixed/near-fixed packet formats per chip; variable-size *messages* are segmented into
+fixed-size packets at the NI. Precedent: Krishnan et al. (ACM JETC 2021) encode DNN
+layer→tile traffic as non-uniform per-pair injection rates with this same packet model.
+**Net: (b-lite) collapses into (a).** Stage 2 needs zero simulator changes for
+ResNet-50/VGG-16.
+
+### Mapping strategy
+
+**Layer→tile** (each layer resident on its own tile), not token→tile or within-layer
+splitting. Realistic for IMC/ReRAM accelerators (weights stay tile-resident), precedented
+in-venue (Krishnan JETC 2021), and the only scheme this simulator runs today (see
+multicast note). Within-layer splitting (spatial-tiling halo exchange, or channel-split
+all-gather) is a legitimate future direction but requires multicast — out of Stage 2 scope.
+
+### Multicast — explored, not planned
+
+True router-level multicast is **absent from noxim3d** (unicast only: `TFlit` carries a
+single `dst_id`; `route()` returns one output port; DP cost-to-go is per single dst).
+Adding it would touch flit format, router datapath + reservation table, a fresh
+deadlock argument (flit replication under wormhole + the OEB turn model), stats, and DP
+— weeks of work with a correctness research question inside. **Garnet (gem5) also lacks
+router-level multicast** — it breaks multicast into unicasts at the NI (confirmed in
+gem5 docs). Source-replication (PE injects N unicasts, one per dst) is therefore the
+field-standard approximation and is runnable today via table rows. Not switching
+simulators for this.
+
+### Stage 6 comparison arm (planned): phase-indexed DP
+
+A non-learning baseline the Stage 7 RL contribution must beat (or show breaks). CNN phase
+timing is fully known from trace generation (`t_on`/`t_off` windows), so per-phase DP cost
+fields can be precomputed (snapshot `cost_mem` per phase, or derive from the phase's
+traffic matrix) and swapped in by a cycle-driven phase counter at each boundary — instead
+of waiting ~`DP_CYCLE` for online DP to reconverge.
+
+- **Fixes DP's one temporal weakness:** stale cost field during phase transitions
+  (e.g. entering an FC burst) — right field loaded at cycle 1 of the burst.
+- **Threat to the RL claim:** same "anticipate the burst" benefit, zero training, zero
+  inference overhead, full determinism.
+- **Where RL could still win:** unknown/aperiodic timing (dynamic batching, early-exit
+  nets); open-loop (doesn't adapt if congestion deviates from the precomputed profile);
+  per-phase field storage cost.
+
+Selection logic unchanged from today's DP; only the cost-field source differs. Not
+implemented — logged for Stage 6.
+
 ## Build
 
 ```
