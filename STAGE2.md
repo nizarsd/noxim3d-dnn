@@ -235,19 +235,53 @@ placement is a *deliberately unoptimised* baseline and must be stated as such.
 | VGG-16 full | 8454 | 2121 |
 | ResNet-50 full | 1406 | 379 |
 | Transformer, 12 blocks | 5184 | 1296 |
-| ResNet-50 **one bottleneck block** | **60** | 15 |
+| ResNet-50 **one bottleneck block** | **92** | 23 |
 | Transformer **one encoder block** | 432 | **108** |
+
+> **Correction (Aug 2026):** this row previously read **60 / 15**, which counted only
+> conv1–conv3 and **omitted the projection shortcut**. The stage-3 bottleneck is a
+> *projection* block (512→1024, dimensions change), so its 1×1 shortcut is a real
+> weighted layer and must occupy crossbars — an identity (weight-free) shortcut only
+> exists in blocks whose dimensions already match. Corrected to **92 / 23**. This
+> invalidated the old "→ 5×5×3, spare 15" fit; see the revised decided start below.
+> The transformer figures (432 / 108) were re-derived and are correct.
+> `VGG-16 full` and `ResNet-50 full` have **not** been re-audited for the same
+> projection-shortcut omission — ResNet-50 full has 4 more projection blocks, so 1406
+> is likely an undercount. Immaterial to the decision (both are far over `DPSIZE`).
+
+**ResNet-50 stage-3 bottleneck, per layer @128×128** (weight matrix = `(k·k·Cin) × Cout`;
+`tiles = ceil(rows/128) · ceil(cols/128)`):
+
+| layer | k | Cin→Cout | weight matrix | reduction depth | fan-out width | tiles |
+|---|---|---|---|---|---|---|
+| conv1 | 1 | 512→256 | 512×256 | 4 | 2 | 8 |
+| conv2 | 3 | 256→256 | 2304×256 | **18** | 2 | 36 |
+| conv3 | 1 | 256→1024 | 256×1024 | 2 | **8** | 16 |
+| shortcut (projection) | 1 | 512→1024 | 512×1024 | 4 | **8** | 32 |
+| | | | | | | **92** |
+
+The two splits are independent axes and every tile participates in both: `ceil(rows/xb)`
+is the **reduction depth** (each row-group holds a slice of the input dimension, so it
+produces only a *partial* sum that must be added across the column) and `ceil(cols/xb)`
+is the **fan-out width** (each column-group computes different output channels from the
+*same* input, so the input must be replicated to all of them). This — not the layer
+dependency graph — is what generates the intra-layer traffic.
 
 All full networks exceed `DPSIZE = 260` — confirms §7's "use a representative block".
 Convenient fits: transformer encoder block @256×256 = 108 → **6×6×3** exactly;
-ResNet bottleneck block @128×128 = 60 → **5×5×3** (75 nodes, spare 15 absorbed by giving
-layers extra tiles).
+ResNet bottleneck block @128×128 = 92 → **6×6×3** (108 nodes, 16 spare absorbed by
+giving layers extra tiles).
 
-**Decided start:** ResNet-50 single bottleneck block, 128×128 crossbar, on 5×5×3
-(a mesh already swept in Stage 1, so DNN-vs-synthetic comparison is direct). Converter
+**Decided start:** ResNet-50 single bottleneck block, 128×128 crossbar, on **6×6×3**
+(a mesh already swept in Stage 1, so DNN-vs-synthetic comparison stays direct). Converter
 to be **hardcoded for this block first** (~50 lines, no PyTorch hooks) to get a runnable
 table fastest, then generalised. Order after: transformer encoder block (§7's recommended
 primary — richest congestion stimulus), then a VGG block as cheap contrast.
+
+Bonus of the correction: ResNet-bottleneck @128×128 (92) and transformer-encoder @256×256
+(108) now both land on **6×6×3**, so the two subjects are directly comparable on one mesh
+with no geometry confound. A VGG-16 block 3 (three 3×3 convs; 18+36+36 = **90** tiles
+@128×128) also fits the same mesh — sparser, width-2-everywhere, pure deep reduction.
 
 ### 9.4 Multicast / broadcast — source replication, no simulator change
 
