@@ -28,3 +28,7 @@ results_*/
 # Archives / snapshots
 *.tar.gz
 *.zip
+
+# Python bytecode (from converter imports)
+__pycache__/
+*.pyc

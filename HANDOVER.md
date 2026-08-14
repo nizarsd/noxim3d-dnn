@@ -84,6 +84,16 @@ FINDINGS.md says even×even reverses just past the knee — DP's delay advantage
 3. **Reading the results:** quote **absolute delay** alongside any DP-vs-BL percentage, and
    locate this pattern's *own* knee first. The FINDINGS.md routing-variant study produced a
    headline "+53%" that was really BL degrading faster than DP.
+4. **Transformer workload omits residual connections** — blocking for that workload.
+   `transformer_layers()` in `stage2_dnn_full.py` models each encoder block as
+   q/k/v/o/ff1/ff2 in a pure sequential chain. A real block has a residual around the
+   attention sublayer and another around the FFN sublayer: **2 per block, 24 across 12
+   blocks**. These are long-range flows, the analogue of ResNet-50's 12 identity shortcuts
+   (mean hop 3.78 vs 3.53 for all other flows). Omitting them understates the transformer's
+   non-locality and so understates DP's opportunity, since DP's advantage comes from seeing
+   congestion several hops out. Fix as `kind="identity"` — zero crossbars, traffic only,
+   window spanning the bypassed sublayer — **before running any transformer simulation or
+   comparing it against ResNet-50**.
 
 ## Repo hygiene (noted, not yet done)
 
