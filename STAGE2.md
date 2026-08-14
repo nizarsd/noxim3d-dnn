@@ -324,6 +324,83 @@ than one block (200 vs 92) while providing many more phases and real long-range 
 connections — relevant if the single block proves too thin temporally (only 3 phases,
 conv2 dominant). Not a change of plan; recorded as the natural next configuration.
 
+### 9.3b Decided configuration (supersedes the §9.3 "decided start")
+
+**Whole ResNet-50 · 128×128 crossbars · 96 crossbars per tile · 131 tiles · 7×7×3 mesh
+(147 nodes, 16 spare).**
+
+| parameter | value | source |
+|---|---|---|
+| crossbar | 128×128 | ISAAC (Shafiee et al., ISCA 2016) |
+| crossbars per tile | 96 (12 IMAs × 8 crossbars, shared ADCs) | ISAAC |
+| weight precision | 8-bit on 1-bit cells (`N_bits = 8`) | §9.3a |
+| scope | whole ResNet-50 (~53 conv layers + FC) | — |
+| crossbars | 12504 | §9.3a formula |
+| tiles | 131 | 12504 / 96 |
+| mesh | 7×7×3 = 147 nodes, 89% occupancy | Stage 1 swept |
+
+Rationale:
+
+1. **Both hardware parameters are exact published values** from a single heavily-cited
+   paper — no interpolation to defend. The previous 8/tile sat between 1 and Krishnan's 16
+   and matched nothing published.
+2. **7×7×3 is a Stage 1 mesh**, so DNN-vs-synthetic comparability is preserved (the reason
+   6×6×3 was chosen originally).
+3. **7×7×3 is odd×odd.** [FINDINGS.md](FINDINGS.md): odd×odd sustains DP's advantage past
+   the knee; even×even (6×6×3) reverses just past it. The completed 6×6×3 sweep already
+   showed that reversal shape at `ls = 0.20`. Odd×odd removes a known parity handicap.
+   7×7×3 also carries Stage 1's largest DP benefit (+82.4%) — though coarse-only, and
+   FINDINGS.md lists a fine sweep of 0.013–0.016 as an open item.
+4. **Whole network fixes the thin temporal structure.** A single bottleneck block gives
+   only three phases with conv2 dominant — roughly two transitions per period. The whole
+   network gives ~53 phases of varied duration plus real long-range skip connections
+   across blocks, which is the material the Stage 6 temporal analysis needs.
+
+Rejected alternatives: Krishnan (256×256, 16/tile) = 200 tiles — cleanest citation but **no
+Stage 1 mesh fits** (needs 8×8×4 = 256 or 9×8×3 = 216), so synthetic comparability is lost.
+VGG-16 full @256/96 = 177 tiles fits 8×8×3, but FC6 is 87% of the network (13 trivial
+phases then one giant) — keep as a later maximum-burst contrast, not the primary.
+
+The existing `traffics_dnn/resnet50_bottleneck3_xb128_6x6x3.*` artefacts remain valid as
+the single-block case and need not be deleted.
+
+### 9.3c Three workloads on one fixed NoC
+
+The mesh is **fixed at 7×7×3 (147 nodes)** for all three subjects. Crossbar size and
+packing density are chosen *per workload* so each fills comparable footprint, since the
+three models differ ~5× in weight volume and no single tile architecture gives all three
+usable occupancy.
+
+| workload | crossbar | xb/tile | tiles | occupancy | model coverage |
+|---|---|---|---|---|---|
+| ResNet-50 full | 128×128 | 96 | 131 | 89% | 100% |
+| Transformer, 12 encoder blocks (BERT/ViT-Base) | 256×256 | 96 | 108 | 73% | 100% |
+| VGG-16 full | 256×256 | 128 | 133 | 90% | 100% |
+
+All three fit `DPSIZE = 260` with every dimension ≤ 10 — **no simulator changes**.
+
+**Why varying tile architecture is not a confound.** The object of study is routing and
+selection on a fixed NoC. In all three cases the network is identical: same 7×7×3 mesh,
+same routers, same links, same node count. The simulator does not model tile internals at
+all — tiles are a converter-side concept that only determines *which node IDs appear in
+which rows*. What varies is the **partitioning granularity**, i.e. how a layer is split
+into flows, which is part of characterising the workload rather than a property of the
+hardware under test. Forcing one crossbar size across models that differ 5× in weight
+volume would instead produce wildly unequal occupancy (ResNet-50 collapses to 34 tiles /
+23% at 256×256), which *would* confound traffic structure with mesh utilisation.
+
+**Two assumptions to state explicitly in write-up:**
+1. **96 crossbars/tile is ISAAC's published value** (12 IMAs × 8 crossbars). **128/tile,
+   used only for VGG-16, is an extrapolation** — justified as "packing density scaled to
+   hold accelerator footprint constant", not cited. The alternative was VGG at 96/tile on
+   a 6×6×5 mesh, rejected to keep the mesh fixed across workloads.
+2. Crossbar size differs across workloads (128×128 for ResNet-50, 256×256 for the other
+   two). Both sizes are published (ISAAC and Krishnan respectively).
+
+**Sequencing:** ResNet-50 first (primary subject — many phases, real long-range skips),
+then the transformer (densest many-to-many, §7's recommended congestion stimulus), then
+VGG-16 (sparse conv chain plus one dominant FC burst; FC6 alone is 74% of the network).
+
 ### 9.4 Multicast / broadcast — source replication, no simulator change
 
 Multicast and broadcast are modelled as **source replication, entirely within the traffic
