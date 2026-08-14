@@ -283,6 +283,47 @@ Bonus of the correction: ResNet-bottleneck @128×128 (92) and transformer-encode
 with no geometry confound. A VGG-16 block 3 (three 3×3 convs; 18+36+36 = **90** tiles
 @128×128) also fits the same mesh — sparser, width-2-everywhere, pure deep reduction.
 
+### 9.3a Weight precision and crossbars-per-tile — reinterpretation, no rework
+
+Two refinements to the formula above, verified against Krishnan et al. (ACM JETC 2022)
+Eq. 2 (see [RELATED_WORK.md](RELATED_WORK.md)). Neither invalidates the generated tables.
+
+**(i) The column term carries a weight-precision factor:**
+
+```
+crossbars = ceil((k·k·Cin) / PE_x) · ceil((Cout · N_bits) / PE_y)
+```
+
+8-bit weights on 1-bit cells need 8 physical columns per logical column. The counts in
+§9.3 implicitly assume `N_bits = 1`. With `N_bits = 8`, the stage-3 bottleneck @128×128 is
+**736 crossbars**, not 92 (conv1 64, conv2 288, conv3 128, shortcut 256).
+
+**(ii) A tile holds many crossbars, not one.** No real IMC design puts an NoC router on a
+single crossbar: router area/energy is comparable to the macro it serves, and
+intra-partition partial-sum traffic is dense and short-range — bus/H-tree work, not NoC.
+Krishnan explicitly justifies the hierarchy ("for low data volume, the NoC-based
+interconnect provides marginal performance gain while increasing energy consumption").
+Published values: **Krishnan 16 crossbars/tile** (256×256; 4 CEs × 4 PEs), **ISAAC 96
+crossbars/tile** (128×128; 12 IMAs × 8 crossbars, shared ADCs).
+
+**Why no rework is needed:** `736 / 92 = 8` exactly. The existing 92-tile partition is
+identical to **8-bit weights at 8 crossbars per tile**. The generated traffic tables,
+placement and flows are unchanged — only the physical labelling changes, from
+"1-bit weights, 1 crossbar/tile" (unrealistic) to "8-bit weights, 8 crossbars/tile"
+(a defensible point between Krishnan's 16 and a 1:1 flat array). State the assumption in
+these terms in write-up.
+
+**Design tension to record:** more crossbars per router → fewer tiles → smaller mesh →
+*less* NoC traffic to study. 8/tile keeps a usable mesh; 16/tile (Krishnan) would halve it.
+
+**Consequence for full networks — the "infeasible" claim is too strong.** At Krishnan's
+own parameters (256×256, `N_bits = 8`, 16 crossbars/tile), whole ResNet-50 is **3190
+crossbars → 200 tiles**, which fits `DPSIZE = 260` (7×7×4 = 196, 8×8×3 = 192). Whole
+VGG-16 at 256×256, 96/tile is **177 tiles**. So a whole network costs little more mesh
+than one block (200 vs 92) while providing many more phases and real long-range skip
+connections — relevant if the single block proves too thin temporally (only 3 phases,
+conv2 dominant). Not a change of plan; recorded as the natural next configuration.
+
 ### 9.4 Multicast / broadcast — source replication, no simulator change
 
 Multicast and broadcast are modelled as **source replication, entirely within the traffic
