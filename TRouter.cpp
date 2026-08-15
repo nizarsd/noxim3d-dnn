@@ -1726,7 +1726,7 @@ vector<int> TRouter::routingOddEvenBalanced(const TRouteData& route_data)
         else
           directions = routingOddEven0(current, source, destination);
       }
-      else  // making palar and vertical are mutually exclusive is shown to give btter performance than allowing both at the same time  
+      else  // making planar and vertical mutually exclusive is shown to give btter performance than allowing both at the same time  
       if ((dz % 2 == 1) || (ez > 1))            // descend under published condition
         directions.push_back(DIRECTION_DOWN);
     }

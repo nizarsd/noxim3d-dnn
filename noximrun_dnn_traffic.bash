@@ -170,6 +170,24 @@ run_one() {
     # -traffic and the filename are SEPARATE arguments -- see header note 1.
     # -pir is deliberately omitted: it is ignored in table mode (header note 2),
     # so passing it would only imply a control that does not exist.
+    #
+    # -samp 1 CORRECTS THE PER-IP THROUGHPUT DENOMINATOR.  TGlobalStats.cpp:280
+    # computes  total_cycles = simulation_time * no_of_samples - warmup,  which is
+    # right for main_multi_step.cpp (it loops over samples) but WRONG for main.cpp,
+    # which calls sc_start(simulation_time) once -- see its "This now run once
+    # only" comment.  At the default no_of_samples = 10 the denominator is ~10x too
+    # large, so "% Throughput (flits/cycle/IP)" (line 341, the value extract_metric
+    # picks up) reads ~10x LOW.  "% Global average throughput" (line 340) uses a
+    # different path and was always correct.
+    #
+    # Safe: under main.cpp, no_of_samples only affects this denominator, the
+    # cosmetic "Now running for N cycles" banner (also 10x overstated without it),
+    # and showStats2(), which is unused.  Thermal management is off (mode 0).
+    #
+    # !! Results produced BEFORE this flag have per-IP throughput ~10x low.  To
+    # compare against them, scale the old values by
+    #     (SIM * 10 - WARMUP) / (SIM - WARMUP)
+    # or re-run.  DP-vs-BL ratios are unaffected -- the factor cancels.
     if ! "$BIN" \
         -dimx "$DIMX" -dimy "$DIMY" -dimz "$DIMZ" \
         -buffer "$buffer" \
@@ -179,6 +197,7 @@ run_one() {
         -cinterval "$CINTERVAL" \
         -warmup "$WARMUP" \
         -sim "$SIM" \
+        -samp 1 \
         -traffic table "$tbl" \
         -seed "$seed" \
         > "$log" 2>&1

@@ -32,3 +32,6 @@ results_*/
 # Python bytecode (from converter imports)
 __pycache__/
 *.pyc
+
+# sweep console logs (regenerable)
+*.out
