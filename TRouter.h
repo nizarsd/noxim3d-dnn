@@ -202,6 +202,8 @@ SC_MODULE(TRouter)
 	// was: int traffic_counter; <Nizar 2026)
 	int    channel_load[DIRECTIONS];      // accumulated occupancy per output channel
 	int    channel_samples;               // sample count in current window
+	int    flits_sent[DIRECTIONS];        // flits actually forwarded per output channel
+	                                      // in the current window = lambda for Little's Law
 	int    dp_channel_cost[DIRECTIONS];   // averaged per-channel cost, published to DP
 
 

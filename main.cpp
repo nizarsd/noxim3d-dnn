@@ -86,6 +86,7 @@ int   TGlobalParams::no_of_samples                    	= DEFAULT_NO_OF_SAMPLES;
 int   TGlobalParams::tcu_interval                     	= DEFAULT_TCU_INTERVAL;
 int   TGlobalParams::traffic_bin                        = DEFAULT_TRAFFIC_BIN;  // traffic binning for traffic information per router
 int   TGlobalParams::dp_settle_mult                   	= DEFAULT_DP_SETTLE_MULT;
+int   TGlobalParams::dp_cost_metric                   	= DEFAULT_DP_COST_METRIC;
 int   TGlobalParams::bw_threshold                     	= DEFAULT_BW_THRESHOLD;
         
  
