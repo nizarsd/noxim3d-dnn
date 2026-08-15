@@ -95,6 +95,42 @@ FINDINGS.md says even×even reverses just past the knee — DP's delay advantage
    window spanning the bypassed sublayer — **before running any transformer simulation or
    comparing it against ResNet-50**.
 
+## Publication targets (checked Aug 2026)
+
+**NOCS no longer exists** — NOCS 2023 was the final edition; the organisers closed the
+symposium. Any older plan naming NOCS as the priority-establishing venue is out of date.
+**NoCArc** (where c2 was published) has a stale site showing only NoCArc 2024 @ MICRO-57;
+status unknown, worth emailing the organisers. **VLSI-SoC 2026** (c1, c10 venue) has closed
+— abstract 20 Apr, paper 27 Apr 2026; watch for the 2027 CfP around Jan–Feb. Best papers
+there are invited to an ACM JETC special issue (j7's venue).
+
+Two live targets:
+
+| venue | deadline | notes |
+|---|---|---|
+| **DATE 2027**, Dresden, 22–24 Mar 2027 | regular: abstract **13 Sep 2026**, paper **20 Sep 2026** (AoE, firm) | Lists "Network on chip and on-chip communication" explicitly. c5 was published at DATE. |
+| **DATE 2027 LBR** | **not yet announced** — full CfP pending | 2-page extended abstract (+1 page refs only), blind review, interactive session. LBR deadlines fall *after* the regular one; expect ~Nov 2026–Jan 2027. |
+| **SAMOS 2027**, Samos, July 2027 | submissions **Feb 2027**, notification May 2027 | SAMOS 2026 was **cancelled**; returns 2027. Springer LNCS, DBLP-indexed; selected papers invited to an IJPP special issue. |
+
+Watch <https://www.date-conference.com/call-for-papers> for the DATE 2027 full CfP (LBR
+dates). One aggregator lists the DATE regular deadline as 7 Sep rather than 13/20 Sep —
+verify against the official page before planning.
+
+**Suggested sequence:** the 20 Sep regular deadline is likely too tight (Stage 3 not
+started). Target **DATE 2027 LBR** when that call opens to establish priority, then
+**SAMOS 2027** (Feb) for the full paper. Two shots without compressing the work.
+
+**What would be publishable** (Stage 2 alone is not — a converter is tooling):
+Stage 2 + Stage 3 together, with the *finding* as the contribution. Candidate claims,
+depending on results: (a) congestion-aware selection policies evaluated on synthetic
+traffic do not transfer as expected to DNN inference traffic — nobody has compared
+selection policies under DNN traffic, as Krishnan uses fixed X–Y routing and the DSE
+literature fixes routing entirely; (b) whether Stage 1's diameter/parity mechanism
+survives phased DNN traffic; (c) if congestion never materialises, the negative result
+extended to 3D and adaptive routing, *provided* the load-scale threshold is quantified.
+Needs all three workloads, both synthetic and DNN baselines on the same meshes, and at
+least two mesh sizes — otherwise "3D" is asserted rather than examined.
+
 ## Repo hygiene (noted, not yet done)
 
 - `.claude/` is untracked but **not** gitignored — `git add -A` from main would sweep it in.
