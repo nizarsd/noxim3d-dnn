@@ -17,13 +17,18 @@ cd "$(dirname "$0")"
 BIN=./noxim
 TBL=results_diag_ls022/tables/dnn_diag_ls0.022.txt
 OUTDIR=results_diag_ls022
-SEEDS="2 6 10 14 18 22 26 30 34 38"
+# Overridable so the arm can be extended without re-running what exists.
+SEEDS=${SEEDS:-"2 6 10 14 18 22 26 30 34 38"}
 JOBS=8
 
 [[ -x $BIN ]] || { echo "no noxim binary"; exit 1; }
 [[ -f $TBL ]] || { echo "no table at $TBL -- run remap_table_diagonal.py"; exit 1; }
 mkdir -p "$OUTDIR/logs" "$OUTDIR/rows"
-find "$OUTDIR/rows" -name '*.row' -delete 2>/dev/null || true
+# Clear ONLY the seeds about to be re-run -- a blanket delete would discard a
+# completed arm (learned the hard way on the 6x6x3 run).
+for s in $SEEDS; do
+    rm -f "$OUTDIR/rows"/*_seed_"$s".row
+done
 
 run_one() {
     local sel="$1" seed="$2"
