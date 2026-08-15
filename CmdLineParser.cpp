@@ -103,6 +103,10 @@ if (TGlobalParams::verbose_mode!=-2){
   cout << "%- thermal management mode (0-3) = " << TGlobalParams::dy_t_mode<<endl;
   cout << "%- traffic counter update interval = " << TGlobalParams::tcu_interval <<endl;
   cout << "%- bandwidth threshold = " << TGlobalParams::bw_threshold <<endl;
+  if (TGlobalParams::dp_cost_metric != DEFAULT_DP_COST_METRIC)
+    cout << "%- DP local cost metric = "
+         << (TGlobalParams::dp_cost_metric == DP_COST_WAIT ? "wait (Little's Law L/lambda)"
+                                                           : "none (congestion term zeroed)") <<endl;
 }
   
 }
@@ -371,6 +375,14 @@ void parseCmdLine(int arg_num, char *arg_vet[])
 	TGlobalParams::tcu_interval = atoi(arg_vet[++i]);
 	  else if (!strcmp(arg_vet[i], "-dpsettle"))   // settle window = N * dp_pass (default 1)
 	TGlobalParams::dp_settle_mult = atoi(arg_vet[++i]);
+	  else if (!strcmp(arg_vet[i], "-dpcost"))     // DP local cost metric (default occupancy)
+	{
+	  char* m = arg_vet[++i];
+	  if (!strcmp(m, "occupancy"))   TGlobalParams::dp_cost_metric = DP_COST_OCCUPANCY;
+	  else if (!strcmp(m, "wait"))   TGlobalParams::dp_cost_metric = DP_COST_WAIT;
+	  else if (!strcmp(m, "none"))   TGlobalParams::dp_cost_metric = DP_COST_NONE;
+	  else { cerr << "ERROR: -dpcost must be 'occupancy', 'wait' or 'none'" << endl; exit(1); }
+	}
 	  else if (!strcmp(arg_vet[i], "-bwt"))
 	TGlobalParams::bw_threshold = atoi(arg_vet[++i]);
 	  else if (!strcmp(arg_vet[i], "-pirgradual"))

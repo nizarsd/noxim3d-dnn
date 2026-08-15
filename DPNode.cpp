@@ -69,13 +69,20 @@ void DPNode::dpProcess()
 		
 		return;
 	}
-	int HOP_COST = 100;
+	// Exchange rate between distance and congestion: one MAXIMALLY congested hop
+	// should cost about the same as one extra hop, so this must track the cost
+	// metric's range (occupancy 0-100, wait 0-DP_COST_WAIT_MAX).  Inert under
+	// minimal routing -- every legal output is one hop closer, so it is added
+	// identically to every candidate and cancels -- but load-bearing under
+	// oddevennm, where candidates sit at different distances.
+	int HOP_COST = (TGlobalParams::dp_cost_metric == DP_COST_WAIT)
+	             ? DP_COST_WAIT_MAX : 100;
 	// RELAX (every cycle of the dwell): dp_rx holds neighbours' stored costs for
 	// this dst_id, coherent because all nodes hold the same dst_id for the window.
 	int rx_dp_cost[DIRECTIONS];
 	for (int i=0; i<DIRECTIONS; i++)
 		rx_dp_cost[i] = (dp_rx[i] >= BIG_VALUE) ? BIG_VALUE
-		              : (int)(dp_rx[i]*alpha) + frozen_local_cost[i] + HOP_COST;
+		              : (int)(dp_rx[i]*alpha) + frozen_local_cost[i] + HOP_COST; // may be not needed for min routing 
 
 	int sorted_ports[] = {0,1,2,3,4,5};
 	BubbleSort(rx_dp_cost, sorted_ports);       // ports ordered by ascending cost

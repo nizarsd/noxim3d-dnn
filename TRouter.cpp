@@ -22,6 +22,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
+#include <cstdlib>
 #include "TRouter.h"
 
 //---------------------------------------------------------------------------
@@ -222,6 +223,7 @@ start_from_port++;
 		      	
 		      //traffic_counter++;
 		      flit_tx[o].write(flit);
+		      flits_sent[o]++;                      // lambda for Little's Law (-dpcost wait)
 		      current_level_tx[o] = 1 - current_level_tx[o];
 		      req_tx[o].write(current_level_tx[o]);
 		      buffer[i].Pop();
@@ -300,7 +302,7 @@ void TRouter::bufferMonitor()
   if (reset.read())
   {
 	for (int i=0; i<DIRECTIONS+1; i++) free_slots[i].write(buffer[i].GetMaxBufferSize());
-    for (int d=0; d<DIRECTIONS; d++) channel_load[d] = 0;
+    for (int d=0; d<DIRECTIONS; d++) { channel_load[d] = 0; flits_sent[d] = 0; }
     channel_samples = 0;
   }
   else
@@ -1110,6 +1112,7 @@ void TRouter::cost_to_go()
 			dp_channel_cost[d] = 0;
 			local_dp_cost[d].write(0);
 			channel_load[d] = 0;
+			flits_sent[d] = 0;
 		}
 		channel_samples = 0;
 		return;
@@ -1128,10 +1131,37 @@ void TRouter::cost_to_go()
 		int maxb = TGlobalParams::buffer_depth;
 		for (int d = 0; d < DIRECTIONS; d++) {
 			// avg occupancy as a percentage of buffer, computed without losing the fraction
-			dp_channel_cost[d]  = channel_samples ? (100 * channel_load[d]) / (channel_samples * maxb):0;    // bounds to [0,100] by construction
-			//dp_channel_cost[d]  = channel_samples ? (100 * channel_load[d]) / (channel_samples) : 0;
+			if (TGlobalParams::dp_cost_metric == DP_COST_NONE) {
+				dp_channel_cost[d] = 0;          // control: no congestion signal
+			} else if (TGlobalParams::dp_cost_metric == DP_COST_WAIT) {
+				// Little's Law, W = L / lambda.  channel_load is sum(queue length)
+				// in FLIT-CYCLES and flits_sent is departures in FLITS, so the
+				// sample count cancels and the ratio is already in cycles:
+				//   sent > 0           -> mean per-flit waiting time
+				//   sent == 0, load > 0-> queued but nothing departed: BLOCKED
+				//   sent == 0, load== 0-> idle and empty: free
+				// Occupancy cannot separate the first two: a full-but-draining
+				// channel and a full-but-stalled one score identically.
+				int w = flits_sent[d] ? (DP_COST_WAIT_SCALE * channel_load[d]) / flits_sent[d]
+				                      : (channel_load[d] ? DP_COST_WAIT_MAX : 0);
+				dp_channel_cost[d] = (w > DP_COST_WAIT_MAX) ? DP_COST_WAIT_MAX : w;
+			} else {
+				// avg occupancy as a percentage of buffer, computed without losing the fraction
+				dp_channel_cost[d]  = channel_samples ? (100 * channel_load[d]) / (channel_samples * maxb):0;    // bounds to [0,100] by construction
+			}
+			// DPCOST_DEBUG=<node> dumps the raw accumulators so the metric can be
+			// hand-checked: W = load/sent must equal (load/samples)/(sent/samples).
+			static const char* dbg = getenv("DPCOST_DEBUG");
+			if (dbg && local_id == atoi(dbg))
+				std::cerr << "[dpcost] t=" << stime << " node=" << local_id << " dir=" << d
+				          << " load=" << channel_load[d] << " sent=" << flits_sent[d]
+				          << " samples=" << channel_samples
+				          << " meanL=" << (channel_samples ? (double)channel_load[d]/channel_samples : 0.0)
+				          << " lambda=" << (channel_samples ? (double)flits_sent[d]/channel_samples : 0.0)
+				          << " cost=" << dp_channel_cost[d] << "\n";
 			local_dp_cost[d].write(dp_channel_cost[d]);
 			channel_load[d] = 0;
+			flits_sent[d] = 0;
 		}
 		channel_samples = 0;
 	}

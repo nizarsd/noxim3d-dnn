@@ -133,13 +133,35 @@ using namespace std;
 
 
 // Modifications made by Ra'ed April 2010
-#define BIG_VALUE				    1000000
+#define BIG_VALUE				    100000000
 #define SMALL_VALUE				    0.2
 #define DEFAULT_NO_OF_SAMPLES		1	
 #define DPSIZE					    260
 #define DEFAULT_TCU_INTERVAL		500
 #define DEFAULT_TRAFFIC_BIN		  0
 #define DEFAULT_DP_SETTLE_MULT	0
+
+// What DP's local per-channel cost measures.  OCCUPANCY is the original: mean
+// downstream buffer fill, 0-100%.  WAIT derives the mean per-flit waiting time
+// from the same accumulator via Little's Law (W = L/lambda), which occupancy
+// cannot distinguish -- a full-but-draining channel and a full-but-stalled one
+// have identical occupancy but very different delay.
+#define DP_COST_OCCUPANCY   0
+#define DP_COST_WAIT        1
+// NONE zeroes the congestion term entirely, leaving cost = HOP_COST * hops.
+// Under minimal routing every candidate then ties, so BubbleSort leaves the
+// ports in index order and selectionDP takes the first FREE one -- i.e. fixed
+// port priority with no congestion awareness at all.  Control experiment: if DP
+// still beats bufferlevel, its advantage was never about sensing congestion.
+#define DP_COST_NONE        2
+#define DEFAULT_DP_COST_METRIC  DP_COST_OCCUPANCY
+// W is a per-flit waiting time in CYCLES and is typically 1-3 at light load, so
+// it must be scaled before the integer division or it truncates to 0/1 and the
+// metric carries no signal (verified on a one-flow mesh).  Work in centi-cycles:
+// resolution 0.01 cyc, range to 100 cyc.  A whole path sums to at most
+// diameter*MAX = 14*10000 = 140k, against BIG_VALUE = 1e8 (707x headroom).
+#define DP_COST_WAIT_SCALE  100   // centi-cycles
+#define DP_COST_WAIT_MAX  1000000   // = 100 cycles; also the cost of a blocked channel
 #define DEFAULT_BW_THRESHOLD		1000
 
 //<Nizar>
@@ -189,6 +211,7 @@ struct TGlobalParams
   static int   tcu_interval;
   static int   traffic_bin;       // traffic binning for traffic information per router
   static int   dp_settle_mult;   // settle window = dp_settle_mult * dp_pass (CLI: -dpsettle)
+  static int   dp_cost_metric;   // what DP's per-channel cost measures (CLI: -dpcost)
   static int   bw_threshold;
   
 
