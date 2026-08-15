@@ -235,6 +235,116 @@ modified2+settle=0 (+71.5%) also **exceeds** the baseline 5×5×3 peak (+64%, se
 DP gain on this mesh. Consequence: the settle=1 knee sweep above **understates** modified2 by
 ~5–7 pp/mesh.
 
+## Stage 2 — DNN traffic: DP's advantage is a property of the *placement*, not the traffic
+
+First DP-vs-BL results under a DNN-derived traffic table rather than a synthetic
+pattern. Subject: ResNet-50 stage-4 bottleneck block, 128×128 crossbars, 8 per tile,
+92 tiles on **7×7×3** (62.6% occupancy), `oddevenbalanced` = **modified2**, `settle=0`,
+buffer 16, fixed 16-flit packets, `ls = 0.022` (this pattern's own knee — delay 91 at
+0.022 against 394 at 0.025). Timing: `SIM=206674`, `WARMUP=14994`, giving exactly 5
+whole block passes in the measured window. All runs `-samp 1`.
+
+### The headline number, and the finding that qualifies it
+
+| | BL delay | DP delay | DP-vs-BL | paired t | p | wins |
+|---|---|---|---|---|---|---|
+| **current placement** (n=30) | 92.53 | 81.63 | **+11.77%** | 2.95 | **0.006** | 22/30 |
+| **XY-diagonal placement** (n=30) | 85.87 | 95.23 | −10.90% | −1.97 | 0.059 | 12/30 |
+
+Paired within policy, current → diagonal:
+
+| policy | change | paired t | p | 95% CI |
+|---|---|---|---|---|
+| bufferlevel | **−7.20%** (faster) | 2.07 | 0.048 | [+0.08, +13.24] cycles |
+| **dp** | **+16.65%** (slower) | **−3.34** | **0.002** | [−21.92, −5.26] cycles |
+
+**Changing only the tile→node mapping inverts the sign of DP's advantage.** The
+diagonal table is a *node relabelling* of the current one — identical traffic graph,
+`pir`, phase windows and total volume — so placement is the single variable.
+
+Pairing is the correct test throughout: both arms share a seed and injection is
+open-loop, measured inter-arm correlation r = 0.300. Unpaired Welch on the current
+placement gives t = 2.47 against the paired 2.95.
+
+### Not a knee artefact, and not a mistuned DP
+
+- DP is negative at **all three** diagonal load points (0.016 / 0.022 / 0.028:
+  −3.09%, −12.17%, −7.13%).
+- Both placements sit on the same delay curve — BL 24 → 91 → 878 (current) vs
+  27 → 85 → 876 (diagonal) — so the knee did not move despite +49% hops.
+- `current` and `diagonal` sit at nearly **equal BL delay** (92.53 vs 85.87) with
+  opposite DP outcomes. Congestion level does not explain it.
+- Three DP timing configurations tested at ls=0.022, n=10; none beats the default
+  (`settle 0`, `cinterval 4998`): `settle 0/ci 2499` +1.79% slower,
+  `settle 1/ci 2499` +1.88% slower. So "DP was badly tuned" is excluded.
+
+### Why: DP does not win by exploiting path diversity
+
+A Python port of `routingOddEvenBalanced` ([oeb_path_diversity.py](oeb_path_diversity.py))
+enumerates the minimal paths the router admits per flow. DP and BL are *provably
+identical* on a flow with one admissible path.
+
+The current placement lands the partial-sum reduction axis **along a mesh axis**:
+40.9% of all bytes are pure-Y displaced, and an axis-aligned flow admits exactly one
+path (`e0 == 0` returns a single direction). Only **25.5% of bytes** have any routing
+choice; the diagonal walk lifts that to 67.2%, at +49% hops.
+
+A 2×2 over (diversity, hops), built by searching tile→node permutations for target
+coordinates ([search_placement.py](search_placement.py)), n=10 per new cell:
+
+| cell | diversity | hops | BL | DP | DP-vs-BL |
+|---|---|---|---|---|---|
+| current | 25.5% | 3.33 | 91.08 | 79.88 | +12.30% |
+| **CELL A** | 25.5% | **4.96** | 138.37 | 90.62 | **+34.51%** |
+| **CELL B** | **67.2%** | 3.33 | 39.66 | 38.48 | +2.97% |
+| diagonal | 67.2% | 4.96 | 85.29 | 95.67 | −12.17% |
+
+Marginal effects on delay: hops 3.33→4.96 costs DP +57.4% but BL **+71.1%**;
+diversity 25.5%→67.2% saves DP −21.3% but BL **−45.5%**.
+
+**Longer paths hurt bufferlevel more than DP** (lookahead is worth more when routes
+are long), while **path choice helps bufferlevel about twice as much as DP**. The
+diagonal placement supplied both at once and BL's diversity gain outweighed DP's hop
+gain — hence the inversion. There is a real interaction: extra hops *help* DP when
+choice is scarce (+12.3 → +34.5) and *hurt* it when choice is plentiful
+(+2.97 → −12.17).
+
+⚠ **Attribution caveat.** The searched cells hit their (diversity, hops) targets by
+scattering layers: intra-layer tile spread is 3.03 (current), 4.04 (diagonal), 4.91
+(A), 4.97 (B). Layer locality therefore varies across every contrast and is a third,
+uncontrolled variable. It does not *order* the outcomes (+12.30, −12.17, +34.51,
++2.97 sorted by scatter shows no trend), but the single-variable readings above are
+not airtight. A locality-constrained search is the fix, and may not have a solution.
+
+### Throughput is invariant; the entire effect is in delay
+
+All eight cell × policy means span **0.014235–0.014353 flits/cycle/IP (0.83%)** and
+242,028–242,975 delivered flits (0.39%), while delay spans **260%** (38.48 → 138.37).
+Nothing is saturated and no policy accepts more traffic than another, so the
+acceptance-rate confound that invalidates the 6×6×3 `ls=0.20` delay figure (see
+Stage 2 handover) is absent here. Note this contrasts with Stage 1's 6×6×3 result,
+where the only solid finding was a *throughput* one (+6.8% at saturation).
+
+### 6×6×3 (n=5, indicative only)
+
+DP is negative under **both** placements (−2.60% current, −6.12% diagonal); its
+current placement already sits at 45.3% diversity — the diverse end — and the
+diagonal there moves hops only +9%. DP sd is 14.33 vs BL's 6.75, so DP is also the
+erratic arm on this mesh. Its knee is at **ls ≈ 0.013** (steepest rise 0.012→0.014,
+2.75×); the older `results_dnn_scale_sweep` grid was entirely past it.
+
+### Implementation detail worth knowing when reading these numbers
+
+`dpProcess` performs **one Bellman-Ford relaxation per `dp_clock` tick** — cost
+propagates one hop per tick, which is why `dp_dwell = diameter + 3` is propagation
+time, not margin. But congestion is snapshotted **once per `dp_pass`**
+(`frozen_local_cost` at `phase == 0`) and reused for all `num_dst` destination fields:
+at 7×7×3 that is one sample per 2499 cycles, so destination 146's field is built from
+buffer occupancy 2482 cycles old. Also note the sweep scripts' `DP_CYCLE = 2·nodes·dwell`
+matches `dp_cycle()` only at `settle=1`; at the actual `settle=0` the real period is
+half (2499, not 4998), so `WARMUP` is 6 real DP cycles rather than the 3 claimed.
+Left as-is deliberately — conservative, and every result above is on it.
+
 ## Open items
 
 - **Routing-variant generality** — modified2 (both-exclusive OEB) only tested on transpose1
@@ -250,6 +360,26 @@ DP gain on this mesh. Consequence: the settle=1 knee sweep above **understates**
   routing (e.g. `fullyadaptive`) to confirm the parity split is routing-induced.
 - **Mechanism test:** instrument per-link load-balance (coefficient of variation)
   to directly test the path-diversity explanation for the even-mesh reversal.
+- **(Stage 2) Locality-constrained placement search** — CELL A/B confound layer
+  scatter with the variable they were built to isolate. Re-search with an
+  intra-layer-spread term pinned near current's 3.03; if no solution exists at
+  hops 4.96, that itself says hops and locality are not independently controllable
+  on this mesh and the 2×2 as posed is unrealisable.
+- **(Stage 2) n=30 on CELL A** — the +34.51% that overturns the "hops hurt DP"
+  reading is the least-replicated number in the section (n=10). 20 runs.
+- **(Stage 2) Validate the routing port** — `oeb_path_diversity.py` reproduces the
+  router by construction and by the axis-aligned single-path argument, but has
+  **not** been cross-checked against simulator hop traces. Do this before any
+  path-count number goes in a paper.
+- **(Stage 2) Deadlock argument** — the claim that all three OEB variants are
+  deadlock-free rests on "turn-set subset/superset of the published baseline",
+  which is only valid for a **subset**. `modified2` (in use) is the restrictive
+  variant so is plausibly safe; `modified` is a superset and its claim is
+  unjustified. No deadlock detector is compiled in (`TRouterTCandNormal.cpp` is not
+  in the Makefile), so delivery statistics are the only evidence — clean at the
+  knee, but 6×6×3 `ls=0.20` shows max delay at 98.7% of the sim window in all 6
+  runs (saturation starvation, packets delivered — not deadlock, but that point's
+  delay figure is uninterpretable).
 
 ## Log
 
@@ -257,3 +387,9 @@ DP gain on this mesh. Consequence: the settle=1 knee sweep above **understates**
 - Z series: 5×5×5 (diameter 12, vs planar 6×6×3).
 - Settle sweeps: 3×3×3 and 5×5×5 at the knee (k=0..4) → `settle=0` best; default set to 0.
 - Raw CSVs in `results_knee_*` (gitignored — regenerate). Peaks/knees as tabulated above.
+- **Stage 2 (DNN traffic, 7×7×3 ResNet-50 block):** `results_block_ls022_n30` (current
+  placement, n=30), `results_diag_ls022` (diagonal, n=30 + 0.016/0.028 probes),
+  `results_hopdiv` (CELL A/B, n=10), `results_knee_6x6x3` (6×6×3 knee finder),
+  `results_diag_6x6x3` (6×6×3 placement pair, n=5), `results_ci2499` /
+  `results_settle_grid` (DP timing negatives). All gitignored — the runner scripts
+  `run_*.bash` are the record and each carries its timing derivation.
