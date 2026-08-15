@@ -71,8 +71,31 @@ def _env(name, default, cast=str):
 MODEL_TAG = "resnet50_bottleneck3"
 
 # --- hardware -----------------------------------------------------------------
-XB = 128                    # IMC crossbar dimension (XB x XB), 1 crossbar/node
-DIMX, DIMY, DIMZ = 6, 6, 3  # mesh -> 108 nodes (STAGE2.md SS9.3, revised)
+XB = 128                    # IMC crossbar dimension (XB x XB)
+#
+# TILE DENSITY.  One (r,c) grid cell = one node.  Read literally that is "1
+# crossbar per tile", which STAGE2.md SS9.3a rejects as unphysical -- but the
+# reinterpretation there is what this actually models: at N_bits = 8 the block is
+# 736 crossbars, and 736 / 92 = 8 EXACTLY, per layer, so the base partition is
+# "8-bit weights at 8 crossbars per tile".  The traffic table is identical either
+# way; only the physical label changes.
+#
+# The identity holds ONLY at the base 92-tile partition.  Absorbing spare nodes
+# (the 6x6x3 config below inflates 92 -> 108) gives each layer a different tile
+# density -- 5.33 to 8.00 -- which no real accelerator would build.  The 7x7x3
+# config therefore does NOT absorb spares: it keeps the base grids and leaves 55
+# nodes tile-free.  Those nodes still forward traffic; they just do not source or
+# sink it.
+#
+# Honesty note for write-up: 8 crossbars/tile is a MODELLING CHOICE, not a
+# citation.  A tile of 8 x 128x128 is 0.12x the cell count of Krishnan's verified
+# 16 x 256x256 tile (RELATED_WORK.md SS1), i.e. 8x more router per unit compute.
+# It is the density at which a single block still fills a usable fraction of the
+# mesh AND keeps its reduction traffic on the network; at published densities the
+# block collapses to 10-15 tiles with zero reduction traffic.
+
+MESH = _env("DNN_MESH", "6x6x3")
+
 
 # --- workload -----------------------------------------------------------------
 FMAP_H, FMAP_W = 14, 14     # feature map of ResNet-50 stage 3, stride 1
@@ -87,36 +110,46 @@ LAYERS = [
     ("shortcut", 1,  512, 1024, "shortcut"),
 ]
 
-# Spare-node absorption (STAGE2.md SS9.3): the block needs 92 tiles, the mesh has
-# 108 nodes.  Rather than leave 16 idle, layers are given a FINER split than XB
-# strictly requires -- crossbars end up partly filled, which deepens reduction /
-# widens fan-out instead of inventing traffic that isn't there.
-#
-# Constraint: a group may only get SMALLER, never larger than XB.  So
-#   R >= ceil(rows/XB)  and  C >= ceil(cols/XB).
-# The chosen grids also make the placement boxes tile 6x6x3 exactly.
-GRID_OVERRIDE = {
-    "conv1":    (6, 2),   # base (4, 2)  =  8 -> 12
-    "conv2":    (18, 2),  # base (18, 2) = 36 -> 36  (unchanged)
-    "conv3":    (3, 8),   # base (2, 8)  = 16 -> 24
-    "shortcut": (4, 9),   # base (4, 8)  = 32 -> 36
-}                         #                 92 -> 108
+# Per-mesh geometry.  grid = (R, C) per layer; boxes = (x0,y0,z0,sx,sy,sz).
+# A box must hold exactly R*C cells.  Boxes may not overlap; with the 7x7x3
+# config they do not have to tile the mesh.
+CONFIGS = {
+    # Original: 92 base tiles inflated to 108 so no node is idle.  Reproduces the
+    # committed traffics_dnn/resnet50_bottleneck3_xb128_6x6x3.* artefacts.
+    "6x6x3": dict(
+        dims=(6, 6, 3),
+        grid={"conv1": (6, 2), "conv2": (18, 2), "conv3": (3, 8), "shortcut": (4, 9)},
+        boxes={"conv1":    (0, 0, 0, 2, 2, 3),   # 12
+               "conv2":    (2, 0, 0, 4, 3, 3),   # 36
+               "conv3":    (0, 2, 0, 2, 4, 3),   # 24
+               "shortcut": (2, 3, 0, 4, 3, 3)},  # 36  -> 108
+    ),
+    # Retarget: base grids only, so every layer is exactly 8 crossbars/tile.
+    # 7x7 is ODD x ODD -- FINDINGS.md reports that class sustains DP's advantage
+    # past the knee, where even x even (6x6) reverses just past it.
+    "7x7x3": dict(
+        dims=(7, 7, 3),
+        grid={"conv1": (4, 2), "conv2": (18, 2), "conv3": (2, 8), "shortcut": (4, 8)},
+        boxes={"conv2":    (0, 0, 0, 3, 4, 3),   # 36
+               "shortcut": (3, 0, 0, 4, 4, 2),   # 32
+               "conv3":    (3, 0, 2, 4, 4, 1),   # 16  (stacks on shortcut)
+               "conv1":    (0, 4, 0, 2, 2, 2)},  #  8  -> 92, 55 nodes tile-free
+    ),
+}
+assert MESH in CONFIGS, f"DNN_MESH={MESH} not in {sorted(CONFIGS)}"
+_CFG = CONFIGS[MESH]
+DIMX, DIMY, DIMZ = _CFG["dims"]
 
 # Placement (STAGE2.md SS9.2): blocked/clustered 3D sub-volume per layer, via
 # coord2Id.  NOT sequential ids -- id+1 walks along X and only reaches the Z
 # neighbour after DIMX*DIMY steps, so a sequential layout would barely use TSVs
 # and the 3D findings (Z-series, vertical turn exclusivity) would stay dormant.
-# These four boxes tile 6x6x3 exactly with no gaps and no overlap.
-#   name: (x0, y0, z0, sx, sy, sz)
-BOXES = {
-    "conv1":    (0, 0, 0, 2, 2, 3),   # 12
-    "conv2":    (2, 0, 0, 4, 3, 3),   # 36
-    "conv3":    (0, 2, 0, 2, 4, 3),   # 24
-    "shortcut": (2, 3, 0, 4, 3, 3),   # 36
-}
+#
 # NOTE: deliberately UNOPTIMISED.  Congestion-aware placement is excluded on
 # purpose (STAGE2.md SS9.2) -- it would confound "does DNN traffic behave
 # differently" with "does smart mapping help".
+GRID_OVERRIDE = _CFG["grid"]
+BOXES = _CFG["boxes"]
 
 # --- data sizes ---------------------------------------------------------------
 BYTES_PER_ACT = 1           # INT8 activations
