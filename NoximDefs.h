@@ -135,7 +135,7 @@ using namespace std;
 // Modifications made by Ra'ed April 2010
 #define BIG_VALUE				    1000000
 #define SMALL_VALUE				    0.2
-#define DEFAULT_NO_OF_SAMPLES		10	
+#define DEFAULT_NO_OF_SAMPLES		1	
 #define DPSIZE					    260
 #define DEFAULT_TCU_INTERVAL		500
 #define DEFAULT_TRAFFIC_BIN		  0
