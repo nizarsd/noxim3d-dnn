@@ -3,6 +3,17 @@
 *.obj
 *.exe
 noxim
+# A/B binaries built from variant sources (noxim_1x, noxim_ref, noxim_base, ...)
+noxim_*
+
+# Secrets -- this repo's origin is PUBLIC. Never commit key material.
+gitkeygen.txt
+gitkeygen.txt.pub
+*.pem
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
 
 # Version control cruft
 .svn/
