@@ -124,6 +124,18 @@ CONFIGS = {
                "conv3":    (0, 2, 0, 2, 4, 3),   # 24
                "shortcut": (2, 3, 0, 4, 3, 3)},  # 36  -> 108
     ),
+    # Base grids on the SMALLER mesh: same 92 tiles as 7x7x3, so every layer is
+    # exactly 8 crossbars/tile and the traffic graph is identical -- only the
+    # mesh changes.  Boxes repacked for 6x6x3; 16 nodes left tile-free.
+    # Use with DNN_TABLE_STEM to avoid overwriting the inflated 6x6x3 artefacts.
+    "6x6x3_base": dict(
+        dims=(6, 6, 3),
+        grid={"conv1": (4, 2), "conv2": (18, 2), "conv3": (2, 8), "shortcut": (4, 8)},
+        boxes={"shortcut": (0, 0, 0, 4, 4, 2),   # 32  x0-3 y0-3 z0-1
+               "conv2":    (4, 0, 0, 2, 6, 3),   # 36  x4-5 y0-5 z0-2
+               "conv3":    (0, 0, 2, 4, 4, 1),   # 16  x0-3 y0-3 z2
+               "conv1":    (0, 4, 0, 4, 2, 1)},  #  8  x0-3 y4-5 z0  -> 92
+    ),
     # Retarget: base grids only, so every layer is exactly 8 crossbars/tile.
     # 7x7 is ODD x ODD -- FINDINGS.md reports that class sustains DP's advantage
     # past the knee, where even x even (6x6) reverses just past it.
