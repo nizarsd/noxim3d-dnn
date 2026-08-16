@@ -149,3 +149,50 @@ Produces the `noxim` binary. `.o` files and the binary are gitignored — rebuil
 - `.gitignore` excludes build artifacts (`*.o`, `noxim` binary), `results_*/`, simulation dumps
   (`.ptrace`, `.steady`, `.init`, etc.), `.svn/`, and Windows Zone.Identifier files.
 - Remote: `origin` → `https://github.com/nizarsd/noxim3d-dnn.git`.
+
+
+## Working agreement (read before any action)
+
+This repo is a research simulator. Results already published in FINDINGS.md depend
+on its current behaviour. Unrequested changes are worse than no changes.
+
+### Before acting
+
+1. Run `git ls-files` and read every `.md` in the repo before advising on any stage.
+   Chat attachments may be stale; **the repo is authoritative**.
+2. Default posture is investigate-and-report. Do not edit unless the current turn
+   explicitly asks for an edit.
+3. Before any code change, state: the file, the function, the exact lines, and why.
+   Then stop and wait for approval.
+
+### Scope discipline
+
+- One change per turn. Never bundle a fix with a refactor, a rename, or a cleanup.
+- Do not touch anything not named in the request — no tidying, no reformatting,
+  no "while I was in there" improvements, no dead-code removal.
+- Do not add abstractions, config options, helper functions, or new files unless
+  asked. Prefer the smallest diff that works over the most elegant one.
+- Do not modify build scripts, sweep scripts, or `NoximDefs.h` constants without
+  explicit instruction — the DP-aware timing derivation there is load-bearing.
+
+### When the plan turns out to be wrong
+
+- Stop and report. Do not adapt silently, do not substitute your own approach,
+  do not "fix it while you're there."
+- Report investigation findings **as findings**, not as justification for having
+  already acted on them.
+
+### Reporting
+
+- Show the diff. State what you changed and what you deliberately left alone.
+- If you were uncertain about anything and guessed, say so explicitly, and say
+  what you guessed.
+- Flag any behaviour change that could affect Stage 1 numbers in FINDINGS.md.
+
+### Validation
+
+- Any change to DP cost computation, routing legality, or selection must be
+  checked against a Stage 1 synthetic-traffic run before being trusted on DNN
+  traffic. Regression against the published `transpose1` numbers is the gate.
+- Runs are deterministic per seed. If output is not bit-identical when it should
+  be, that is a bug, not noise.
