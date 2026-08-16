@@ -204,6 +204,8 @@ SC_MODULE(TRouter)
 	int    channel_samples;               // sample count in current window
 	int    flits_sent[DIRECTIONS];        // flits actually forwarded per output channel
 	                                      // in the current window = lambda for Little's Law
+	long   flits_total[DIRECTIONS];       // same, but NEVER reset -- for DPTRACE only, so
+	                                      // per-cycle departures can be recovered by diffing
 	int    dp_channel_cost[DIRECTIONS];   // averaged per-channel cost, published to DP
 
 
