@@ -161,7 +161,7 @@ using namespace std;
 // resolution 0.01 cyc, range to 100 cyc.  A whole path sums to at most
 // diameter*MAX = 14*10000 = 140k, against BIG_VALUE = 1e8 (707x headroom).
 #define DP_COST_WAIT_SCALE  100   // centi-cycles
-#define DP_COST_WAIT_MAX  1000000   // = 100 cycles; also the cost of a blocked channel
+#define DP_COST_WAIT_MAX  1000000   // = 10000 cycles; also the cost of a blocked channel
 #define DEFAULT_BW_THRESHOLD		1000
 
 //<Nizar>
@@ -246,7 +246,11 @@ inline int dp_diameter()
          + (TGlobalParams::mesh_dim_z - 1);
 }
 
-inline int dp_dwell()   { return dp_diameter() + 3; }             // cycles per destination
+// NoC cycles per destination.  The +3 is protocol (propagate, publish at dwell-2,
+// latch at dwell-1); the divisor is the dp_clock multiple, since each NoC cycle now
+// carries that many relaxation steps = that many cost hops.
+#define DP_CLOCK_MULT 4
+inline int dp_dwell()   { return (dp_diameter() + DP_CLOCK_MULT - 1) / DP_CLOCK_MULT + 3; }
 inline int dp_pass()    { return dp_dwell() * dp_no_dst(); }      // full converge sweep
 inline int dp_settle()  { return TGlobalParams::dp_settle_mult * dp_pass(); }  // hold window (CLI -dpsettle, default 1)
 inline int dp_cycle()   { return dp_pass() + dp_settle(); }       // full reconfiguration period
