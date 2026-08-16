@@ -118,7 +118,13 @@ int dz=TGlobalParams::mesh_dim_z;
  
  // Signals
  sc_clock        clock("clock", 1, SC_NS);
- sc_clock        dp_clock("dp_clock", 1, SC_NS);
+ // DP runs on its own clock, 4x the NoC clock.  Design A (CLAUDE.md): a faster
+ // dp_clock propagates 4 cost-hops per NoC cycle, so dp_dwell() shrinks by ~4 and
+ // the whole destination sweep completes proportionally sooner.  No clock-domain
+ // crossing is needed: dpProcess and routing_directionsUpdater both derive their
+ // phase from sc_time_stamp() truncated to NoC cycles, so all 4 dp ticks inside a
+ // NoC cycle share one stime and the two stay in lockstep for free.
+ sc_clock        dp_clock("dp_clock", 250, SC_PS);
  sc_signal<bool> reset;
  
   // NoC instance
