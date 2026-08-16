@@ -224,6 +224,7 @@ start_from_port++;
 		      //traffic_counter++;
 		      flit_tx[o].write(flit);
 		      flits_sent[o]++;                      // lambda for Little's Law (-dpcost wait)
+		      flits_total[o]++;                     // never reset; DPTRACE diffs this
 		      current_level_tx[o] = 1 - current_level_tx[o];
 		      req_tx[o].write(current_level_tx[o]);
 		      buffer[i].Pop();
@@ -302,7 +303,7 @@ void TRouter::bufferMonitor()
   if (reset.read())
   {
 	for (int i=0; i<DIRECTIONS+1; i++) free_slots[i].write(buffer[i].GetMaxBufferSize());
-    for (int d=0; d<DIRECTIONS; d++) { channel_load[d] = 0; flits_sent[d] = 0; }
+    for (int d=0; d<DIRECTIONS; d++) { channel_load[d] = 0; flits_sent[d] = 0; flits_total[d] = 0; }
     channel_samples = 0;
   }
   else
@@ -319,6 +320,21 @@ void TRouter::bufferMonitor()
 		channel_load[d] += (maxb - free);
 	}
 	channel_samples++;
+
+	// DPTRACE=<node>:<dir> dumps one line per cycle for a single channel, so the
+	// averaging can be redone offline (any interval, any EWMA decay) from one run
+	// instead of re-simulating per parameter.  qlen is the DOWNSTREAM buffer;
+	// flits_total is cumulative, so per-cycle departures = its first difference.
+	static const char* trc = getenv("DPTRACE");
+	static int trc_node = -1, trc_dir = -1;
+	static bool trc_parsed = false;
+	if (trc && !trc_parsed) { sscanf(trc, "%d:%d", &trc_node, &trc_dir); trc_parsed = true; }
+	if (trc && local_id == trc_node) {
+		int fr = free_slots_neighbor[trc_dir].read();
+		if (fr != NOT_VALID)
+			std::cerr << "T," << stime << "," << (maxb - (fr > maxb ? maxb : fr))
+			          << "," << flits_total[trc_dir] << "\n";
+	}
 
 
       // Advertise our input-buffer free slots to neighbours every cycle.
@@ -361,6 +377,10 @@ void TRouter::routing_directionsUpdater()
 	if (phase >= dp_pass()) return;              	    // don't latch during settle
 	if (phase % dp_dwell() != dp_dwell() - 1) return;   // latch at end of each dwell window
 	int dst_id = (phase / dp_dwell()) % dp_no_dst();
+	// DPSYNC=<node> -- pairs with the PUB line in DPNode::dpProcess.
+	static const char* sy = getenv("DPSYNC");
+	if (sy && local_id == atoi(sy))
+		std::cerr << "LAT," << stime << "," << phase << "," << dst_id << "\n";
 	for (int i=0; i<DIRECTIONS; i++)
 		routing_directions[dst_id][i] = dp_dir[i];
 	
