@@ -1,3 +1,100 @@
+# Handover
+
+Newest section first. Older handovers kept below for context.
+
+---
+
+# Machine migration + Stage 3 state — 17 August 2026
+
+Moving from the i7-10510U dev box (4 cores / 8 threads, 15 W, thermally throttled,
+8 GB) to an **i7 13th-gen, 10 cores / 16 threads, 32 GB**.
+
+## Setup on the new machine
+
+1. **SystemC 2.3.3 at `$HOME/tools/systemc-2.3.3-install`.** Use that exact path and
+   `Makefile.defs` needs no edit — it is already `$(HOME)`-relative.
+2. `make` — `*.o`, `noxim` and `noxim_1x` were deliberately excluded from the archive.
+3. **Verify determinism before trusting any run.** Runs are deterministic per seed and
+   every published number depends on that (CLAUDE.md: non-identical output when it
+   should be identical is a bug, not noise).
+
+```
+./noxim -dimx 6 -dimy 6 -dimz 3 -buffer 16 -routing oddeven -sel dp \
+  -cinterval 648 -size 16 16 -warmup 9720 -sim 124328 -samp 1 \
+  -traffic table traffics_dnn_6base/rn50_6b_ls0.026_diag_accint.txt -seed 2
+```
+
+| config (seed 2, ls 0.026, ci 648, 3 passes) | delay | throughput | max delay |
+|---|---|---|---|
+| interior placement (`_diag_accint.txt`), DP | **104.168** | 0.0170293 | 3112 |
+| edge placement (`_diag.txt`), DP | **182.155** | 0.0170411 | 7642 |
+
+Last-digit differences = GCC codegen drift in float summation, tolerable but means old
+and new rows are not strictly poolable. Material differences = stop and investigate.
+
+## Parallelism
+
+`-P 8` on the old box measured a **2.9× contention factor** (8 jobs delivering under 3
+jobs of throughput), mostly thermal. Use **`-P 12`** on the new box —
+`run_6x6x3.bash --jobs 12`; its default is still 8. Memory is a non-issue (~50 MB per
+sim). Caveat: 10 cores / 16 threads is a hybrid part, so runs landing on E-cores finish
+later and each `xargs` wave is paced by its slowest job. Wall-clock only; results are
+timing-independent. Expect **4–6×** faster batches — the 120-run n=30 comparison drops
+from ~20 min to ~4.
+
+## Where the work stands
+
+**Primary setup** (see `memory` / `MAPPING.md`): 6×6×3, ResNet-50 stage-3 bottleneck,
+**92 tiles at 8 crossbars/tile** (the base partition — *not* the older inflated
+108-tile artefacts in `traffics_dnn/`), XY-diagonal placement, `-routing oddeven`,
+`-cinterval 648`, `-warmup 9720`, `-sim 124328` (3 whole block passes).
+`dp_cycle = (ceil(diameter/4)+3)·nodes = 648` here; the scripts' printed
+`DP_CYCLE = 2·nodes·(diam+3) = 3240` is the legacy 1×/settle-1 formula — fine for
+warmup sizing, **wrong for `-cinterval`**.
+
+**The Stage 3 result** (FINDINGS.md, `STAGE3-MAPPING-FINDINGS.md`): DP's null result on
+DNN traffic is a **placement funnel**, not a DP defect. conv2's 18→1 reduction landed on
+mesh-edge nodes whose arrival face is fixed by geometry, so no selection policy could
+rebalance the last hop. Swapping the two accumulators to interior nodes (pure
+transposition, same graph/rates/windows) moves DP from +5.0% to **−28.96% vs bufferlevel**
+(t = −3.51, n = 30) at ls 0.026, and the **tail is better still: −41.1%, t = −4.10**.
+
+**Carry this qualification with the number.** At ls 0.020 (below the knee) the same swap
+gives only −1.94% (t = −1.08) — the funnel must be *loaded* for un-funnelling it to pay.
+Claim to use: *"past the knee, placement decides whether DP can win"*, **never a bare
+−29%**. Throughput is invariant everywhere (all |t| ≤ 1.65); the entire effect is latency.
+
+**Knee (interior placement, BL, 3 seeds):** 18.52 @0.014 → 31.84 @0.020 → 47.40 @0.023 →
+63.49 @0.024 → 70.05 @0.025 → **191.93 @0.026**. The elbow is between **0.025 and 0.026**
+(2.74× step vs ≤1.5× everywhere below), so 0.026 is *just* past the knee — the right
+operating point, not deep saturation.
+
+## Immediate next steps
+
+1. **30-seed DP-vs-BL at ls 0.025**, interior placement — the last point on the linear
+   ramp, and the load where the DP-vs-BL crossover should sit. Tables for
+   ls 0.014–0.030 are all generated and assert-checked as
+   `traffics_dnn_6base/rn50_6b_ls<LS>_diag_accint.txt`.
+2. **Write the ls-0.020 qualification into FINDINGS.md and `STAGE3-MAPPING-FINDINGS.md`
+   §3** — both currently state −29% without its load condition. **Outstanding.**
+3. Finish the interior knee sweep proper (`results_6b_knee_int/` has only the 9 BL
+   points above plus 3 stale rows).
+4. Then VGG-16 and the transformer per `MAPPING.md` — score placements with
+   `oe_arrival_faces.py` *before* simulating, never geometrically.
+
+## Housekeeping
+
+- **13 commits unpushed** on `main`. Remote is SSH (`git@github.com:nizarsd/...`), so
+  pushing needs `gitkeygen.txt` — which is in the archive and is a **private key**.
+  Keep the archive off shared storage. The key and `noxim_*` are now gitignored.
+- `results_*/` is gitignored by design; the runner scripts plus each doc's timing
+  derivation are the record. The archive carries the n=30 datasets anyway
+  (`results_6b_accint/`, `results_6b_ls020/`).
+- Untracked scratch left behind deliberately: `handover-venues.patch`,
+  `readme-dnn.diff`, `plot_channel_trace.py.ci100`.
+
+---
+
 # Handover — Stage 2 state as of 2026-08-13
 
 Recovered from two worktree sessions whose working folders were deleted. **No work was
