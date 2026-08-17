@@ -36,8 +36,11 @@ results_*/
 *.init
 *.flp.old
 
-# Archives / snapshots
+# Archives / snapshots -- migration tarballs contain .git AND gitkeygen.txt,
+# so never let one be staged into a repo whose origin is public.
 *.tar.gz
+*.tgz
+*.tar
 *.zip
 
 # Python bytecode (from converter imports)

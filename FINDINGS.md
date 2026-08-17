@@ -390,10 +390,48 @@ because OE admits only 4 of node 52's 6 geometric faces. Measured outcome: **+2.
 t=0.45 — nothing**, as predicted before the runs completed. The geometric metric would have
 predicted a gain and been wrong.
 
-**Two caveats.** `ls=0.026` is past this mesh's knee (delay rises 4.9× from 0.020), so the
-−29% is measured in saturation — repeat at 0.020 before quoting it. And a fan-in-3 sink
-cannot fill six faces however it is placed; conv1-type hotspots need a wider phase window
-or a split reduction (tree, 18→6→2→1, max fan-in 3, ~44% more bytes), not relocation.
+**The tail moves further than the mean.** Max delay, interior placement:
+DP 5,723 vs BL 9,709 — **−41.1%, t = −4.10, 25/30 seeds**, more significant than the mean
+effect. And the largest single effect in the set is what interior placement does to
+*bufferlevel's* tail: **+61.5%, t = 5.11**, with only 4/30 seeds improving. Caveat: max
+delay is one extreme order statistic per run and right-skewed (sd 2,487–3,860), so the
+t-test is indicative only — medians agree (5,243 vs 8,783) and the win counts are
+distribution-free, but a Wilcoxon signed-rank test is the correct one and has not been run.
+
+### The −29% is a past-knee number and does not generalise (n=30 at ls 0.020)
+
+| load | placement | BL | DP | DP vs BL | t |
+|---|---|---|---|---|---|
+| 0.020 | edge | 32.96 | 34.42 | **+4.42%** | 2.45 |
+| 0.020 | interior | 31.84 | 31.22 | −1.94% | −1.08 |
+| 0.026 | edge | 161.67 | 169.80 | +5.03% | 0.65 |
+| 0.026 | interior | 191.93 | **136.35** | **−28.96%** | −3.51 |
+
+Below the knee the placement fix does not let DP overtake bufferlevel. But the placement
+effect **on DP itself** is the most significant result anywhere in this study:
+interior − edge at ls 0.020 is **−9.29%, t = −6.88** (27/30 seeds — variance is tiny down
+here, sd ≈ 2 against ≈ 55 at 0.026), against bufferlevel's −3.41% (t = −1.70). So interior
+placement reliably helps DP at *both* loads; what load changes is whether that is enough to
+overtake bufferlevel. Note the **double dissociation does not reproduce at 0.020** —
+interior placement helps bufferlevel too (−3.4%) rather than hurting it (+18.7% at 0.026),
+so "interior hurts BL" is itself past-knee. Peak arrival-face load is 0.146 flits/cycle at
+0.020 versus 0.300 at 0.026: **the funnel has to be loaded for un-funnelling it to pay.**
+All of this coheres with the Stage 1 result that DP pays off at or above the knee.
+
+**Claim to use: *"past the knee, placement decides whether DP can win"* — never a bare
+−29%.**
+
+**Knee location, interior placement** (bufferlevel, 3 seeds, same config): 18.52 @0.014 →
+31.84 @0.020 → 47.40 @0.023 → 63.49 @0.024 → 70.05 @0.025 → **191.93 @0.026**. The elbow
+sits between **0.025 and 0.026** — a 2.74× step against ≤1.5× everywhere below, and the
+first point where delivered throughput stops tracking offered load. So 0.026 is *just* past
+the knee, not deep saturation, which is the right operating point for a DP comparison.
+Relocating the accumulators moved *who wins past the knee*, **not where the knee is** —
+consistent with the funnel being a latency mechanism, not a capacity one.
+
+**Remaining caveat.** A fan-in-3 sink cannot fill six faces however it is placed;
+conv1-type hotspots need a wider phase window or a split reduction (tree, 18→6→2→1, max
+fan-in 3, ~44% more bytes), not relocation.
 
 ## Open items
 
