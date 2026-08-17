@@ -345,6 +345,56 @@ matches `dp_cycle()` only at `settle=1`; at the actual `settle=0` the real perio
 half (2499, not 4998), so `WARMUP` is 6 real DP cycles rather than the 3 claimed.
 Left as-is deliberately — conservative, and every result above is on it.
 
+### The mechanism: a funnel at the reduction sinks (6×6×3, n=30)
+
+**Why DP failed on DNN traffic.** Each of the following was tested and excluded as the
+cause: DP convergence lag (4× `dp_clock` — no gain), congestion-sampling staleness
+(`-cinterval` 100–648 — no gain), phase transitions (measuring only conv2's stationary
+interior, cycles 10k–25k — no gain), path diversity (OE + diagonal gives 83% of bytes a
+routing choice and 10.3 paths/flow — still zero), and hop length (4.96 vs transpose1's
+6.20). What remained is **where** the congestion sits.
+
+conv2's reduction sends 18 tiles → 1 accumulator. Those two accumulators take **15.2% of
+all traffic each** (4 nodes carry 55%), and the base placement put them at mesh-edge
+coordinates (4,0,0) and (4,0,1) — 4 and 5 faces instead of 6, two of them receiving
+nothing. Under minimal routing the arrival face is fixed by where the sender is, not
+chosen, so **no selection policy can rebalance the last hop**. `DPTRACE` confirms it: the
+busiest input link into node 4 was full **73.5% of cycles** (mean queue 12.61/16) while an
+interior control link never queued a single flit (0.00 occupancy).
+
+**The test** — swap the two accumulators onto interior nodes (1,1,1) and (3,4,1). A pure
+transposition: identical traffic graph, rates and phase windows, asserted in the generator.
+`ls=0.026`, OE, `-cinterval 648`, 3 block passes, n=30 paired seeds:
+
+| placement | BL delay | DP delay | DP vs BL | t | DP wins |
+|---|---|---|---|---|---|
+| edge (4,0,0)/(4,0,1) | 161.67 | 169.80 | +5.03% | 0.65 | 15/30 |
+| **interior (1,1,1)/(3,4,1)** | 191.93 | **136.35** | **−28.96%** | **−3.51** | 23/30 |
+
+p ≈ 0.0015. Effect and significance grew monotonically with seeds (−17.4%/t=−1.11 at
+n=12 → −25.7%/t=−2.73 at n=22 → −29.0%/t=−3.51 at n=30), unlike the false positives below.
+**Double dissociation:** the same swap makes DP **19.7% faster** (t=−3.05) and bufferlevel
+**18.7% slower** (t=+2.54). Edge placement pens unroutable congestion in a corner; interior
+placement makes the same congestion routable and in everyone's way — DP exploits it,
+bufferlevel cannot. Throughput is invariant (0.01704–0.01714) as everywhere else in Stage 2.
+This is the **first genuine DP win on DNN traffic**.
+
+**Placement must be scored on routing-admitted arrival faces, not geometry.**
+`oe_arrival_faces.py` enumerates every admissible minimal OE path and records the final
+hop. Its prediction for node 4's busiest face is 0.297 flits/cyc against **0.274 measured**
+by DPTRACE (8%); a naive "one face per displaced dimension" estimate gives 0.118 — wrong by
+2.3×. Scored correctly, the conv2 swap improved worst-face/mean-face **3.68× → 2.33×** and
+**3.72× → 2.07×**. A second swap moving conv1's accumulators (fan-in 3–4, 25% of traffic)
+to interior nodes was scored **3.89×/3.90× — no better than the 3.23×/4.00× it replaced**,
+because OE admits only 4 of node 52's 6 geometric faces. Measured outcome: **+2.61%,
+t=0.45 — nothing**, as predicted before the runs completed. The geometric metric would have
+predicted a gain and been wrong.
+
+**Two caveats.** `ls=0.026` is past this mesh's knee (delay rises 4.9× from 0.020), so the
+−29% is measured in saturation — repeat at 0.020 before quoting it. And a fan-in-3 sink
+cannot fill six faces however it is placed; conv1-type hotspots need a wider phase window
+or a split reduction (tree, 18→6→2→1, max fan-in 3, ~44% more bytes), not relocation.
+
 ## Open items
 
 - **Routing-variant generality** — modified2 (both-exclusive OEB) only tested on transpose1
