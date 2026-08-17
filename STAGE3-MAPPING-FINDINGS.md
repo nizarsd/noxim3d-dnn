@@ -97,15 +97,32 @@ the same congestion routable and in everyone's way. DP exploits it, bufferlevel
 cannot. Throughput is invariant throughout (0.01704–0.01714), so the entire effect is
 delay.
 
-- Measured at **one load scale, past the knee** — `ls=0.026`, where delay has already
-  risen 4.9× from 0.020. FINDINGS.md warns that percentages taken in saturation can
-  reflect which policy degrades faster rather than which routes better, so **repeat at
-  0.020 before quoting −29%**.
-- **Maximum delay moves the same way as the mean** on the interior placement
-  (DP 5,723 vs BL 9,709). Two caveats: no significance test was run on the tail, and
-  on the *edge* placement DP's tail is **worse** (6,840 vs 6,013) — so the tail
-  advantage is specific to interior placement, not a general DP property. Tail latency
-  matters for inference deadlines, so report both, with the test.
+- **Load condition (now measured, n=30 at ls 0.020 — the −29% does NOT generalise).**
+  Below the knee the fix does not let DP overtake bufferlevel: edge **+4.42%** (t=2.45),
+  interior **−1.94%** (t=−1.08). The placement effect *on DP itself* is however the most
+  significant result in the study — interior − edge at 0.020 is **−9.29%, t=−6.88**
+  (27/30 seeds) against BL's −3.41% — so interior placement helps DP at both loads; load
+  decides whether that is enough to win. The double dissociation does **not** reproduce at
+  0.020 (interior helps BL too, −3.4%), so "interior hurts BL" is itself past-knee. Peak
+  arrival-face load 0.146 flits/cyc at 0.020 vs 0.300 at 0.026: the funnel must be
+  **loaded** for un-funnelling it to pay.
+  **Claim to use: "past the knee, placement decides whether DP can win" — never a bare −29%.**
+- **Knee located** (interior, BL, 3 seeds): 18.52 @0.014 → 31.84 @0.020 → 47.40 @0.023 →
+  63.49 @0.024 → 70.05 @0.025 → **191.93 @0.026**. Elbow between **0.025 and 0.026**
+  (2.74× step vs ≤1.5× below), so 0.026 is *just* past the knee, not deep saturation —
+  the saturation-artefact worry is answered. Relocation moved *who wins* past the knee,
+  **not where the knee is**, consistent with a latency rather than capacity mechanism.
+- **The tail moves further than the mean.** Interior placement, max delay: DP 5,723 vs
+  BL 9,709 — **−41.1%, t = −4.10, 25/30 seeds**, i.e. *more* significant than the mean
+  effect. The largest single effect in the whole set is what interior placement does to
+  **bufferlevel's** tail: **+61.5%, t = 5.11**, only 4/30 seeds improving. On the *edge*
+  placement DP's tail is **worse** than BL's (6,840 vs 6,013), so the tail advantage is
+  specific to interior placement, not a general DP property. Tail latency matters for
+  inference deadlines, so the tail is arguably the better headline — it is both larger
+  than −29% and better supported. Caveat: max delay is a single extreme order statistic
+  per run and right-skewed (sd 2,487–3,860), so the t-test is indicative; medians agree
+  (5,243 vs 8,783) and win counts are distribution-free, but **Wilcoxon signed-rank is
+  the correct test and has not been run.**
 
 ### Interpretation (the paper-relevant claim)
 
@@ -336,7 +353,8 @@ survived.
 | 2 | 3–4 usable input directions | **4 and 5** |
 | 2 | ejection-port limit, "exactly one path" | input-link limit at 48% of port capacity; 4 admissible faces with 10× forced imbalance |
 | 3 | ~25% / ~28% | −25.7% (t=−2.73) / −29.0% (t=−3.51); added the n=12 point and the double dissociation |
-| 3 | max delay "significantly lower" | lower on interior, **higher on edge**, no test run |
+| 3 | max delay "significantly lower" | interior **−41.1%, t=−4.10** (more significant than the mean); **higher on edge**; skewed statistic, Wilcoxon not run |
+| 3 | −29% stated unconditionally | **past-knee only** — just −1.94% at ls 0.020 (n=30); knee located at 0.025–0.026 |
 | 4.2 | 2-D `CINTERVAL` × decay sweep | latch-point × decay sweep; `CINTERVAL`-only is done and negative |
 | 7 | describes the diversity computation | already implemented; use routing-admitted faces, not geometry |
 | 8 | crossbars-per-tile absorbs size | **crossbar size** absorbs it; transformer = 108 tiles at 256×256 |
