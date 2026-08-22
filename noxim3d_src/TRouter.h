@@ -207,6 +207,9 @@ SC_MODULE(TRouter)
 	long   flits_total[DIRECTIONS];       // same, but NEVER reset -- for DPTRACE only, so
 	                                      // per-cycle departures can be recovered by diffing
 	int    dp_channel_cost[DIRECTIONS];   // averaged per-channel cost, published to DP
+	int    dp_cost_ewma[DIRECTIONS];      // EWMA state for dp_channel_cost, Q8 fixed point
+	                                      // (x256) so the blend can decay below 1%; only
+	                                      // used when env DPDECAY is set, see cost_to_go()
 
 
    //<Nizar>

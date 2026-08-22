@@ -22,13 +22,18 @@ Face labels are the direction of the packet's last hop, so E=... means "arrived
 on an eastward hop", i.e. entered through the node's WEST side.
 
 Usage:
-  python3 oe_arrival_faces.py TABLE.txt [DIMX DIMY DIMZ] [--routing oe|oeb] [--top N]
+  python3 oe_arrival_faces.py TABLE.txt [DIMX DIMY DIMZ] [--routing oe|oeb|oeb2] [--top N]
+
+  oe    plain odd-even 3D            (-routing oddeven)
+  oeb   odd-even-balanced, RELAXED   (-routing oddevenbalanced AS SIMULATED) -- default
+  oeb2  odd-even-balanced, modified2 (historic; planar/vertical mutually exclusive)
 """
 import collections
 import sys
 
 from oeb_path_diversity import STEP, UP, DN, oddEven, oddEven0
-from oeb_path_diversity import route as route_oeb
+from oeb_path_diversity import route as route_oeb2          # modified2 (historic)
+from oeb_path_diversity import route_relaxed as route_oeb   # AS SIMULATED
 
 FACE_OF = {'N': 'N', 'S': 'S', 'E': 'E', 'W': 'W', 'U': 'U', 'D': 'D'}
 DX = DY = DZ = None
@@ -106,7 +111,7 @@ def arrivals(src, dst, route):
 def main(path, dims, routing, top):
     global DX, DY, DZ
     DX, DY, DZ = dims
-    route = route_oe if routing == "oe" else route_oeb
+    route = {"oe": route_oe, "oeb": route_oeb, "oeb2": route_oeb2}[routing]
 
     senders = collections.defaultdict(list)
     inload = collections.Counter()
@@ -121,8 +126,12 @@ def main(path, dims, routing, top):
     print(f"{path}   mesh {DX}x{DY}x{DZ}   routing {routing}")
     print(f"{'node':>5} {'coord':>10} {'fan-in':>7} {'in f/c':>7} {'deg':>4} "
           f"{'faces':>6} {'peak':>7} {'worst/mean':>11}")
+    # Score EVERY destination -- the objective is a property of the placement,
+    # not of how many rows we chose to print.  `top` controls display only.
     peak_global = (0.0, None, None)
-    for n, _ in inload.most_common(top):
+    shown = {n for n, _ in inload.most_common(top)}
+    scored = 0
+    for n, _ in inload.most_common():
         b = xyz(n)
         face = collections.Counter()
         for s, pir in senders[n]:
@@ -133,20 +142,24 @@ def main(path, dims, routing, top):
         used = [v * 16 for v in face.values() if v > 1e-12]
         if not used:
             continue
+        scored += 1
         wm = max(used) / (sum(used) / 6)
         if max(used) > peak_global[0]:
             peak_global = (max(used), n, max(face, key=face.get))
+        if n not in shown:
+            continue
         print(f"{n:>5} {str(b):>10} {len(senders[n]):>7} {inload[n]*16:>7.3f} "
               f"{degree(n):>4} {len(used):>6} {max(used):>7.3f} {wm:>10.2f}x")
         print("        " + "  ".join(f"{k}={v*16:.3f}"
                                      for k, v in sorted(face.items()) if v > 1e-12))
     print(f"\nOBJECTIVE  peak arrival-face load = {peak_global[0]:.3f} flits/cyc "
-          f"at node {peak_global[1]} face {peak_global[2]}   (1.000 saturates a link)")
+          f"at node {peak_global[1]} face {peak_global[2]}   (1.000 saturates a link)"
+          f"\n           scored all {scored} sinks; --top {top} controls display only")
 
 
 if __name__ == '__main__':
     a = [x for x in sys.argv[1:] if not x.startswith('--')]
-    routing = "oe"
+    routing = "oeb"          # the simulated substrate
     top = 8
     for i, x in enumerate(sys.argv):
         if x == "--routing":

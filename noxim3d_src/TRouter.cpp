@@ -1130,6 +1130,7 @@ void TRouter::cost_to_go()
 	if (reset.read()) {
 		for (int d = 0; d < DIRECTIONS; d++) {
 			dp_channel_cost[d] = 0;
+			dp_cost_ewma[d] = 0;
 			local_dp_cost[d].write(0);
 			channel_load[d] = 0;
 			flits_sent[d] = 0;
@@ -1166,8 +1167,21 @@ void TRouter::cost_to_go()
 				                      : (channel_load[d] ? DP_COST_WAIT_MAX : 0);
 				dp_channel_cost[d] = (w > DP_COST_WAIT_MAX) ? DP_COST_WAIT_MAX : w;
 			} else {
-				// avg occupancy as a percentage of buffer, computed without losing the fraction
-				dp_channel_cost[d]  = channel_samples ? (100 * channel_load[d]) / (channel_samples * maxb):0;    // bounds to [0,100] by construction
+				// Mean occupancy over the window as a percentage of buffer depth, carried
+				// in Q8 fixed point (x256) so the fraction survives the EWMA blend -- an
+				// int-percent state cannot decay below 1 once alpha is near 1.
+				// inst_q8 in [0,25600]; worst case 100*256*648*16 = 2.65e8, fits int32.
+				int inst_q8 = channel_samples
+				            ? (100 * 256 * channel_load[d]) / (channel_samples * maxb) : 0;
+				// DPDECAY=<alpha*100> enables formulation (A) from the offline screen:
+				// blend successive window means, s_k = a*s_{k-1} + (1-a)*mean_k.
+				// Unset (or 0) reproduces the boxcar EXACTLY, since
+				//   (inst_q8 >> 8) == (100*load)/(samples*maxb) for all inputs
+				// (floor(floor(x/a)/b) == floor(x/ab) for positive integers).
+				static const char* dcy  = getenv("DPDECAY");
+				static const int   a100 = dcy ? atoi(dcy) : 0;
+				dp_cost_ewma[d] = (a100 * dp_cost_ewma[d] + (100 - a100) * inst_q8) / 100;
+				dp_channel_cost[d] = dp_cost_ewma[d] >> 8;   // back to [0,100], HOP_COST scale
 			}
 			// DPCOST_DEBUG=<node> dumps the raw accumulators so the metric can be
 			// hand-checked: W = load/sent must equal (load/samples)/(sent/samples).
@@ -1776,7 +1790,7 @@ vector<int> TRouter::routingOddEvenBalanced(const TRouteData& route_data)
         else
           directions = routingOddEven0(current, source, destination);
       }
-      else  // making planar and vertical mutually exclusive is shown to give btter performance than allowing both at the same time  
+      //else  // making planar and vertical mutually exclusive is shown to give btter performance than allowing both at the same time  
       if ((dz % 2 == 1) || (ez > 1))            // descend under published condition
         directions.push_back(DIRECTION_DOWN);
     }
@@ -1786,7 +1800,7 @@ vector<int> TRouter::routingOddEvenBalanced(const TRouteData& route_data)
 
     if (((ex != 0) || (ey != 0)) & (cz % 2 == 0))
       directions = routingOddEven1(current, source, destination); // even plane: X-primary (column-wise)
-    else  
+    //else  
       directions.push_back(DIRECTION_UP);
     
   }

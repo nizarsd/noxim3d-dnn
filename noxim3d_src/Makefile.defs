@@ -13,7 +13,8 @@ LIBDIR = -L. -L.. -L$(SYSTEMC)/lib-$(TARGET_ARCH)
 LIBS   =  -lsystemc -lm $(EXTRA_LIBS)
 
 
-EXE    = $(MODULE)
+## Binaries live at the repo root (one level up); sources and .o live here.
+EXE    = ../$(MODULE)
 
 .SUFFIXES: .cpp .o 
 
