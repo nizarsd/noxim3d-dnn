@@ -184,7 +184,7 @@ PACKET_BYTES = FLIT_BYTES * PACKET_FLITS
 # shortest phase (conv1) just above DP_CYCLE while keeping t_period short enough
 # that SIM_DP_CYCLES=80 covers ~10 block passes.  See the timing report printed
 # by main().
-CYCLES_PER_MAC = _env("DNN_CYCLES_PER_MAC", 1.3e-4, float)
+CYCLES_PER_MAC = _env("DNN_CYCLES_PER_MAC", 6.5e-5, float)
 
 SIM_DP_CYCLES = _env("SIM_DP_CYCLES", 80, int)      # mirrors the sweep-script env vars;
 WARMUP_DP_CYCLES = _env("WARMUP_DP_CYCLES", 3, int)  # used only to report coverage

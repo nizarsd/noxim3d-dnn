@@ -46,7 +46,7 @@ void DPNode::dpProcess()
 	// if (phase == 0) 
 		// frozen_local_cost = local_dp_cost.read();
 	
-	if (phase == 0) {
+	if ((phase % dp_dwell()) == 0) {
 		for (int i=0; i<DIRECTIONS; i++)
 			frozen_local_cost[i] = local_dp_cost[i].read();
 	}
@@ -1096,7 +1096,7 @@ bool DPNode::can_turnOddEvenBalanced(int dir_in, int dir_out, int dst_id)
               else
                   directions = routingOddEven0_DPStrict(current, destination);
             }
-            else
+            //else
             if ((dz % 2 == 1) || (ez > 1))
                 directions.push_back(DIRECTION_DOWN);
         }
@@ -1109,7 +1109,7 @@ bool DPNode::can_turnOddEvenBalanced(int dir_in, int dir_out, int dst_id)
          */
         if ((ex != 0 || ey != 0) && (cz % 2 == 0))
             directions = routingOddEven1_DPStrict(current, destination);
-        else
+        //else
             directions.push_back(DIRECTION_UP);
     }
 

@@ -24,6 +24,7 @@
  */
 #include <iostream>
 #include <iomanip>
+#include <cstdlib>
 #include "TStats.h"
 // TODO: nan in averageDelay
 
@@ -59,8 +60,18 @@ void TStats::receivedFlit(const double arrival_time,
       i = chist.size() - 1;
     }
 
-  if (flit.flit_type == FLIT_TYPE_HEAD) 
+  if (flit.flit_type == FLIT_TYPE_HEAD)
     chist[i].delays.push_back(arrival_time - flit.timestamp);
+
+  // BARRIERTRACE (env-gated, output-only; provably bit-exact no-op when unset):
+  // one line per delivered packet, so an offline pass can group by
+  // (dst, phase, period) and take the group-MAX arrival = the reduction-barrier
+  // time (the real inference gate, vs the pooled-p99 proxy). id == dst node here
+  // (receivedFlit runs on DIRECTION_LOCAL delivery). Same precedent/discipline as
+  // DPTRACE in TRouter.cpp.
+  static const char* btrc = getenv("BARRIERTRACE");
+  if (btrc && flit.flit_type == FLIT_TYPE_HEAD)
+    std::cerr << "B," << id << ',' << flit.timestamp << ',' << arrival_time << '\n';
 
   chist[i].total_received_flits++;
   chist[i].last_received_flit_time = arrival_time - warm_up_time;

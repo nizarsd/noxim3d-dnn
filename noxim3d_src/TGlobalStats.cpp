@@ -23,6 +23,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 #include <iomanip>
+#include <algorithm>
 #include "TGlobalStats.h"
 
 //---------------------------------------------------------------------------
@@ -332,6 +333,38 @@ for (int z=0; z<TGlobalParams::mesh_dim_z; z++)
 
 //---------------------------------------------------------------------------
 
+// Pooled per-packet delay percentiles.  chist[].delays already holds exactly one
+// entry per received packet (HEAD flits only, and TStats.cpp discards arrivals
+// before warm_up_time), so this is the same population getAverageDelay() and
+// getMaxDelay() summarise -- the percentiles are exact, not estimated.
+// Reporting only: reads accumulated stats after the run, changes no state.
+void TGlobalStats::showDelayPercentiles(std::ostream& out)
+{
+  vector<double> d;
+  for (int z=0; z<TGlobalParams::mesh_dim_z; z++)
+    for (int y=0; y<TGlobalParams::mesh_dim_y; y++)
+      for (int x=0; x<TGlobalParams::mesh_dim_x; x++)
+	{
+	  vector<CommHistory>& ch = noc->t[x][y][z]->r->stats.chist;
+	  for (unsigned int i=0; i<ch.size(); i++)
+	    d.insert(d.end(), ch[i].delays.begin(), ch[i].delays.end());
+	}
+
+  if (d.empty()) return;
+  sort(d.begin(), d.end());
+
+  const double q[5] = {0.50, 0.90, 0.95, 0.99, 0.999};
+  const char*  nm[5] = {"p50", "p90", "p95", "p99", "p99.9"};
+  for (int k=0; k<5; k++)
+    {
+      unsigned int idx = (unsigned int)(q[k]*(d.size()-1) + 0.5);
+      out << "% Delay " << nm[k] << " (cycles): " << d[idx] << endl;
+    }
+  out << "% Delay samples: " << d.size() << endl;
+}
+
+//---------------------------------------------------------------------------
+
 void TGlobalStats::showStats(std::ostream& out, bool detailed)
 {
   out << "% Total received packets: " << getReceivedPackets() << endl;
@@ -340,6 +373,7 @@ void TGlobalStats::showStats(std::ostream& out, bool detailed)
   out << "% Global average throughput (flits/cycle): " << getAverageThroughput() << endl;
   out << "% Throughput (flits/cycle/IP): " << getThroughput() << endl;
   out << "% Max delay (cycles): " << getMaxDelay() << endl;
+  showDelayPercentiles(out);
   out << "% Total energy (J): " << getPower() << endl;
   
   

@@ -11,7 +11,7 @@ Poisson injection, buffer 16, seeds {2, 6, 10}.
 ## Experimental method
 
 - **DP-aware timing** (derived from mesh, single source of truth in
-  [NoximDefs.h](NoximDefs.h)):
+  [NoximDefs.h](../noxim3d_src/NoximDefs.h)):
   - `DP_DWELL = diameter + 3`, `diameter = (X-1)+(Y-1)+(Z-1)`
   - `DP_CYCLE = 2 · nodes · DP_DWELL` (converge + settle)
   - `CINTERVAL = DP_CYCLE` (congestion cost recomputed once per DP reconfiguration)
@@ -35,8 +35,8 @@ Poisson injection, buffer 16, seeds {2, 6, 10}.
 
 ## Reproduction
 
-Runner: [`noximrun_buffer_sweep_parallel.bash`](noximrun_buffer_sweep_parallel.bash)
-(or the sequential [`noximrun_buffer_sweep.bash`](noximrun_buffer_sweep.bash)).
+Runner: [`noximrun_buffer_sweep_parallel.bash`](../noximrun_buffer_sweep_parallel.bash)
+(or the sequential [`noximrun_buffer_sweep.bash`](../noximrun_buffer_sweep.bash)).
 Timing is auto-derived from the mesh; everything not set below is left at Noxim
 defaults. Invocation template:
 
@@ -162,13 +162,13 @@ DP-vs-BL delay reduction at the knee, by settle multiple:
   still hold — the small end just nudges up.
 - **Not `CINTERVAL`:** that sets the congestion-sampling period (`cost_to_go`), not the
   reconfigure cadence. Settle lives in the compiled `dp_cycle()/dp_pass()/dp_settle()`
-  ([NoximDefs.h](NoximDefs.h)); see [PERFORMANCE.md](PERFORMANCE.md).
+  ([NoximDefs.h](../noxim3d_src/NoximDefs.h)); see [PERFORMANCE.md](PERFORMANCE.md).
 
 ## Routing-variant study: turn exclusivity ↔ saturation throughput
 
 Three `oddevenbalanced` (OEB) variants tested, **all deadlock-free** (each is a turn-set
 subset/superset of the published baseline), differing only in vertical↔planar turn
-**exclusivity** in [`routingOddEvenBalanced`](TRouter.cpp):
+**exclusivity** in [`routingOddEvenBalanced`](../noxim3d_src/TRouter.cpp):
 
 | variant | up branch | down branch | planar/vertical coupling |
 |---------|-----------|-------------|--------------------------|
@@ -195,7 +195,7 @@ traffic ([STAGE2.md](STAGE2.md)).
 **Scope:** measured on **4×4×3 + transpose1 only** (random run lost to a script typo). OEB is
 parity/size dependent (above), so generality is unverified. Binaries on disk (gitignored):
 `noxim`=modified2, `noxim_ref`=modified, `noxim_base`=baseline. The DP legality mirror
-`can_turnOddEvenBalanced` ([DPNode.cpp](DPNode.cpp)) matches the router modulo the documented
+`can_turnOddEvenBalanced` ([DPNode.cpp](../noxim3d_src/DPNode.cpp)) matches the router modulo the documented
 source-independence terms (`cz==sz`/`c0==s0`/`c1==s1` dropped/proxied).
 
 ### modified2 across sizes — knee shifts right, DP benefit is size-dependent
@@ -280,7 +280,7 @@ placement gives t = 2.47 against the paired 2.95.
 
 ### Why: DP does not win by exploiting path diversity
 
-A Python port of `routingOddEvenBalanced` ([oeb_path_diversity.py](oeb_path_diversity.py))
+A Python port of `routingOddEvenBalanced` ([oeb_path_diversity.py](../tools/oeb_path_diversity.py))
 enumerates the minimal paths the router admits per flow. DP and BL are *provably
 identical* on a flow with one admissible path.
 
@@ -290,7 +290,7 @@ path (`e0 == 0` returns a single direction). Only **25.5% of bytes** have any ro
 choice; the diagonal walk lifts that to 67.2%, at +49% hops.
 
 A 2×2 over (diversity, hops), built by searching tile→node permutations for target
-coordinates ([search_placement.py](search_placement.py)), n=10 per new cell:
+coordinates ([search_placement.py](../tools/search_placement.py)), n=10 per new cell:
 
 | cell | diversity | hops | BL | DP | DP-vs-BL |
 |---|---|---|---|---|---|
@@ -433,6 +433,79 @@ consistent with the funnel being a latency mechanism, not a capacity one.
 conv1-type hotspots need a wider phase window or a split reduction (tree, 18→6→2→1, max
 fan-in 3, ~44% more bytes), not relocation.
 
+### EWMA on the congestion field — a defensible runtime tail refinement, modest
+
+Does giving DP's congestion field memory across windows buy anything? Answer: a small,
+**tail-only** improvement that is a redistribution rather than a gain, and it is *not*
+needed for the DP-vs-BL claim.
+
+**Substrate** (the adopted Stage-2 comparison substrate; distinct from the OE runs above):
+6×6×3, buffer 16, `oddevenbalanced` with planar/vertical exclusivity **relaxed in both the
+ascending and descending branches**, availability-check bypassed ("noskip"), `-sel dp
+-dpcost occupancy`, interior accumulators (`rn50_6b_ls0.028_diag_accint.txt`, the
+interior-placement regime of the funnel study), `ls = 0.028`, `-cinterval 648` (= one
+`dp_pass`), warmup 9720, sim 124328, `-samp 1`, n=30 paired seeds. Production DP on this
+substrate: **mean 313.98, p99 4134**. Like ls 0.026 in the funnel study, 0.028 is **past
+the 6×6×3 knee**, so the tail figures are measured in saturation.
+
+**The change.** The per-window occupancy cost (`TRouter::cost_to_go`, `occupancy` branch)
+is blended across windows with a fixed decay, `s_k = α·s_{k−1} + (1−α)·mean_k`, state carried
+in Q8 fixed point (×256) so it can decay below 1%. Gated by env `DPDECAY = α·100`;
+**unset/0 is a provable bit-exact no-op** (`floor(floor(25600·L/SM)/256) == floor(100·L/SM)`),
+verified against the stored production row. +21/−4 lines in [TRouter.cpp](../noxim3d_src/TRouter.cpp) /
+[TRouter.h](../noxim3d_src/TRouter.h), confined to the occupancy branch (`wait` would overflow the state,
+`none` must stay 0). Kept in-tree as the gated-off no-op; not promoted to a CLI flag (env
+precedent, `DPTRACE`).
+
+**Result — a redistribution, not a gain (n=30, paired vs production DP):**
+
+| arm | ci | α | p99 | p95 | p90 | p50 | mean | thru |
+|---|---|---|---|---|---|---|---|---|
+| **D** | 648 | 0.7 | **−4.54%** (t −2.18, p 0.037) | +5.19% | +3.84% | −2.85% | +0.42% ns | flat |
+| C | 162 | 0.9 | −1.62% ns | −2.03% | −2.04% | −2.95% | −1.04% ns | flat |
+| B | 162 | 0 | **+7.41%** (t +2.92) | −6.89% | −7.56% | −1.75% | +0.47% ns | flat |
+
+Arm **D** (EWMA at the production window) is the only config that beats production on the
+tail: **−4.54% p99**, at the cost of **+4–5% at p90/p95** — it rotates the delay distribution
+around ≈p95. Mean is flat (t=0.44). Throughput invariant across all arms (0.0179–0.0189 by
+seed, mean 0.0183), no deadlock. For DNN reductions, where the barrier is the *slowest*
+arriving partial sum, trading body for tail is the correct direction.
+
+**Window length and α are opposing knobs.** Shortening ci 648→162 alone (B) improves the
+body (p90/p95 −7%) but *worsens* the tail (+7% p99); adding EWMA (C) reverses it. An α-sweep
+at ci 162 (n=10, indicative) shows the short-window tail penalty shrinking monotonically to
+parity but **never past it** — p99 vs production +14.8 → +9.4 → +4.4 → +0.2% at α = 0 / 0.5 /
+0.7 / 0.9. The short window is a dead end; the benefit lives at the production window (D),
+not at the offline-screen optimum (C).
+
+**The offline R² screen mis-ranked the configs.** An offline predictor (from one per-cycle
+`DPTRACE`) scored each config on R² of the value at the latch instant against mean occupancy
+over the following 648 cycles. It ranked ci162/α0.9 best (R² 0.229 vs production 0.136) — but
+that config is a live-p99 *wash* (arm C). **Estimator R² is not a faithful proxy for delivered
+p99;** trust the live runs. (Second time this session the offline proxy misordered the
+simulator — cf. the funnel-study negatives predicted before running.)
+
+**Phase-indexed DP is an oracle ceiling, not a competitor.** A phase-schedule predictor — a
+3-entry ROM indexed by `cycle mod t_period`, calibrated offline — scores R² 0.259 on the same
+trace, above every EWMA config. But it needs **design-time** knowledge: the phase boundaries
+*and* per-channel calibrated means, both specific to this network and this placement (a new
+tile→NoC mapping invalidates every entry). It is not congestion sensing; it is a per-workload
+table compiled from the answer. Its proper role is a **ceiling** — "a perfect design-time
+oracle reaches 0.259; runtime EWMA reaches 0.229, **88% of it, with zero design-time
+knowledge**." On the axis that matters for a deployable mechanism (runtime-discoverable,
+workload-agnostic) EWMA is the stronger candidate. This corrects an earlier framing that
+used the oracle's R² to dismiss EWMA — a rigged comparison. Phase-indexed DP stays logged
+for Stage 6 (CLAUDE.md) as the RL baseline, but as the **bound**, not the shipping router.
+
+**Bottom line.** EWMA is **not load-bearing** for the DP-vs-BL result — production DP already
+senses congestion at runtime, so "adaptive DP beats greedy BL" stands without it. It is an
+**optional, defensible refinement**: −4.5% p99 in the barrier-correct direction, one register
+per channel, deadlock-free. If included, the operating point is `DPDECAY=70` at the production
+window (arm D), never the shortened window. **Two caveats:** measured in saturation (repeat at
+the pre-knee ls 0.020 before quoting), and the premise that p99 is the right endpoint rests on
+the DAG barrier argument, **not** on measured per-phase completion times — that instrumentation
+is unbuilt.
+
 ## Open items
 
 - **Routing-variant generality** — modified2 (both-exclusive OEB) only tested on transpose1
@@ -481,3 +554,11 @@ fan-in 3, ~44% more bytes), not relocation.
   `results_diag_6x6x3` (6×6×3 placement pair, n=5), `results_ci2499` /
   `results_settle_grid` (DP timing negatives). All gitignored — the runner scripts
   `run_*.bash` are the record and each carries its timing derivation.
+- **Stage 2 (EWMA on DP congestion field):** substrate = 6×6×3 relaxed-OEB + noskip,
+  `-dpcost occupancy`, interior accumulators, ls 0.028. [run_ewma_p99.bash](../run_ewma_p99.bash)
+  (arms B/C + the bit-exact `DPDECAY=0` gate), [run_ewma_d.bash](../run_ewma_d.bash) (arm D,
+  ci648 α0.7), [run_ewma_asweep.bash](../run_ewma_asweep.bash) (α-sweep at ci162). Baselines
+  (production DP + BL, with percentiles) in `results_6b_p99`. Results in `results_6b_ewma` /
+  `results_6b_p99` (gitignored — regenerate). Code: gated-off `DPDECAY` blend in
+  [TRouter.cpp](../noxim3d_src/TRouter.cpp); percentile print in [TGlobalStats.cpp](../noxim3d_src/TGlobalStats.cpp)
+  (output-only, verified bit-identical to stored delay/throughput/max rows).
