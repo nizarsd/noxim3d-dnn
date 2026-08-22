@@ -1,0 +1,57 @@
+
+digraph G {
+  graph [rankdir=LR, splines=spline, overlap=false, nodesep=0.2, ranksep=1.0,
+         labelloc="t", label="ResNet-50 stage-3 bottleneck — channel-level view",
+         fontsize=18, fontname="Arial"];
+  node [shape=circle, fixedsize=true, width=0.30, height=0.30, fontsize=8, fontname="Arial"];
+  edge [color=gray55, penwidth=0.8, arrowsize=0.45];
+
+  // Each visible circle = one feature-map channel.
+  // Ellipsis = omitted channels.
+
+  subgraph cluster_in {
+    label="Input\n512 channels"; color=gray80; style=rounded;
+    {rank=same; i0[label="0"]; i1[label="1"]; i2[label="2"]; ix[shape=plaintext,label="⋮",fontsize=16]; i510[label="510"]; i511[label="511"];}
+  }
+
+  subgraph cluster_c1 {
+    label="conv1  1×1\n256 output channels"; color=gray80; style=rounded;
+    {rank=same; a0[label="0"]; a1[label="1"]; a2[label="2"]; ax[shape=plaintext,label="⋮",fontsize=16]; a254[label="254"]; a255[label="255"];}
+  }
+
+  subgraph cluster_c2 {
+    label="conv2  3×3\n256 output channels"; color=gray80; style=rounded;
+    {rank=same; b0[label="0"]; b1[label="1"]; b2[label="2"]; bx[shape=plaintext,label="⋮",fontsize=16]; b254[label="254"]; b255[label="255"];}
+  }
+
+  subgraph cluster_c3 {
+    label="conv3  1×1\n1024 output channels"; color=gray80; style=rounded;
+    {rank=same; c0[label="0"]; c1[label="1"]; c2[label="2"]; cx[shape=plaintext,label="⋮",fontsize=16]; c1022[label="1022"]; c1023[label="1023"];}
+  }
+
+  subgraph cluster_sc {
+    label="projection shortcut  1×1\n1024 output channels"; color=mediumpurple3; style="rounded,dashed";
+    {rank=same; s0[label="0"]; s1[label="1"]; s2[label="2"]; sx[shape=plaintext,label="⋮",fontsize=16]; s1022[label="1022"]; s1023[label="1023"];}
+  }
+
+  subgraph cluster_out {
+    label="Residual add / output\n1024 channels"; color=gray80; style=rounded;
+    {rank=same; o0[label="0"]; o1[label="1"]; o2[label="2"]; ox[shape=plaintext,label="⋮",fontsize=16]; o1022[label="1022"]; o1023[label="1023"];}
+  }
+
+  // Representative dense channel dependencies on main convolution path.
+  {i0 i1 i2 i510 i511} -> {a0 a1 a2 a254 a255};
+  {a0 a1 a2 a254 a255} -> {b0 b1 b2 b254 b255};
+  {b0 b1 b2 b254 b255} -> {c0 c1 c2 c1022 c1023};
+
+  // Projection shortcut.
+  {i0 i1 i2 i510 i511} -> {s0 s1 s2 s1022 s1023} [color=mediumpurple3, style=dashed];
+
+  // Residual addition is channel-wise.
+  c0 -> o0; c1 -> o1; c2 -> o2; c1022 -> o1022; c1023 -> o1023;
+  s0 -> o0 [color=mediumpurple3, style=dashed];
+  s1 -> o1 [color=mediumpurple3, style=dashed];
+  s2 -> o2 [color=mediumpurple3, style=dashed];
+  s1022 -> o1022 [color=mediumpurple3, style=dashed];
+  s1023 -> o1023 [color=mediumpurple3, style=dashed];
+}

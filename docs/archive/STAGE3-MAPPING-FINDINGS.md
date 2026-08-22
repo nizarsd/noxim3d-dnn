@@ -259,11 +259,11 @@ This is a **static computation — no simulation needed** — so it is cheap eno
 sit inside an NSGA evaluation loop.
 
 **Both already exist — do not rebuild them** (added 17 Aug 2026, see
-[MAPPING.md](MAPPING.md)):
+[MAPPING.md](../MAPPING-FORMULATION.md)):
 
-- [`oeb_path_diversity.py`](oeb_path_diversity.py) — traffic-weighted count of legal
+- [`oeb_path_diversity.py`](../../tools/oeb_path_diversity.py) — traffic-weighted count of legal
   minimal paths per src→dst under OEB `modified2`; also reports mean/weighted hops.
-- [`oe_arrival_faces.py`](oe_arrival_faces.py) — enumerates admissible minimal paths
+- [`oe_arrival_faces.py`](../../tools/oe_arrival_faces.py) — enumerates admissible minimal paths
   and records the **final hop**, giving arrival-face load per sink under OE or OEB.
   Prints the objective directly: *peak arrival-face load over all (node, face) pairs*.
 
@@ -334,7 +334,7 @@ comparison**.
 - [ ] Score the VGG and transformer mappings with `oe_arrival_faces.py` *before*
       simulating. VGG blk3 has **six** hot sinks (R=9/18 into C=2, three consecutive
       phases) against only 16 interior nodes on 6×6×3, so the interior budget binds;
-      the transformer is inherently spread except `ff2`. See [MAPPING.md](MAPPING.md)
+      the transformer is inherently spread except `ff2`. See [MAPPING.md](../MAPPING-FORMULATION.md)
 - [ ] Add the 24 missing transformer residuals (`transformer_layers()` in
       `stage2_dnn_full.py`) before any transformer run — they are the long-range flows
       DP responds to, so omitting them understates the workload

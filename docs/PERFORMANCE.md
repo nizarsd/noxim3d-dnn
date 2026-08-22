@@ -12,7 +12,7 @@ improvements, sanity checked").
 
 ### Root cause — NaN results (a routing stall, not a warmup problem)
 
-The old [`TRouter::routingOddEven1()`](TRouter.cpp) had **inverted parity/turn
+The old [`TRouter::routingOddEven1()`](../noxim3d_src/TRouter.cpp) had **inverted parity/turn
 conditions**, incompatible with the intended odd-even restrictions. It could drive
 the network into a persistent congestion/stall state in which almost no packets
 were delivered. With a long warmup the network entered this state *before*
@@ -40,7 +40,7 @@ stall more clearly. (Relevant to sizing warmup: see the timing notes in
 
 The DP unit picks only from the router's legal candidate list, so it can never
 violate OEB prohibitions — but its own legality
-([`can_turnOddEvenBalanced`](DPNode.cpp)) was corrected to match the new mapping:
+([`can_turnOddEvenBalanced`](../noxim3d_src/DPNode.cpp)) was corrected to match the new mapping:
 
 - Even Z → `routingOddEven1_DPStrict()`; Odd Z → `routingOddEven0_DPStrict()`.
 - Same-plane OEB calls swapped to the correct orientation.
@@ -88,7 +88,7 @@ and the NoP output writes (~5%).
 
 ## 3. Optimization B — gate the NoP output
 
-[`TRouter::bufferMonitor`](TRouter.cpp) wrote `NoP_data_out` and computed
+[`TRouter::bufferMonitor`](../noxim3d_src/TRouter.cpp) wrote `NoP_data_out` and computed
 `getCurrentNoPData()` every cycle for every router, but that data is consumed
 **only** by `selectionNoP()` (reachable only under `-sel nop`). The guard had
 been commented out.
@@ -108,7 +108,7 @@ and the (fixed) routing algorithm — constant for a whole run — yet `dpProces
 recomputed it 36×/node/cycle (124.8M calls), each doing coordinate math and a
 heap `std::vector` allocation.
 
-**Fix:** memoize per destination in [`DPNode`](DPNode.h):
+**Fix:** memoize per destination in [`DPNode`](../noxim3d_src/DPNode.h):
 `bool legal_cache[DPSIZE][DIRECTIONS][DIRECTIONS]` + `legal_cached[DPSIZE]`,
 built lazily on first use of each `dst_id` and looked up thereafter. `can_turn`
 calls drop from ~124.8M to ~`nodes × dsts × 36` (built once).
@@ -129,7 +129,7 @@ calls drop from ~124.8M to ~`nodes × dsts × 36` (built once).
 
 ## 6. Parallel sweep driver
 
-[`noximrun_buffer_sweep_parallel.bash`](noximrun_buffer_sweep_parallel.bash) — a
+[`noximrun_buffer_sweep_parallel.bash`](../noximrun_buffer_sweep_parallel.bash) — a
 drop-in parallel version of the sweep script. Same env-var interface + DP-aware
 timing; new `JOBS` knob (default = `nproc`). Each job writes its own row file
 (no CSV race); rows are concatenated at the end. Runs are deterministic per seed,
@@ -141,7 +141,7 @@ multi-core host.
 
 ## 7. Known limit — DPSIZE
 
-`DPSIZE = 260` ([NoximDefs.h](NoximDefs.h)) bounds the DP arrays (`cost_mem`,
+`DPSIZE = 260` ([NoximDefs.h](../noxim3d_src/NoximDefs.h)) bounds the DP arrays (`cost_mem`,
 `routing_directions`, `legal_cache`), all indexed by `dst_id`. **Meshes with
 > 260 nodes overflow these arrays with no guard** (e.g. 8×8×7 = 448 nodes).
 Raise `DPSIZE` and rebuild before running larger topologies.

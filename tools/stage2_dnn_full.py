@@ -79,7 +79,7 @@ PACKET_FLITS = 16           # must match the simulator's `-size 16 16`
 PACKET_BYTES = FLIT_BYTES * PACKET_FLITS
 
 # --- timing / load ------------------------------------------------------------
-CYCLES_PER_MAC = _env("DNN_CYCLES_PER_MAC", 1.3e-4, float)
+CYCLES_PER_MAC = _env("DNN_CYCLES_PER_MAC", 6.5e-5, float)
 SIM_DP_CYCLES = _env("SIM_DP_CYCLES", 80, int)
 WARMUP_DP_CYCLES = _env("WARMUP_DP_CYCLES", 3, int)
 LOAD_SCALE = _env("DNN_LOAD_SCALE", 0.05, float)
@@ -135,29 +135,36 @@ def resnet50_layers():
 def transformer_layers(nblk=12, d=768, ff=3072, seq=197):
     """12 encoder blocks (BERT/ViT-Base).  seq = token count = the 'feature map'.
 
-    !! INCOMPLETE -- NO RESIDUAL CONNECTIONS.  A real encoder block has a residual
-       around the attention sublayer and another around the FFN sublayer: 2 per
-       block, 24 across 12 blocks.  They are omitted here, so this table models a
-       pure sequential chain.
+    Each block has TWO residual connections, modelled the same way ResNet's
+    identity shortcuts are (kind="identity", zero crossbars, traffic only, window
+    spanning the sublayer bypassed):
+      - attention residual: block input   -> attention output-projection accumulators
+      - FFN residual:       attention out  -> FFN second-matmul accumulators
+    One block adds exactly 2 residuals; the full 12-block model adds 24.
 
-       Consequence: the transformer's non-locality is UNDERSTATED.  Those residuals
-       are long-range flows, the direct analogue of ResNet-50's 12 identity
-       shortcuts (which measure mean hop 3.78 vs 3.53 for every other flow in its
-       table).  DP beats bufferlevel precisely by seeing congestion several hops
-       out, so judging this workload as written would hand DP a weaker stimulus
-       than the architecture actually presents.
+    To reuse the ResNet residual machinery unchanged, each block is split into two
+    sub-block GROUPS -- attention (q,k,v,o) and FFN (ff1,ff2).  The last trunk
+    layer of each ends in "_c3" (the residual-add trigger) and carries a
+    "{group}_sc" identity shortcut, so build_phases windows it over its sublayer
+    and build_flows adds block_input -> that sublayer's accumulators.
 
-       FIX BEFORE RUNNING ANY TRANSFORMER SIMULATION: add the 24 residuals the same
-       way ResNet's identity shortcuts are done -- kind="identity", zero crossbars,
-       traffic only, window spanning the sublayer they bypass.
+    Pre-existing limitation left unchanged (NOT a residual issue): q/k/v are
+    modelled as a sequential trunk chain and the QK^T / A.V attention matmuls are
+    not represented -- only the four projection matmuls carry weights here.
     """
     L = []
     for b in range(nblk):
-        g = f"b{b}"
-        for nm in ("q", "k", "v", "o"):
-            L.append((f"{g}_{nm}", 1, d, d, seq, 1, "conv", g))
-        L.append((f"{g}_ff1", 1, d, ff, seq, 1, "conv", g))
-        L.append((f"{g}_ff2", 1, ff, d, seq, 1, "conv", g))
+        ga, gf = f"b{b}a", f"b{b}f"                  # attention / FFN sub-block groups
+        # attention sublayer: q,k,v projections then the output projection (o)
+        L.append((f"{ga}_q",     1, d,  d,  seq, 1, "conv", ga))
+        L.append((f"{ga}_k",     1, d,  d,  seq, 1, "conv", ga))
+        L.append((f"{ga}_v",     1, d,  d,  seq, 1, "conv", ga))
+        L.append((f"{ga}_o_c3",  1, d,  d,  seq, 1, "conv", ga))      # _c3 => residual trigger
+        L.append((f"{ga}_sc",    1, d,  d,  seq, 1, "identity", ga))  # attention residual (bypass)
+        # FFN sublayer
+        L.append((f"{gf}_ff1",    1, d,  ff, seq, 1, "conv", gf))
+        L.append((f"{gf}_ff2_c3", 1, ff, d,  seq, 1, "conv", gf))     # _c3 => residual trigger
+        L.append((f"{gf}_sc",     1, d,  d,  seq, 1, "identity", gf)) # FFN residual (bypass)
     return L
 
 

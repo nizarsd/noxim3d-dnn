@@ -14,12 +14,12 @@ marginally worse). Key finding from the size series (Z=3): **peak DP benefit sca
 with mesh diameter within a parity class, and X/Y parity governs past-knee behaviour**
 — odd×odd meshes win through saturation, even×even meshes reverse just past the knee.
 
-**See [FINDINGS.md](FINDINGS.md) for the full DP-vs-BL results, method, and open items.**
+**See [FINDINGS.md](docs/FINDINGS.md) for the full DP-vs-BL results, method, and open items.**
 (The older `stage1-log.txt` is superseded by FINDINGS.md.)
 
 ## Traffic injection (Stage 2)
 
-**[STAGE2.md](STAGE2.md) is the authoritative Stage 2 decision doc** — representation
+**[STAGE2.md](docs/STAGE2.md) is the authoritative Stage 2 decision doc** — representation
 choice (option **a**: DNN-derived statistical table rows using `t_on/t_off/t_period`
 phase windows), the constraint envelope, the expressiveness gap analysis, subject-model
 recommendation, and the routing-choice warning (§8). Read it before touching the converter.
@@ -31,7 +31,7 @@ Supplementary findings not covered there:
 `-size N N` (e.g. `-size 16 16`) yields an exactly fixed packet size: `getRandomSize()`
 -> `randInt(min,max)` returns `min` exactly when `min==max` (verified empirically, 1M
 draws, zero deviation), and it passes both CLI validators
-([`CmdLineParser.cpp`](CmdLineParser.cpp)). The size is **global** (one value per run),
+([`CmdLineParser.cpp`](noxim3d_src/CmdLineParser.cpp)). The size is **global** (one value per run),
 not per-row, so per-flow volume differences must be encoded in `pir` (packet *count*),
 not size — resolving the STAGE2.md §9 open item "decide whether the converter also fixes
 packet size" in favour of *no simulator change needed*. What's lost is message
@@ -63,7 +63,7 @@ of waiting ~`dp_cycle` for online DP to reconverge.
 
 - **Fixes DP's temporal weakness:** stale cost field during phase transitions — the right
   field is loaded at cycle 1 of the burst. (Related: `-dpsettle 0` already improves
-  freshness; see [FINDINGS.md](FINDINGS.md) settle study.)
+  freshness; see [FINDINGS.md](docs/FINDINGS.md) settle study.)
 - **Threat to the RL claim:** same "anticipate the burst" benefit, zero training, zero
   inference overhead, full determinism.
 - **Where RL could still win:** unknown/aperiodic timing (dynamic batching, early-exit
@@ -76,7 +76,7 @@ implemented — logged for Stage 6.
 ## Correctness & performance
 
 - **odd-even-balanced + DP legality** (`a698e05`): DP's turn legality
-  ([`can_turnOddEvenBalanced`](DPNode.cpp) + `*_DPStrict` helpers) mirrors the
+  ([`can_turnOddEvenBalanced`](noxim3d_src/DPNode.cpp) + `*_DPStrict` helpers) mirrors the
   router's `routingOddEvenBalanced` but source-independent (DP has no packet-source
   state); correct 3D vertical exclusivity; falls back to 2D odd-even when `Z==1`.
 - **DP perf optimizations** (this session, behaviour-preserving / bit-identical):
@@ -92,7 +92,7 @@ implemented — logged for Stage 6.
 
 `dp_pass = dp_dwell · num_dst` NoC cycles grows with mesh size (∝ nodes·diameter) — the
 destination-multiplexing bottleneck. `dp_clock` is **already a separate clock**
-([main.cpp](main.cpp), currently `1 SC_NS` = NoC clock), so DP can run faster than the NoC.
+([main.cpp](noxim3d_src/main.cpp), currently `1 SC_NS` = NoC clock), so DP can run faster than the NoC.
 Running it k× (4–6×) cuts convergence ~k× — a **constant factor** (doesn't change the
 nodes·diameter scaling; approaches k for large diameter, less for tiny meshes where the
 `+3` margin dominates). Relevant to later **RL stages**: faster reconfiguration = fresher
@@ -110,26 +110,32 @@ cost fields (complements the `settle=0` result).
   and forces an explicit CDC handshake (DP exposes `dp_dir`+dst+valid, router latches on its
   own clock, DP must hold each config stable ≥1 NoC cycle). Avoid unless full decoupling is needed.
 
-**See [PERFORMANCE.md](PERFORMANCE.md) for profiling, fixes, and validation.**
+**See [PERFORMANCE.md](docs/PERFORMANCE.md) for profiling, fixes, and validation.**
 
 ## Build
 
 ```
-# Edit Makefile.defs: set SYSTEMC to your systemc-2.3.3 install path
+# Edit noxim3d_src/Makefile.defs: set SYSTEMC to your systemc-2.3.3 install path
 make
 ```
 
-Produces the `noxim` binary. `.o` files and the binary are gitignored — rebuild locally.
+Sources and `.o` files live in `noxim3d_src/`; **binaries are written to the repo root**,
+where the sweep scripts expect them. The root `Makefile` just delegates, so `make`,
+`make clean` and `make -jN MODULE=noxim_variant` all still run from the root.
+`.o` files and the binaries are gitignored — rebuild locally.
 
 ## Key source files
 
-- [TRouter.cpp](TRouter.cpp) / [TRouter.h](TRouter.h) — router, routing algorithms, selection policies
-- [DPNode.cpp](DPNode.cpp) / [DPNode.h](DPNode.h) — DP cost-to-go computation unit
-- [TNoC.cpp](TNoC.cpp) / [TNoC.h](TNoC.h) — top-level NoC topology/wiring
-- [TGlobalStats.cpp](TGlobalStats.cpp) — delay/throughput/energy stats collection
-- [TPower.cpp](TPower.cpp) — power modeling
-- [TProcessingElement.cpp](TProcessingElement.cpp) — traffic generation/injection per node
-- `TRouter_old_can_turn.cpp`, `TRouterTCandNormal.cpp` — earlier routing variants kept for reference
+All under `noxim3d_src/`.
+
+- [TRouter.cpp](noxim3d_src/TRouter.cpp) / [TRouter.h](noxim3d_src/TRouter.h) — router, routing algorithms, selection policies
+- [DPNode.cpp](noxim3d_src/DPNode.cpp) / [DPNode.h](noxim3d_src/DPNode.h) — DP cost-to-go computation unit
+- [TNoC.cpp](noxim3d_src/TNoC.cpp) / [TNoC.h](noxim3d_src/TNoC.h) — top-level NoC topology/wiring
+- [TGlobalStats.cpp](noxim3d_src/TGlobalStats.cpp) — delay/throughput/energy stats collection
+- [TPower.cpp](noxim3d_src/TPower.cpp) — power modeling
+- [TProcessingElement.cpp](noxim3d_src/TProcessingElement.cpp) — traffic generation/injection per node
+- `variants/TRouter_old_can_turn.cpp`, `variants/TRouterTCandNormal.cpp` — earlier routing
+  variants kept for reference; **not in `SRCS`, not compiled**
 
 ## Running experiments
 

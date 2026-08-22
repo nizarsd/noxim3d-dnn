@@ -29,8 +29,8 @@ sub-problems, only the third of which is decided here:
 
 ## 2. The constraint envelope: what Noxim actually consumes
 
-From the injection path ([`TProcessingElement::canShot`](TProcessingElement.cpp:134)
-→ [`TGlobalTrafficTable::getCumulativePirPor`](TGlobalTrafficTable.cpp:101)):
+From the injection path ([`TProcessingElement::canShot`](../noxim3d_src/TProcessingElement.cpp:134)
+→ [`TGlobalTrafficTable::getCumulativePirPor`](../noxim3d_src/TGlobalTrafficTable.cpp:101)):
 
 - **Injection is statistical, memoryless.** Each node, each cycle, draws
   `rand()/RAND_MAX < threshold`. `threshold` is the *cumulative PIR* over all table
@@ -41,10 +41,10 @@ From the injection path ([`TProcessingElement::canShot`](TProcessingElement.cpp:
 - **A table row is already phase-capable.** Row format
   `src dst pir por t_on t_off t_period`; the gate is
   `r = ccycle % t_period; on iff t_on < r < t_off`
-  ([TGlobalTrafficTable.cpp:115](TGlobalTrafficTable.cpp:115)). So a flow can be
+  ([TGlobalTrafficTable.cpp:115](../noxim3d_src/TGlobalTrafficTable.cpp:115)). So a flow can be
   windowed and periodic. **The existing `traffics/*.txt` don't use this** — they set
   `t_on=0, t_off=10000, t_period=10001` (always-on). Phase structure is available and
-  currently unexploited. (The [CLAUDE.md](CLAUDE.md) "whole-run only" caveat applies
+  currently unexploited. (The [CLAUDE.md](../CLAUDE.md) "whole-run only" caveat applies
   to `TRAFFIC_RANDOM`, not to the table.)
 - **Packet size is decoupled from the flow.** `packet.make(..., getRandomSize())` —
   size is a uniform draw between `min/max_packet_size`, *not* derived from the tensor

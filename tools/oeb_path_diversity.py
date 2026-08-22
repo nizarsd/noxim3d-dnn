@@ -100,6 +100,46 @@ def route(cur, src, dst, dir_in):
     return [UP]
 
 
+def route_relaxed(cur, src, dst, dir_in):
+    """routingOddEvenBalanced AS SIMULATED -- the RELAXED variant.
+
+    Port of TRouter.cpp routingOddEvenBalanced (~1751).  It differs from
+    `route` (modified2) only in that planar and vertical are NOT mutually
+    exclusive: in the C++ the `//else` is commented out in both the descending
+    and the ascending branch, so a hop may be offered as a CHOICE between an
+    in-plane and a vertical move.  Everything else -- the cz-parity split, the
+    (cz%2==1 || cz==sz) planar gate, the (dz%2==1 || ez>1) descend gate, and the
+    vertical-arrival source rewrite -- is identical.
+
+    This is the routing behind every relaxed-OEB number in FINDINGS.md /
+    SESSION-NOTES; `route` is kept for reproducing the older modified2 analysis.
+    """
+    cx, cy, cz = cur; sx, sy, sz = src; dx_, dy_, dz_ = dst
+    if dir_in in (UP, DN):            # vertical arrival rewrites the source xy
+        sx, sy = cx, cy
+    s = (sx, sy, sz)
+    ex, ey, ez = dx_ - cx, dy_ - cy, dz_ - cz
+
+    if ez == 0:
+        return oddEven(cur, s, dst) if cz % 2 == 0 else oddEven0(cur, s, dst)
+
+    out = []
+    if ez > 0:                        # going down
+        if ex == 0 and ey == 0:
+            return [DN]
+        if (cz % 2 == 1) or (cz == sz):
+            out += oddEven(cur, s, dst) if cz % 2 == 0 else oddEven0(cur, s, dst)
+        if (dz_ % 2 == 1) or (ez > 1):        # coexists with the planar options
+            out.append(DN)
+        return out
+
+    # ez < 0, going up
+    if (ex != 0 or ey != 0) and (cz % 2 == 0):
+        out += oddEven(cur, s, dst)
+    out.append(UP)                            # always offered alongside planar
+    return out
+
+
 class Mesh:
     def __init__(self, dx, dy, dz):
         self.DX, self.DY, self.DZ = dx, dy, dz

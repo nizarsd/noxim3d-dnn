@@ -57,6 +57,9 @@ public:
   // Returns the max delay
   double getMaxDelay();
 
+  // Prints pooled per-packet delay percentiles.  Reporting only.
+  void showDelayPercentiles(std::ostream& out);
+
   // Returns the max delay (cycles) experimented by destination
   // node_id. Returns -1 if node_id is not destination of any
   // communication
