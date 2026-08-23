@@ -21,7 +21,7 @@
 # simulation_time 207674, a different window.
 
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../.."
 
 export DIMX=7 DIMY=7 DIMZ=3
 export CONVERTER=stage2_dnn_traffic.py

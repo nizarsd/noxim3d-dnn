@@ -12,7 +12,7 @@
 # (remap_table_diagonal.py) -- identical traffic graph, rates and phase windows,
 # so placement is the single variable.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../.."
 
 BIN=./noxim
 TBL=results_diag_ls022/tables/dnn_diag_ls0.022.txt

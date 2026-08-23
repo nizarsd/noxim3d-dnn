@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Fill the missing OEB cells so the noskip result becomes interpretable.
+# Fill the missing OEB cells so the noskip result becomes interpretable -- ls 0.028.
 #
 # results_6b_noskip is currently the ONLY oddevenbalanced data on disk; every other
 # results dir is -routing oddeven.  That makes its "vs bufferlevel" column invalid
@@ -12,14 +12,14 @@
 #
 # Together with results_6b_noskip that completes the 2x2 and gives a real baseline.
 #
-# Usage:  ./run_oeb_arms.bash [SEEDS] [JOBS]
+# Usage:  ./run_oeb_arms_ls026.bash [SEEDS] [JOBS]
 set -euo pipefail
 cd "$(dirname "$0")"
 
 SEEDS="${1:-0 2 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 105 110 115 120 125 130 135 140 150 155 160 165 170 175 180 185 190 195 200 205 210 215 220 225 230 235 240 245 250}"
 JOBS="${2:-12}"
-TABLE="traffics_dnn_6base/rn50_6b_ls0.026_diag_accint.txt"
-OUT="results_6b_oeb"
+TABLE="traffics_dnn_6base/rn50_6b_ls0.028_diag_accint.txt"
+OUT="results_6b_oeb028"
 
 [ -x ./noxim ] || { echo "ERROR: ./noxim not built (run: make clean && make -j$JOBS)" >&2; exit 1; }
 mkdir -p "$OUT/rows" "$OUT/logs"
@@ -66,19 +66,19 @@ def betai(a,b,x):
 def pval(t,df): return betai(df/2,0.5,df/(df+t*t))
 
 arms={}
-for f in glob.glob("results_6b_oeb/rows/*.row"):
+for f in glob.glob("results_6b_oeb028/rows/*.row"):
     p=open(f).read().strip().split(",")
     if p[3]=="NA": continue
     arms.setdefault({"bufferlevel":"bufferlevel","occupancy":"DP skip occupancy",
                      "none":"DP skip none"}[p[0]],{})[int(p[2])]=float(p[3])
-for f in glob.glob("results_6b_noskip/rows/*.row"):
+for f in glob.glob("results_6b_noskip028/rows/*.row"):
     p=open(f).read().strip().split(",")
     if p[3]=="NA": continue
     arms.setdefault(p[0].replace("noskip-","DP noskip "),{})[int(p[2])]=float(p[3])
 
 seeds=sorted(set.intersection(*[set(v) for v in arms.values()])); n=len(seeds)
 b=[arms["bufferlevel"][s] for s in seeds]
-print(f"\nls 0.026, interior placement, OEB (planar/Z coexisting), n={n} paired seeds\n")
+print(f"\nls 0.028, interior placement, OEB (planar/Z coexisting), n={n} paired seeds\n")
 print(f"{'arm':<22} {'delay':>8} {'sd':>7} {'vs BL':>9} {'t':>7} {'p':>9}")
 print("-"*66)
 for k in ("bufferlevel","DP skip occupancy","DP skip none",

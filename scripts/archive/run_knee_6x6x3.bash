@@ -17,7 +17,7 @@
 # The -1000 is the reset sc_start before the measured window; without it the
 # measured span is not a whole number of block passes.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../.."
 
 export DIMX=6 DIMY=6 DIMZ=3
 export CONVERTER=stage2_dnn_traffic.py

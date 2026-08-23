@@ -20,7 +20,7 @@
 # noximrun_dnn_traffic.bash's regex actually captures (its pattern ends on the
 # last line matching /received/, which is the flits line, not packets).
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../.."
 
 BIN=./noxim
 OUTDIR=results_diag_6x6x3
