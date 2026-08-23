@@ -47,7 +47,12 @@ def _env(name, default, cast=str):
 # =============================================================================
 
 BYTES_PER_ACT = 1           # INT8 activations
-BYTES_PER_PSUM = 4          # INT32 partial sums -- 4x activation width
+# 4 = INT32 psums, the value every published table was generated with.
+# 2 = the 16-bit psum CROSSBAR-ADC-PACKING.md SS2.2 derives (8-bit ADC per weight
+# bit-slice, combined by intra-tile shift-and-add across the 8 bit-planes).
+# Override with DNN_BYTES_PER_PSUM=2; default unchanged so existing tables
+# regenerate byte-for-byte.  See SESSION-NOTES SS5.
+BYTES_PER_PSUM = _env("DNN_BYTES_PER_PSUM", 4, int)
 FLIT_BYTES = 4
 PACKET_FLITS = 16           # must match the simulator's `-size 16 16`
 PACKET_BYTES = FLIT_BYTES * PACKET_FLITS

@@ -1,0 +1,134 @@
+{
+  "ResNet-50": {
+    "2": {
+      "intra_psum": 13405056,
+      "inter_psum": 8838032,
+      "scatter": 2101198848,
+      "inter_total": 2110036880,
+      "tiles": 6372
+    },
+    "4": {
+      "intra_psum": 13405056,
+      "inter_psum": 8838032,
+      "scatter": 1050607616,
+      "inter_total": 1059445648,
+      "tiles": 3190
+    },
+    "8": {
+      "intra_psum": 13405056,
+      "inter_psum": 8838032,
+      "scatter": 525303808,
+      "inter_total": 534141840,
+      "tiles": 1595
+    },
+    "16": {
+      "intra_psum": 13405056,
+      "inter_psum": 8838032,
+      "scatter": 307609600,
+      "inter_total": 316447632,
+      "tiles": 804
+    },
+    "32": {
+      "intra_psum": 13405056,
+      "inter_psum": 8838032,
+      "scatter": 218832896,
+      "inter_total": 227670928,
+      "tiles": 422
+    },
+    "64": {
+      "intra_psum": 13405056,
+      "inter_psum": 8838032,
+      "scatter": 196120576,
+      "inter_total": 204958608,
+      "tiles": 271
+    }
+  },
+  "VGG-16": {
+    "2": {
+      "intra_psum": 57683712,
+      "inter_psum": 54563600,
+      "scatter": 8051458048,
+      "inter_total": 8106021648,
+      "tiles": 33808
+    },
+    "4": {
+      "intra_psum": 57683712,
+      "inter_psum": 54563600,
+      "scatter": 4025745408,
+      "inter_total": 4080309008,
+      "tiles": 16912
+    },
+    "8": {
+      "intra_psum": 57683712,
+      "inter_psum": 54563600,
+      "scatter": 2012872704,
+      "inter_total": 2067436304,
+      "tiles": 8456
+    },
+    "16": {
+      "intra_psum": 57683712,
+      "inter_psum": 54563600,
+      "scatter": 1160577024,
+      "inter_total": 1215140624,
+      "tiles": 4230
+    },
+    "32": {
+      "intra_psum": 57683712,
+      "inter_psum": 54563600,
+      "scatter": 824344576,
+      "inter_total": 878908176,
+      "tiles": 2121
+    },
+    "64": {
+      "intra_psum": 57683712,
+      "inter_psum": 54563600,
+      "scatter": 728481792,
+      "inter_total": 783045392,
+      "tiles": 1078
+    }
+  },
+  "ViT-Base": {
+    "2": {
+      "intra_psum": 65814480,
+      "inter_psum": 49322976,
+      "scatter": 8424253440,
+      "inter_total": 8473576416,
+      "tiles": 21069
+    },
+    "4": {
+      "intra_psum": 65814480,
+      "inter_psum": 49322976,
+      "scatter": 4212129792,
+      "inter_total": 4261452768,
+      "tiles": 10536
+    },
+    "8": {
+      "intra_psum": 65814480,
+      "inter_psum": 49322976,
+      "scatter": 2106064896,
+      "inter_total": 2155387872,
+      "tiles": 5268
+    },
+    "16": {
+      "intra_psum": 65814480,
+      "inter_psum": 49322976,
+      "scatter": 1053032448,
+      "inter_total": 1102355424,
+      "tiles": 2634
+    },
+    "32": {
+      "intra_psum": 65814480,
+      "inter_psum": 49322976,
+      "scatter": 526516224,
+      "inter_total": 575839200,
+      "tiles": 1317
+    },
+    "64": {
+      "intra_psum": 65814480,
+      "inter_psum": 49322976,
+      "scatter": 307433472,
+      "inter_total": 356756448,
+      "tiles": 768
+    }
+  }
+}

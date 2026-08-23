@@ -2,7 +2,7 @@
 
 Formulation for Paper 1 (mapping / design-space exploration). Absorbs the former
 `MAPPING.md` (placement objective, rules, per-workload structure). Companion to
-[SESSION-NOTES.md](SESSION-NOTES.md) §5, which holds the work queue derived from this.
+[PROJECT-RESEARCH-NOTES.md](PROJECT-RESEARCH-NOTES.md) §31, which holds the active work queue derived from this.
 
 Status: formulation settled in discussion; **not yet implemented**.
 

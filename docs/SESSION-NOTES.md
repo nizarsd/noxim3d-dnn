@@ -1,4 +1,8 @@
-# Session notes — 20 Aug 2026 (to revisit)
+# Session notes — 20 Aug 2026 (archived historical snapshot)
+
+> **Archived / superseded:** This dated snapshot is preserved for historical context.
+> The active living record is [PROJECT-RESEARCH-NOTES.md](PROJECT-RESEARCH-NOTES.md);
+> update that file going forward.
 
 Captured for later decisions. Nothing here is locked.
 
@@ -452,6 +456,30 @@ crossing) may be the better place for the trade-off curve than simulation.
 - ResNet now runs at cpm **2e-4** while TF/VGG are at 1e-4 model / 5e-5 & 2.5e-5 tables —
   three different rationales, none physical. §2.3 makes this defensible *post hoc*
   (all three land at 44–48% of port) but the paper needs that framing, not the cpm values.
+- **Partial-sum width: code and docs disagree (2×).** `BYTES_PER_PSUM = 4` (INT32) in
+  `tools/stage2_core.py:50`, `stage2_dnn_traffic.py:168` and `stage2_dnn_full.py:75` —
+  introduced in `8ec5fa9` with a comment that states a consequence, not a derivation.
+  `CROSSBAR-ADC-PACKING.md` §2.2 *derives* **16 bits**: 8-bit ADC per weight bit-slice,
+  combined by intra-tile shift-and-add across the 8 bit-planes. The derivation is
+  consistent with `s`=8 being bit-planes (see the packing item below), so 16 is likely
+  the defensible value.
+  **Decision for now: keep 32-bit, state it as an explicit modelling assumption.** It
+  *over*-weights the reduction traffic the contribution depends on, which is the safe
+  direction to err. Switching would mean: reduce share 81.8% → 69.1%, total load −41%,
+  `load_scale` ×1.691 (0.026 → 0.0440), and at matched load the conv2 hotspot carries
+  84.7% of today's traffic — peak arrival-face load ≈ 0.382 → 0.324, which on the
+  validated monotone series sits between the +5.1% and +31.9% points. Mechanism and
+  placement *ranking* should survive (the funnel is topological); every published
+  *percentage* would not. Cost: re-locate the knee for all three workloads and re-run
+  the n=30 arms, ~500 sims. Not a silent one-line edit.
+- **Packing is not a free variable in the generator.** `stage2_core.py:100` sets
+  `cols = cout` with no `N_bits`, so a tile is one input row-group × one output-channel
+  group and its 8 crossbars are the 8 **bit-planes**. Measured across all 13 layers of
+  all three workloads: `r` = 1 and `s` = `N_bits` = 8, always. `r`>1 is structurally
+  forbidden by the `R >= base_R` assert at `stage2_core.py:106`. Any `(c, r, s)` study
+  (Stage A of MAPPING-FORMULATION §3) therefore needs converter work, not a config
+  change — and the docs' "output grouping" reading of `s` must first be reconciled with
+  the code's bit-plane reading. Exploratory arithmetic in `stage3_step1_explore/`.
 - Transformer omits QK^T / softmax / A·V / LayerNorm (no stored weights ⇒ no crossbar).
   Standard modelling boundary, and it *under*-counts reductions — the safe direction — but
   must be stated. Adding digital attention engines needs no extra nodes if co-located with

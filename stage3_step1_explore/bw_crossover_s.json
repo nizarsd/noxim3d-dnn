@@ -1,0 +1,155 @@
+{
+  "ResNet-50": {
+    "1": {
+      "intra_psum": 0,
+      "inter_psum": 22243088,
+      "scatter": 2101198848,
+      "inter_total": 2123441936,
+      "tiles": 12504
+    },
+    "2": {
+      "intra_psum": 0,
+      "inter_psum": 22243088,
+      "scatter": 1050607616,
+      "inter_total": 1072850704,
+      "tiles": 6260
+    },
+    "4": {
+      "intra_psum": 0,
+      "inter_psum": 22243088,
+      "scatter": 525303808,
+      "inter_total": 547546896,
+      "tiles": 3130
+    },
+    "8": {
+      "intra_psum": 0,
+      "inter_psum": 22243088,
+      "scatter": 307609600,
+      "inter_total": 329852688,
+      "tiles": 1576
+    },
+    "16": {
+      "intra_psum": 0,
+      "inter_psum": 22243088,
+      "scatter": 218832896,
+      "inter_total": 241075984,
+      "tiles": 824
+    },
+    "32": {
+      "intra_psum": 0,
+      "inter_psum": 22243088,
+      "scatter": 196120576,
+      "inter_total": 218363664,
+      "tiles": 526
+    },
+    "64": {
+      "intra_psum": 0,
+      "inter_psum": 22243088,
+      "scatter": 190885888,
+      "inter_total": 213128976,
+      "tiles": 454
+    }
+  },
+  "VGG-16": {
+    "1": {
+      "intra_psum": 0,
+      "inter_psum": 112247312,
+      "scatter": 8051458048,
+      "inter_total": 8163705360,
+      "tiles": 67576
+    },
+    "2": {
+      "intra_psum": 0,
+      "inter_psum": 112247312,
+      "scatter": 4025745408,
+      "inter_total": 4137992720,
+      "tiles": 33804
+    },
+    "4": {
+      "intra_psum": 0,
+      "inter_psum": 112247312,
+      "scatter": 2012872704,
+      "inter_total": 2125120016,
+      "tiles": 16902
+    },
+    "8": {
+      "intra_psum": 0,
+      "inter_psum": 112247312,
+      "scatter": 1160577024,
+      "inter_total": 1272824336,
+      "tiles": 8454
+    },
+    "16": {
+      "intra_psum": 0,
+      "inter_psum": 112247312,
+      "scatter": 824344576,
+      "inter_total": 936591888,
+      "tiles": 4237
+    },
+    "32": {
+      "intra_psum": 0,
+      "inter_psum": 112247312,
+      "scatter": 728481792,
+      "inter_total": 840729104,
+      "tiles": 2151
+    },
+    "64": {
+      "intra_psum": 0,
+      "inter_psum": 112247312,
+      "scatter": 727515136,
+      "inter_total": 839762448,
+      "tiles": 1207
+    }
+  },
+  "ViT-Base": {
+    "1": {
+      "intra_psum": 0,
+      "inter_psum": 115137456,
+      "scatter": 8424253440,
+      "inter_total": 8539390896,
+      "tiles": 42138
+    },
+    "2": {
+      "intra_psum": 0,
+      "inter_psum": 115137456,
+      "scatter": 4212129792,
+      "inter_total": 4327267248,
+      "tiles": 21072
+    },
+    "4": {
+      "intra_psum": 0,
+      "inter_psum": 115137456,
+      "scatter": 2106064896,
+      "inter_total": 2221202352,
+      "tiles": 10536
+    },
+    "8": {
+      "intra_psum": 0,
+      "inter_psum": 115137456,
+      "scatter": 1053032448,
+      "inter_total": 1168169904,
+      "tiles": 5268
+    },
+    "16": {
+      "intra_psum": 0,
+      "inter_psum": 115137456,
+      "scatter": 526516224,
+      "inter_total": 641653680,
+      "tiles": 2634
+    },
+    "32": {
+      "intra_psum": 0,
+      "inter_psum": 115137456,
+      "scatter": 307433472,
+      "inter_total": 422570928,
+      "tiles": 1536
+    },
+    "64": {
+      "intra_psum": 0,
+      "inter_psum": 115137456,
+      "scatter": 160978944,
+      "inter_total": 276116400,
+      "tiles": 804
+    }
+  }
+}
