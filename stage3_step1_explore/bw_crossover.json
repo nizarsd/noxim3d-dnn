@@ -1,0 +1,80 @@
+{
+  "ResNet-50": {
+    "crossbars": 12504,
+    "crossing": null,
+    "curves": {
+      "4": {
+        "intra_Gb": 0.018501952,
+        "inter_Gb": 0.003741136
+      },
+      "8": {
+        "intra_Gb": 0.020887328,
+        "inter_Gb": 0.00135576
+      },
+      "16": {
+        "intra_Gb": 0.021791504,
+        "inter_Gb": 0.000451584
+      },
+      "32": {
+        "intra_Gb": 0.022167824,
+        "inter_Gb": 7.5264e-05
+      },
+      "64": {
+        "intra_Gb": 0.022243088,
+        "inter_Gb": 0.0
+      }
+    }
+  },
+  "VGG-16": {
+    "crossbars": 67576,
+    "crossing": null,
+    "curves": {
+      "4": {
+        "intra_Gb": 0.085522048,
+        "inter_Gb": 0.026725264
+      },
+      "8": {
+        "intra_Gb": 0.10129568,
+        "inter_Gb": 0.010951632
+      },
+      "16": {
+        "intra_Gb": 0.107978272,
+        "inter_Gb": 0.00426904
+      },
+      "32": {
+        "intra_Gb": 0.111118864,
+        "inter_Gb": 0.001128448
+      },
+      "64": {
+        "intra_Gb": 0.112235024,
+        "inter_Gb": 1.2288e-05
+      }
+    }
+  },
+  "ViT-Base": {
+    "crossbars": 42138,
+    "crossing": null,
+    "curves": {
+      "4": {
+        "intra_Gb": 0.091383744,
+        "inter_Gb": 0.023753712
+      },
+      "8": {
+        "intra_Gb": 0.111506352,
+        "inter_Gb": 0.003631104
+      },
+      "16": {
+        "intra_Gb": 0.113321904,
+        "inter_Gb": 0.001815552
+      },
+      "32": {
+        "intra_Gb": 0.115137456,
+        "inter_Gb": 0.0
+      },
+      "64": {
+        "intra_Gb": 0.115137456,
+        "inter_Gb": 0.0
+      }
+    }
+  }
+}
