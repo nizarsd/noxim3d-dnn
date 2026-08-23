@@ -14,7 +14,7 @@
 # (search_placement.py + verified pir/window invariance), so the traffic graph,
 # rates and phase windows are identical across all four cells.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../.."
 BIN=./noxim; OUTDIR=results_hopdiv
 SEEDS=${SEEDS:-"2 6 10 14 18 22 26 30 34 38"}
 CELLS=${CELLS:-"A B"}

@@ -15,7 +15,7 @@
 # two routings are compared on exactly the same traffic.
 # Timing matches the n=30 OEB set: SIM=206674 WARMUP=14994 CINTERVAL=4998.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../.."
 OUTDIR=results_oe_knee
 SCALES=${SCALES:-"0.012 0.016 0.020 0.022 0.025 0.028 0.032"}
 SEEDS=${SEEDS:-"2"}

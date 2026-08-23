@@ -16,9 +16,9 @@
 # Partial passes bias the phase mix, so PASSES must stay an integer.
 #
 # Usage:
-#   ./run_6x6x3.bash --seeds "2 6 10" --ci "648 1029"
-#   ./run_6x6x3.bash --seeds "$(seq 2 4 118)" --ci 648 --passes 5
-#   ./run_6x6x3.bash --seeds "2 6" --ci 648 --routing oddevenbalanced
+#   ./scripts/archive/run_6x6x3.bash --seeds "2 6 10" --ci "648 1029"
+#   ./scripts/archive/run_6x6x3.bash --seeds "$(seq 2 4 118)" --ci 648 --passes 5
+#   ./scripts/archive/run_6x6x3.bash --seeds "2 6" --ci 648 --routing oddevenbalanced
 #
 # Options (all optional except --seeds / --ci):
 #   --seeds "N N N"   seed list                      (required)
@@ -32,7 +32,7 @@
 #   --jobs N          parallel runs                  (default 8)
 #   --outdir DIR      results directory              (default results_6x6x3)
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../.."
 
 SEEDS=""; CIS=""
 SELS="dp bufferlevel"

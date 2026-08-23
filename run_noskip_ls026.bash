@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Does DP's greedy skip-if-busy explain its win, or is it the static ranking?
+# Does DP's greedy skip-if-busy explain its win, or is it the static ranking? -- ls 0.026.
 #
 # Builds a second binary with the availability test in selectionDP neutralised
 # (always take the best-ranked direction, even if the port is reserved), runs it
@@ -9,14 +9,14 @@
 # Your TRouter.cpp is patched, built, and restored -- a trap restores it even on
 # Ctrl-C.  Nothing else in the repo is touched.
 #
-# Usage:  ./run_noskip_experiment.bash [SEEDS] [JOBS]
+# Usage:  ./run_noskip_ls026.bash [SEEDS] [JOBS]
 set -euo pipefail
 cd "$(dirname "$0")"
 
 SEEDS="${1:-0 2 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 105 110 115 120 125 130 135 140 45 150 155 160 165 170 175 180 185 190 195 200 205 210 215 220 225 230 235 240 245 250}"
 JOBS="${2:-12}"
-TABLE="traffics_dnn_6base/rn50_6b_ls0.028_diag_accint.txt"
-OUT="results_6b_noskip028"
+TABLE="traffics_dnn_6base/rn50_6b_ls0.026_diag_accint.txt"
+OUT="results_6b_noskip"
 SRC="TRouter.cpp"
 BACKUP=".TRouter.cpp.noskip-backup"
 PATTERN='if (reservation_table.isAvailable(directions\[i\]))'
@@ -109,9 +109,9 @@ def add(name, pattern, dcol=3, seedcol=2):
         if len(p)<6 or p[dcol]=="ERROR": continue
         arms.setdefault(name,{})[int(p[seedcol])]=float(p[dcol])
 
-add("bufferlevel", "results_6b_oeb028/rows/bufferlevel_s*.row")
-add("random",      "__none__/rows/*.row")
-for f in glob.glob("__none__/rows/*.row"):
+add("bufferlevel", "results_6b_accint/rows/accint_bufferlevel_*.row")
+add("random",      "results_6b_random/rows/*.row")
+for f in glob.glob("results_6b_dpcost/rows/*.row"):
     p=open(f).read().strip().split(",")
     arms.setdefault("DP "+p[0], {})[int(p[2])]=float(p[3])
 for f in glob.glob(os.path.join(sys.argv[1],"rows","*.row")):

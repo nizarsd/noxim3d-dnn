@@ -10,9 +10,9 @@
 # from results_block_7x7x3, and the 1000-cycle SIM difference is 0.5%.
 #
 # Waits for any running sweep to clear before starting, so it does not contend
-# for the 8 cores with run_diag_ls022.bash.
+# for the 8 cores with scripts/archive/run_diag_ls022.bash.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../.."
 
 BIN=./noxim
 OUTDIR=results_diag_ls022
