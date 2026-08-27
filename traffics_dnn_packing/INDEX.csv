@@ -1,0 +1,35 @@
+workload,c,r,s,tiles,nodes_idle,scatter,reduce,add,total_bytes,mib,flows,t_period,worst_stacked_pir,sim_ready,errors,warnings,note,stem
+ResNet-50 stage-3 bottleneck,8,1,8,92,16,1411200,7225344,200704,8837248,8.428,168,38536,0.012,yes,,16 nodes unused,current,resnet50_bottleneck3_xb128_6x6x3_c8r1s8
+ResNet-50 stage-3 bottleneck,8,2,4,92,16,2916480,2609152,200704,5726336,5.461,218,38536,0.0245,yes,,16 nodes unused,min@c=8,resnet50_bottleneck3_xb128_6x6x3_c8r2s4
+ResNet-50 stage-3 bottleneck,16,1,16,46,62,655424,7225344,200704,8081472,7.707,82,38536,0.0169,yes,,62 nodes unused,,resnet50_bottleneck3_xb128_6x6x3_c16r1s16
+ResNet-50 stage-3 bottleneck,16,2,8,46,62,1408064,2609152,200704,4217920,4.023,88,38536,0.0161,yes,,62 nodes unused,,resnet50_bottleneck3_xb128_6x6x3_c16r2s8
+ResNet-50 stage-3 bottleneck,16,4,4,56,52,2913344,802816,200704,3916864,3.735,147,38536,0.0448,yes,,52 nodes unused,min@c=16,resnet50_bottleneck3_xb128_6x6x3_c16r4s4
+ResNet-50 stage-3 bottleneck,16,8,2,96,12,5923904,401408,200704,6526016,6.224,423,38536,0.0934,yes,,12 nodes unused,,resnet50_bottleneck3_xb128_6x6x3_c16r8s2
+ResNet-50 stage-3 bottleneck,32,1,32,34,74,354368,7225344,200704,7780416,7.42,60,38536,0.0164,yes,,74 nodes unused,,resnet50_bottleneck3_xb128_6x6x3_c32r1s32
+ResNet-50 stage-3 bottleneck,32,2,16,23,85,653856,2609152,200704,3463712,3.303,38,38536,0.018,yes,,85 nodes unused,,resnet50_bottleneck3_xb128_6x6x3_c32r2s16
+ResNet-50 stage-3 bottleneck,32,4,8,28,80,1406496,802816,200704,2410016,2.298,53,38536,0.0204,yes,,80 nodes unused,GLOBAL MIN,resnet50_bottleneck3_xb128_6x6x3_c32r4s8
+ResNet-50 stage-3 bottleneck,32,8,4,48,60,2911776,401408,200704,3513888,3.351,131,38536,0.0447,yes,,60 nodes unused,,resnet50_bottleneck3_xb128_6x6x3_c32r8s4
+ResNet-50 stage-3 bottleneck,32,16,2,88,20,5920768,200704,200704,6322176,6.029,399,38536,0.0934,yes,,20 nodes unused,,resnet50_bottleneck3_xb128_6x6x3_c32r16s2
+VGG-16 block 3,8,1,8,90,18,3938816,134873088,0,138811904,132.381,196,115606,0.0564,yes,,18 nodes unused,current,vgg16_block3_xb128_6x6x3_c8r1s8
+VGG-16 block 3,8,2,4,92,16,7930944,64225280,0,72156224,68.814,214,115606,0.0367,yes,,16 nodes unused,,vgg16_block3_xb128_6x6x3_c8r2s4
+VGG-16 block 3,8,4,2,104,4,15999872,32112640,0,48112512,45.884,324,115606,0.0599,yes,,4 nodes unused,min@c=8,vgg16_block3_xb128_6x6x3_c8r4s2
+VGG-16 block 3,16,1,16,45,63,1756160,134873088,0,136629248,130.3,93,115606,0.1087,yes,,63 nodes unused,,vgg16_block3_xb128_6x6x3_c16r1s16
+VGG-16 block 3,16,2,8,46,62,3760064,64225280,0,67985344,64.836,96,115606,0.0575,yes,,62 nodes unused,,vgg16_block3_xb128_6x6x3_c16r2s8
+VGG-16 block 3,16,4,4,52,56,7796096,32112640,0,39908736,38.06,128,115606,0.042,yes,,56 nodes unused,,vgg16_block3_xb128_6x6x3_c16r4s4
+VGG-16 block 3,16,8,2,64,44,15755264,16056320,0,31811584,30.338,214,115606,0.0746,yes,,44 nodes unused,min@c=16,vgg16_block3_xb128_6x6x3_c16r8s2
+VGG-16 block 3,16,16,1,80,28,31711232,6422528,0,38133760,36.367,559,115606,0.2306,yes,,28 nodes unused,,vgg16_block3_xb128_6x6x3_c16r16s1
+VGG-16 block 3,32,1,32,45,63,1756160,134873088,0,136629248,130.3,93,115606,0.1087,yes,,63 nodes unused,,vgg16_block3_xb128_6x6x3_c32r1s32
+VGG-16 block 3,32,2,16,23,85,1674624,64225280,0,65899904,62.847,43,115606,0.1087,yes,,85 nodes unused,,vgg16_block3_xb128_6x6x3_c32r2s16
+VGG-16 block 3,32,4,8,26,82,3694208,32112640,0,35806848,34.148,54,115606,0.0593,yes,,82 nodes unused,,vgg16_block3_xb128_6x6x3_c32r4s8
+VGG-16 block 3,32,8,4,32,76,7676928,16056320,0,23733248,22.634,74,115606,0.0475,yes,,76 nodes unused,,vgg16_block3_xb128_6x6x3_c32r8s4
+VGG-16 block 3,32,16,2,40,68,15654912,6422528,0,22077440,21.055,151,115606,0.1221,yes,,68 nodes unused,GLOBAL MIN,vgg16_block3_xb128_6x6x3_c32r16s2
+VGG-16 block 3,32,32,1,48,60,31711232,0,0,31711232,30.242,527,115606,0.2306,yes,,60 nodes unused,,vgg16_block3_xb128_6x6x3_c32r32s1
+DeiT-S encoder block,8,1,8,108,0,2647680,8169984,151296,10968960,10.461,192,58097,0.0424,yes,,,current min@c=8,vitsmall_encoder1_xb128_6x6x3_c8r1s8
+DeiT-S encoder block,16,1,16,66,42,1588608,8169984,151296,9909888,9.451,127,58097,0.039,yes,,42 nodes unused,,vitsmall_encoder1_xb128_6x6x3_c16r1s16
+DeiT-S encoder block,16,2,8,66,42,2647680,3933696,151296,6732672,6.421,158,58097,0.0568,yes,,42 nodes unused,,vitsmall_encoder1_xb128_6x6x3_c16r2s8
+DeiT-S encoder block,16,4,4,66,42,5371008,605184,151296,6127488,5.844,365,58097,0.1781,yes,,42 nodes unused,min@c=16,vitsmall_encoder1_xb128_6x6x3_c16r4s4
+DeiT-S encoder block,32,1,32,33,75,756480,8169984,151296,9077760,8.657,59,58097,0.0492,yes,,75 nodes unused,,vitsmall_encoder1_xb128_6x6x3_c32r1s32
+DeiT-S encoder block,32,2,16,40,68,1588608,3933696,151296,5673600,5.411,66,58097,0.0483,yes,,68 nodes unused,,vitsmall_encoder1_xb128_6x6x3_c32r2s16
+DeiT-S encoder block,32,4,8,33,75,2647680,605184,151296,3404160,3.246,101,58097,0.0865,yes,,75 nodes unused,GLOBAL MIN,vitsmall_encoder1_xb128_6x6x3_c32r4s8
+DeiT-S encoder block,32,8,4,60,48,5371008,302592,151296,5824896,5.555,359,58097,0.1781,yes,,48 nodes unused,,vitsmall_encoder1_xb128_6x6x3_c32r8s4
+DeiT-S encoder block,32,16,2,108,0,10817664,0,151296,10968960,10.461,1355,58097,0.3613,yes,,,,vitsmall_encoder1_xb128_6x6x3_c32r16s2
