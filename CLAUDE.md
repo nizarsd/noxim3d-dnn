@@ -1,7 +1,27 @@
 # Noxim3D — NoC for DNN
 
-SystemC-based cycle-accurate Network-on-Chip simulator (fork of Noxim), extended for 3D NoC
-research comparing routing/selection policies under DNN-style traffic.
+SystemC cycle-accurate Network-on-Chip simulator (fork of Noxim), extended to 3D and used
+to study **how an in-memory-computing DNN accelerator should be packed, mapped and routed**.
+The mesh is 6×6×3 = 108 tiles of 128×128 crossbars; layers are packed onto tiles, tiles are
+placed on the mesh, and traffic is generated from the resulting flow graph.
+
+Three coupled design axes, in decreasing order of measured effect:
+
+1. **Packing** — `(c, r, s)`: crossbars per tile and how rows/columns are grouped. Sets the
+   placement-invariant **port floor PF**, which dominates delay (~4.4× elasticity) and caps
+   throughput (`k_max = 1/sustained`).
+2. **Mapping** — which tile sits on which node. Matters only once peak link load clears PF;
+   below that floor delay is flat.
+3. **Routing/selection** — odd-even-balanced routing with **DP** (multi-hop congestion
+   cost-to-go) versus **bufferlevel** (local heuristic). DP pays only above PF, and only in
+   proportion to how much load is escapable.
+
+Workloads are ResNet-50, VGG-16 and DeiT-S blocks, converted to statistical traffic tables
+with phase windows. Later stages replace DP with a learned selection policy; the packing and
+mapping results define the regime in which that contribution can matter.
+
+Read [PD-PO-DESIGN-FLOW.md](docs/PD-PO-DESIGN-FLOW.md) before any packing or mapping work,
+and [STAGE2.md](docs/STAGE2.md) before touching the traffic converter.
 
 ## Research focus (Stage 1)
 
@@ -73,6 +93,51 @@ of waiting ~`dp_cycle` for online DP to reconverge.
 Selection logic unchanged from today's DP; only the cost-field source differs. Not
 implemented — logged for Stage 6.
 
+## Packing & mapping (Stage 3+) — decisions
+
+**[PD-PO-DESIGN-FLOW.md](docs/PD-PO-DESIGN-FLOW.md) is the authoritative flow doc** —
+full derivation, evidence level per claim, and an explicit "not established" section.
+Read it before touching the packing sweep or any mapping search. The decisions below
+are load-bearing; several supersede earlier docs.
+
+**Metric names** (use these, don't invent synonyms). Port and link capacity are both
+1 flit/cycle = **4 GB/s** (flit = 4 B, clock 1 ns; `flit_rx`/`flit_tx` are separate
+channels, so injection and ejection are independent).
+
+| symbol | meaning | placement-dependent? |
+|---|---|---|
+| **PD** / **PO** | packing density `c` / orientation `(r,s)`, `r·s = c` | no |
+| **PIL** / **PEL** | peak injection / ejection load | **no** |
+| **PF** | port floor = `max(PIL, PEL)` — never their sum | **no** |
+| **PL** | peak link load (inter-router, first hop included) | yes |
+| **BIND** | `max(PL, PF)` — the delay predictor, r ≈ +0.86 | yes |
+| **PLf** | forced link load (edges every admissible path uses) | yes |
+| **CC** / **PV** / **PR** | comm cost / path variety / peak router load | yes |
+
+- **Feasibility is `tiles ≤ 108` AND `sustained port rate ≤ 1`** — *not* `PF ≤ 1`.
+  PF is a peak over an interval that is 13% of the period; 18 of 34 points exceed it
+  but only 5 exceed sustained. Do not exclude a packing on PF.
+- **Rank POs on PF, never on min total bytes.** Min-bytes selects the burstiest
+  packings (burst ratio spans 1.7–9.9×). `docs/packing_crs_sweep.xlsx` still
+  highlights min-bytes cells as GLOBAL MIN — wrong objective, not yet fixed.
+- **Mapping objective:** `PL < PF` as a hard constraint (delay is flat below the
+  floor, steep above), then min PL, with CC minimised throughout as energy overhead.
+  **Do not optimise PV** (null) **or PLf** (83% collinear with PL). PLf is a
+  diagnostic; its *ratio* `1 − PLf/PL` is the escapable fraction and predicts how
+  much DP can recover.
+- **`k` is tuned per (workload, `c`)**, shared across all POs at that `c`, so
+  orientation is compared at equal load. All ratios are k-invariant; PV exactly so.
+- **Delay takes the PEAK, temperature takes the TIME-AVERAGE.** Thermal time
+  constants (0.1–10 ms) dwarf the 38.5 µs period. Using burst power for thermal
+  reverses the ranking.
+- **Thermal is out of scope as analysis** — it appears only as the *motivation* for
+  spreading a placement (which is what puts the design in the regime where DP pays).
+- **PL and PLf are offline models, never validated against the simulator.**
+  `-detailed` reports per-(src,dst) pairs, not per-link. Say so when citing them.
+- **Never compare an optimised point against arbitrary ones.** That error produced
+  two wrong conclusions in one session. Optimise both arms, or compare within a
+  single sampling regime.
+
 ## Correctness & performance
 
 - **odd-even-balanced + DP legality** (`a698e05`): DP's turn legality
@@ -88,27 +153,37 @@ implemented — logged for Stage 6.
   `settle=0` (continuous reconvergence, freshest field) is best-or-tied; more settle only
   degrades DP. Big win on small/fast meshes, marginal on large. See FINDINGS.md settle section.
 
-### Idea (not implemented): faster DP clock to cut convergence time
+### DP clock runs at 4× the NoC clock (implemented — Design A)
 
 `dp_pass = dp_dwell · num_dst` NoC cycles grows with mesh size (∝ nodes·diameter) — the
-destination-multiplexing bottleneck. `dp_clock` is **already a separate clock**
-([main.cpp](noxim3d_src/main.cpp), currently `1 SC_NS` = NoC clock), so DP can run faster than the NoC.
-Running it k× (4–6×) cuts convergence ~k× — a **constant factor** (doesn't change the
-nodes·diameter scaling; approaches k for large diameter, less for tiny meshes where the
-`+3` margin dominates). Relevant to later **RL stages**: faster reconfiguration = fresher
-cost fields (complements the `settle=0` result).
+destination-multiplexing bottleneck. Running DP faster than the NoC cuts convergence by
+that factor — a **constant factor** (doesn't change the nodes·diameter scaling; approaches
+k for large diameter, less for tiny meshes where the `+3` margin dominates). Relevant to
+later **RL stages**: faster reconfiguration = fresher cost fields (complements the
+`settle=0` result).
 
-- **Design A (recommended, minimal, no clock-domain crossing):** a faster `dp_clock` already
-  propagates k cost-hops per NoC cycle (each dp edge = one hop via `dp_rx`), so just shrink
-  `dp_dwell()` to ~`ceil(diameter/k)+3`. `dpProcess` and `routing_directionsUpdater` stay
-  unchanged — both key their phase off `sc_time_stamp`, so the two clock domains remain
-  coordinated automatically. ~3 lines (dp_clock period in main.cpp + dwell formula in
-  NoximDefs.h). Then re-verify the publish margin (`phase%dwell==dwell-2` must be
-  post-convergence) and realign `CINTERVAL`/sweep timing to the new `dp_cycle`.
-- **Design B (tick-based counter):** re-base `dpProcess` on a `dp_clock`-tick counter instead
-  of `sc_time_stamp`. Cleaner-sounding but *worse* — it breaks the free sim-time coordination
-  and forces an explicit CDC handshake (DP exposes `dp_dir`+dst+valid, router latches on its
-  own clock, DP must hold each config stable ≥1 NoC cycle). Avoid unless full decoupling is needed.
+**Design A is in the build.** Two coupled constants:
+
+- `dp_clock` is `250 SC_PS` = 4× the NoC clock ([main.cpp:127](noxim3d_src/main.cpp))
+- `DP_CLOCK_MULT 4` with `dp_dwell() = ceil(diameter / DP_CLOCK_MULT) + 3`
+  ([NoximDefs.h:252](noxim3d_src/NoximDefs.h))
+
+**Change both together or DP breaks**: the dwell formula assumes the dp clock propagates
+`DP_CLOCK_MULT` cost-hops per NoC cycle (each dp edge = one hop via `dp_rx`). No
+clock-domain crossing is involved — `dpProcess` and `routing_directionsUpdater` both key
+their phase off `sc_time_stamp`, so all 4 dp ticks inside a NoC cycle share one stime and
+the domains stay in lockstep for free. After any change, re-verify the publish margin
+(`phase%dwell==dwell-2` must be post-convergence) and realign `CINTERVAL`/sweep timing to
+the new `dp_cycle`.
+
+**All DP results in FINDINGS.md and later reflect the 4× clock.** DP numbers are not
+comparable across a change to `DP_CLOCK_MULT`.
+
+- **Design B (tick-based counter, rejected):** re-base `dpProcess` on a `dp_clock`-tick
+  counter instead of `sc_time_stamp`. Cleaner-sounding but *worse* — it breaks the free
+  sim-time coordination and forces an explicit CDC handshake (DP exposes `dp_dir`+dst+valid,
+  router latches on its own clock, DP must hold each config stable ≥1 NoC cycle). Avoid
+  unless full decoupling is needed.
 
 **See [PERFORMANCE.md](docs/PERFORMANCE.md) for profiling, fixes, and validation.**
 
