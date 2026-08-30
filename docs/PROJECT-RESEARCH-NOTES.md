@@ -2218,94 +2218,222 @@ This file is the **single active source of truth** for project-wide research sta
 
 ---
 
-# 33. Paper 1 thesis — the four-claim conclusion set
+# 33. Paper 1 thesis — the eight-claim conclusion set
 
-**Status:** Locked as the paper's thesis and contribution. All results are organised to support one of these four claims; anything unsupported gets revised. The spatially-aware policy used to demonstrate the claims is DP.
+**Status: LOCKED, synced 2026-08-30 to the claim-set artifact** ("The Eight
+Claims", claude.ai/code/artifact/ad29f1c7-494b-48c5-854a-5883d09e5987, label
+`e7-complete`) — the artifact is the authoritative rendering; this section is
+its in-repo record. Evidence base: ~20,600 simulations, 0 failures, all under
+`results_stage3/mapping_pilot/pool1000/hill/`.
 
-**Claim 1 — BIND determines delay.** What determines average delay and p99 — and hence inference time — is a single quantity, with high confidence and high correlation: BIND equals max of PF and PL. PF is the local injection/ejection port floor set by packing; PL is peak load in the network. Whichever is larger binds. Delay tracks BIND, not the individual terms.
+**This supersedes the four-claim set of 2026-08-27 and both of its Claim-4
+drafts** ("buy path diversity with communication cost"; "D_esc is the lever" —
+both retracted below). The superseded text is in git history. Offline-geometry
+results that survive the supersession are listed at the end of this section.
 
-**Claim 2 — Where PL is below PF, mapping is inert, and that is a licence not a limitation.** For mappings that do not alter BIND, no mapping choice changes delay; average and p99 stay almost the same across very different placements. The determining layer there is PO, packing orientation, not placement. Design rule: once PL below PF is verified, the mapping budget is free — spend it on thermal, communication cost, energy, load balancing, or any other objective, at no latency penalty. This converts the earlier apparent null into a positive licence for multi-objective mapping.
+**Thesis, one breath:** Packing sets the achievable operating point. Placement
+decides whether you reach it. Adaptive routing buys throughput only under two
+conditions — but buys robustness across placements of equal PL under none — and
+below the floor the choice between policies is a coin flip no offline metric
+can call.
 
-**Claim 3 — Where PL exceeds PF, mapping determines delay.** For mappings that cannot keep PL under the floor, control shifts from packing to placement, and the mapping sets average delay.
+**Reading discipline:** all gains are measured at each placement's own capacity
+point \(k^*\) or at loads fixed in advance — never at an operating point derived
+from the results being compared. Compression and gain live in the knee window
+(BL mean \(\lesssim 30\times\) free-flow); reading saturated rungs inverts them.
+Max/min over fewer than ~10 placements is unstable.
 
-**Claim 4 — In the above-floor regime the mapping lever is escape room at the binding link, and it is close to free.** Where PL exceeding PF is unavoidable, what decides whether a congestion-aware policy can recover the added delay is the load-weighted escape room on the link that binds:
+## Group 1 — the frame: which quantity belongs to which layer
 
-\[
-D_{esc}
-=
-\frac{\sum_f \lambda_f\,\phi_f\,(1-\phi_f)}{\sum_f \lambda_f\,\phi_f},
-\qquad\text{at the } PL\text{-argmax link,}
-\]
+**C0 — The two terms of BIND belong to different design layers.** *(verified)*
+\(PF\) is fixed by \((c,r,s)\) and is invariant to placement (identical to 6 dp
+across 9 permutations; spans 5.8× over ResNet's 11 feasible points). \(PL\) is
+fixed by the placement (spans 7.5× within the single packing (8,2,4)).
+\(BIND = \max(PF, PL)\) is where the two layers meet; C2–C3 say which holds
+control where.
 
-where \(\phi_f\) is the fraction of flow \(f\)'s OEB-admissible minimal paths that cross that link, so \(\phi_f = 1\) means forced — the link is a cut edge of \(f\)'s path DAG and no selection policy can divert it. \(D_{esc}\) is the component of path diversity that actually produces escapable load: it tracks the escapable fraction \(E = 1 - PL_f/PL\) at \(r = +0.85\) to \(+0.96\) in every population scored, whereas global path variety tracks it at only \(+0.43\), and not at all under a directed search.
+**C1 — Delay has two terms, and BIND governs only one.** *(verified)*
+A floor set by hop count (CC), plus congestion set by BIND. BIND sets where the
+curve bends; CC sets where it starts. At identical BIND (same packing, both
+below floor): **+15% CC → +3.7 to +6.7% free-flow delay, across three arms** —
+enough to flip the ranking between capacity and delay-at-load.
 
-**\(D_{esc}\) is not bought with communication cost.** It is decoupled from PL — the full 0–1 range of \(E\) is available within every PL quartile, \(r(E,PL) = -0.148\) — and decoupled from CC, \(r(D_{esc},CC) = +0.040\). At matched path variety it is *negatively* priced: partial \(r(E,CC\mid PV) = -0.28\). What **is** expensive is global path variety, \(r(PV_{global},CC) = +0.56\) in a random pool and \(+0.87\) under directed search — and that component does not deliver escape room, \(r(E,PV_{global}) = -0.045\) in the very sweep built to maximise it.
+## Group 2 — which layer controls where
 
-Consequence, revised: the classical minimum-communication-cost mapping is **not wrong** above the floor, it is **incomplete**. CC and escape room are largely orthogonal, so minimising CC neither buys nor forfeits \(D_{esc}\). Escape room has to be a separate search objective, not a by-product of any cost or variety term.
+**C2 — Below the floor, orientation sets the achievable delay; placement
+decides whether you get it.** *((a),(b) verified; (c) partial)*
 
-**CONFIRMED OFFLINE 2026-08-27 — open item 3 closed.** A hill-climb targeting \(D_{esc}\) directly, above the floor, with CC left free (n=22, `desc_price.py` → `desc_price.csv`) gives \(r(D_{esc},CC) = -0.221\) (ns); the top and bottom halves of the \(D_{esc}\) range differ by 3.3× in escape room and **+0.007 in CC** (t=+0.01, p=0.99). In the same population \(r(PV_{global},CC) = +0.859\) and \(r(D_{esc},PV_{global}) = -0.044\). Escape room is free, global path variety is expensive, and the expensive term buys none of the useful one. Not an argmax artifact: four placement pairs share the *identical* hot link at opposite \(D_{esc}\) extremes (0.000 vs 0.201), and in three of four the high-\(D_{esc}\) member is also cheaper in CC.
+- **(a)** At fixed PD, orientation changes capacity **1.56–1.80× in \(k^*\)**,
+  with mapping held at min-CC on both arms (`test1_po.py` / `test1c8_po.py`) —
+  so this is orientation, not placement. \((16,2,8)\) vs \((16,4,4)\): 1.80×;
+  \((8,2,4)\) vs \((8,1,8)\): 1.56×. The lower-PF orientation wins in both.
+- **(b)** Placement is **not second-order**: its spread exists only in a band
+  around the knee. Same 8 below-floor placements of (8,1,8)
+  (`belowfloor_mapping_impact.log`):
 
-**\(D_{esc}\) is itself the link-conditioned diversity measure.** The relevant diversity is \((1-\phi_f)\), the share of \(f\)'s paths avoiding \(\ell^*\), so \(D_{esc}\) is *load × diversity transverse to the bottleneck*. There is no separate PV to pair with it. Path **count** is the wrong primitive: \(n_f=100\) with every path crossing \(\ell^*\) yields zero divertibility, \(n_f=2\) with one avoiding it yields 0.5. \(PV_{global}\) is weighted by flow volume and never sees hop count or link occupancy; \(PV_{local}\) has the right weighting but keeps \(\log_2 n_f\), a whole-flow count that credits paths which also cross \(\ell^*\) — a half-conversion, and the reason it behaved inconsistently.
+  | \(PF\cdot k\) | delay spread | p99 spread | |
+  |---|---|---|---|
+  | 0.26 | 1.34× | 1.67× | light load |
+  | 0.46 | **13.62×** | **22.64×** | the knee |
+  | 0.67 | 1.28× | 1.31× | saturated |
 
-**Where PV does matter — the absorption question (open).** Offline PL assumes even spreading. Where \(D_{esc}\) is high, a real policy pulls load *off* \(\ell^*\), so the realised online peak is below the offline PL. What decides the net gain is where that load lands: with few distinct alternatives it re-concentrates on one alternate link and no peak reduction results; with many it spreads. So **\(D_{esc}\) says how much can leave, PV says whether the alternatives absorb it.** This makes offline PL an upper bound whose looseness is \(D_{esc}\), and predicts the second-hottest link limits the achievable gain. Checkable offline by recomputing the link field after removing the escapable share from \(\ell^*\). Not run.
+  Measured under BL; under DP the knee spread is 7.6× — see C7.
+- **(c)** But **min-CC already captures nearly all of it.** Searching past
+  min-CC returns ≤1.14× delay, ≤1.34× p99 at best, and 1.00× on ResNet (8,2,4)
+  from free-flow to 106× ff, at pre-specified loads. *Accepted as partial* —
+  n ≈ 6 effective pairs, one rung; error bars ±0.06 delay, ±0.14 p99.
+  The ResNet-vs-DeiT split is a **workload property, not occupancy**: the DeiT
+  density series gains at every occupancy (37% → 1.105×, 61% → 1.136×,
+  100% → 1.052×) while ResNet at 85% is null — tile count cannot explain it,
+  and the gain is not monotone in density.
 
-**REVISED 2026-08-27 — Claim 4 restated as a placement-freedom licence.** Simulation on two independent above-floor populations (PV sweep, \(n=21\), \((8,2,4)\), PL and CC pinned, BL+DP \(n=30\); cc12, \(n=12\), \((16,2,8)\), \(k=2.0\), BL+DP \(n=10\)) does **not** support \(D_{esc}\) as a predictor of DP gain, and supports a different and simpler statement instead.
+**Second-order term, retained:** at equal PF (DeiT (16,1,16) vs (16,2,8), PF
+within 0.4%, sustained rate 2.98× apart) \(k^*\) still spreads 1.30× — bursts
+matter — but PF is ~4× closer in log terms than the sustained rate as a
+predictor. **Rank orientations on PF** (sustained-rate ranking retracted).
 
-**What DP does.** DP does not make good placements faster — on the fastest placements BL matches or beats it (DP loses on 6/21 and 3/12). What DP does is remove the tail and compress the spread:
+**C3 — Above the floor, placement determines delay.** *(verified)*
+Spreads of 4.6× to 31.8× across placements, on all three workloads. With E7
+(DeiT n=7→21), \(r(PL/PF,\text{delay})\) is **positive in every population** —
+the earlier DeiT null (+0.00) was undersampling; it reads +0.52 at n=21.
 
-| population | avg spread BL → DP | CV BL → DP | worst case |
+## Group 3 — what predicts it
+
+**C4 — Peak link load predicts capacity; escape room does not.** *(verified for
+PL · E retracted)* Capacity regressed on \(PL/PF\) and \(E\), read at matched
+congestion (4× own free-flow). \(r(PL)\) is negative in **5 of 5 populations**;
+\(E\)'s sign flips and its coefficient is 4× smaller:
+
+| population | n | r(PL) | r(E) | R(PL+E) |
+|---|---|---|---|---|
+| ResNet (8,1,8) | 24 | −0.541 | −0.170 | 0.560 |
+| VGG grid | 20 | −0.580 | +0.327 | 0.741 |
+| VGG (8,2,4) | 10 | −0.633 | +0.020 | 0.635 |
+| VGG (8,4,2) | 8 | −0.838 | +0.285 | 0.957 |
+| DeiT-S (E7) | 21 | −0.561 | +0.091 | 0.571 |
+| **pooled** | **69** | **β −0.584** | **β +0.143** | **0.582** |
+
+## Group 4 — what the policy buys: two faces of one lever
+
+**C5 — DP as a throughput lever: unconditional above the floor.** *(verified)*
+Above the floor DP wins outright: **1.153× delay / 1.364× p99** (n=71, 65/71
+wins; +E7: DeiT n=21 gives 1.53×/2.70×, 16/21). Best single placement
+1.640×/2.352× — replicates on all 3 workloads. Below the floor it is
+conditional — load near the knee AND the right placement:
+
+| arm | binding | mean | best | at |
+|---|---|---|---|---|
+| ResNet (8,1,8) | ejc | 1.334× | 2.15× | \(PF\cdot k\) 0.55 (not min-PF) |
+| ResNet (8,2,4) | inj | 1.101× | 1.37× | 0.45 (min-PF at c=8) |
+| VGG (8,4,2) | inj | 1.354× | 1.85× | 0.81 (min-PF at c=8, 8/8) |
+
+The peak tracks **each packing's own knee**, not a fixed \(PF\cdot k\). Every
+arm built by a normal mapping search came out flat because those searches drive
+PL down — see C8.
+
+**C7 — DP as a robustness lever: it returns the mapping freedom PL took
+away.** *(verified — CLOSED 2026-08-30)* DP narrows the spread of delay across
+placements wherever spread exists and load is at or below the knee — **8 of 8
+qualifying populations**, spanning 3 workloads, 3 densities, 8 orientations,
+both regimes. Mechanism: **rescue of the worst placements** — on the fastest
+placements BL matches or beats DP; the worst case improves up to 7.6×
+(5566 → 732 ns). Read in each population's compression window:
+
+| population | n | spread BL → DP | ratio |
 |---|---|---|---|
-| PV sweep \(n=21\), PL pinned | 1.59× → **1.45×** | 0.145 → **0.101** | 194 → 153 |
-| cc12 \(n=12\), PL pinned | 64.3× → **8.6×** | 2.551 → **1.123** | 5566 → 732 |
-| PL sweep \(n=7\), PL varying | 1.71× → 1.79× | 0.174 → 0.209 | — |
-| PL sweep \(n=7\), \(k=1.60\) | 1.85× → 1.81× | 0.199 → 0.210 | — |
+| cc12 ResNet (16,2,8), PL pinned | 12 | 64.26× → 8.57× | 7.50 |
+| DeiT-S (8,1,8) above (E7) | 21 | 7.08× → 3.30× | 2.15 |
+| VGG (8,2,4) above, at knee | 10 | 5.25× → 1.79× | 2.93 |
+| VGG (8,4,2) above | 8 | 50.42× → 21.66× | 2.33 |
+| ResNet (8,1,8) below | 8 | 13.62× → 7.64× | 1.78 |
+| ResNet (8,1,8) above | 24 | 31.81× → 18.76× | 1.70 |
+| VGG (32,8,4) above | 22 | 20.00× → 15.35× | 1.30 |
+| PV sweep ResNet (8,2,4), PL pinned | 21 | 1.59× → 1.45× | 1.09 |
 
-The two populations that narrow are the two with **PL pinned**; the two that do not are the two with PL varying (0.41–0.49). DP cannot compress spread caused by PL itself — that is BIND, and no routing decision changes what a link must carry. It compresses the spread caused by everything else.
+Where PL is pinned, compression also appears in CV (1.43× and 2.27×) — the
+whole distribution tightens, not just the tail. **DP cannot compress variation
+caused by PL itself** (that is BIND): the two PL-varying arms show none
+(1.71×→1.79×, 1.85×→1.81×). The two non-compressing cases are the two
+*predicted failure modes*, not anomalies: past the knee saturation equalises
+placements (VGG (8,2,4) reads 0.69× at 22× ff but 2.93× at its knee), and with
+nothing to compress there is no compression (ResNet (8,2,4) below-floor spreads
+only 1.05–1.43× under BL; DP never exceeds 1.01×). **The robustness window is
+the throughput window (C5): the knee.** Scope: compression ratios are max/min
+statistics over 7–24 placements at 3 sim seeds; the PL-pinned CV results are
+the tightest-measured members.
 
-**Claim 4, restated.** *Above the floor, routing selection determines delay and p99. DP recovers the loss BL incurs and narrows the variation of both across placements of equal PL — which returns placement freedom, so the mapping can be optimised for fault tolerance, thermal balance, or other objectives at little latency cost.* This is the Claim 2 licence extended above the floor: below the floor the mapping budget is free because mapping is inert; above the floor it is largely free **once PL is chosen**, because DP flattens what remains. Claim 4 therefore sits directly beneath Claim 1 rather than competing with it.
+**C8 — Below the floor the policy choice is placement-specific and
+offline-unpredictable.** *(verified · no predictor found)* Above the floor the
+question is moot — DP wins 65/71 and a perfect oracle switch adds 0.3%. Below
+it, always-DP is *worse* than always-BL, DP wins 84 of 162, and a per-placement
+oracle beats always-DP by **1.042× delay / 1.116× p99**:
 
-**What predicts DP's gain: how badly BL is doing.** \(r(\log BL, \text{gain}) = +0.807\) over the pooled \(n=33\) (\(R^2 = 0.652\)); \(r(BL, \text{gain}) = +0.684\). Excluding the two BL-collapse cases, \(r = +0.465\) (\(p = 0.008\), \(n=31\)). BL delay is not an offline quantity, so this is a description, not a design rule.
+| regime | always BL | always DP | oracle | DP vs BL | oracle vs DP | DP wins |
+|---|---|---|---|---|---|---|
+| above, mean (n=71) | 31.0 | 27.2 | 27.1 | 1.140× | 1.003× | 65/71 |
+| below, mean (n=162) | 20.9 | 21.0 | 20.1 | 0.995× | 1.042× | 84/162 |
+| above, p99 | 222 | 170 | 168 | 1.304× | 1.015× | 60/71 |
+| below, p99 | 191 | 197 | 176 | 0.970× | 1.116× | 88/162 |
 
-**\(D_{esc}\) and \(E\) do not predict DP gain across packings.** Pooled \(n=33\): \(r(D_{esc}, \text{gain}) = +0.142\) (ns), \(r(E, \text{gain}) = +0.120\) (ns); adding \(D_{esc}\) to a \(\log BL\) model *lowers* adjusted \(R^2\) (0.641 → 0.636, \(t = -0.79\)). Within each population separately they are strong but **opposite in sign** — \(r(E,\text{gain}) = -0.512\) in the PV sweep, \(+0.792\) in cc12; \(r(E, BL) = -0.819\) versus \(+0.757\). A predictor that reverses between packings is a proxy, not a mechanism — the same failure mode as \(PR\) (§ earlier). The offline geometry results above stand; only the tie to *measured delay* fails.
+Every offline predictor tested has failed: E flips sign, E_transit is actively
+harmful, PL/PF is weak below the floor, CC is null. What does predict DP's gain
+is **how badly BL is doing — observable only online**. This is the bridge to a
+learned selection policy: the 4–12% below the floor is real, per-placement, and
+needs an online signal. (Per-seed detail: on p99 DP collects the gain on 20 of
+29 gaining seeds and owns every gain above 1.7× — hence "DP everywhere for
+tail" in the design rule.)
 
-**What \(E\) does predict, within a fixed packing, is BL delay.** At pinned PL and CC (PV sweep, \(n=21\), BL spanning 1.59×): \(r(E, BL) = -0.819\), \(r(D_{esc}, BL) = -0.775\), against \(PV_{local}\) \(-0.368\) (ns) and \(PV_{global}\) \(+0.092\) (ns). More escape room means BL is *already fast*, which is precisely why \(E\) predicts DP gain negatively there: escape room removes DP's opportunity rather than creating it.
+## Group 5 — scope
 
-> **⚠️ Claim 4 items 1, 2 and 4 REMAIN OPEN.** Everything above it rests on
-> offline path geometry over existing placement populations — **no simulation**.
-> It supersedes the earlier wording ("buy path diversity with communication
-> cost"), whose premise that diversity and CC are inversely coupled is not
-> supported by the measured matrix. Open before this claim is written up:
->
-> 1. **Does \(D_{esc}\) predict measured delay and DP−BL gain above the floor?**
->    Current support is the m1/m2 escapable-fraction pair — 2 placements, n=10
->    seeds, \((16,2,8)\), one load point — plus the regime split. That is a
->    two-point observation, not a result.
-> 2. **\(D_{esc}\) is the DP-exploitable quantity; BL realises only a subset.**
->    *(Reworded 2026-08-27 — the earlier version had this backwards.)*
->    \(\phi_f\) is a whole-path property, so \(\phi_f=1\) means \(\ell^*\) is a cut
->    edge of \(f\)'s path DAG and no policy can divert \(f\); \(\phi_f<1\) means
->    complete \(\ell^*\)-avoiding routes exist. DP propagates cost-to-go and can
->    place \(f\) on one from injection, so it acts on the full \((1-\phi_f)\); BL
->    sees one hop and can only take a branch at the node it occupies, a strict
->    subset. Prediction: \(D_{esc}\) tracks DP gain more tightly than BL, and the
->    DP−BL difference is the part BL's horizon cannot reach. Untested.
-> 3. **Does \(D_{esc}\) stay free in CC when a search targets it directly?** The
->    negative partials come from a search optimising PL with CC left free, so
->    they describe the region that search traversed, not the whole space.
-> 4. **Sample.** All scored populations are ResNet \((8,2,4)\); only 28
->    placements sit above the floor and 21 of those have PL frozen by
->    construction. The geometry relations are regime-independent and unaffected,
->    but anything tying \(D_{esc}\) to *delay* needs an above-floor population
->    that does not yet exist.
->
-> Scoring code and data: `results_stage3/mapping_pilot/pool1000/hill/`
-> — `escapable_analytic.py`, `e_vs_pl_cc.py`, `corr_matrix.py`,
-> `plf_vs_pv.py` and their CSVs. `metrics.py` is unmodified.
+**C6 — The regime where adaptivity pays for throughput is not naturally
+reachable.** *(verified)* Above-floor is entered by **deliberate provisioning
+only**: min-CC mapping, thermal spreading (3 model fidelities), link faults,
+TSV clustering, and multi-tenancy all leave \(PL/PF < 1\).
 
-**Structural point.** The regime boundary is the contribution. It tells a designer which layer to optimise, and in the free regime it licenses spending the mapping budget elsewhere — more useful than any single delay number.
+## Retractions in force
 
-**Terminology.** The regime boundary is the design-space line where PL crosses PF. The hinge is the statistical device that detects and measures it. One phenomenon, two vocabularies: argue the regime boundary in the text, cite the hinge regression as evidence.
+1. **Sustained rate as the orientation-ranking metric** — tested; PF is ~4×
+   closer to measured \(k^*\).
+2. **E_transit as objective or gate** — degrades placements under both
+   policies (n=56).
+3. **E (and D_esc) as a mapping objective or DP-gain predictor** — sign flips
+   once the congestion confound is removed (C4).
+4. **"Mapping is inert below the floor"** — contradicted by the 13.6× knee
+   spread (C2b). Use the banded form: inert at light load and in saturation,
+   decisive at the knee.
 
-**Evidence provenance, to keep straight.** Claim 1 rests on the hinge regression: R-squared 0.735 mean under BL, 0.559 under DP, above-floor slope significant, below-floor slope flat and non-significant. The roughly seventy percent figure on both mean and p99 came from a high-versus-low diversity comparison at fixed above-floor PL, so it is **Claim 4 evidence, not a BIND fit** — do not attach it to Claim 1.
+## Design rule (paper-facing)
 
+Pick the orientation on **PF**. Map with **min-CC**. If searching further,
+minimise **PL**. For tail latency run **DP everywhere**; above the floor run DP
+unconditionally; below it DP still buys the tail (C7) but costs 0.5–3% on the
+mean, and the 4–12% from per-placement policy choice needs an online signal no
+offline metric supplies (C8).
 
+## Bridge to the next stage
+
+The **knee reserve**: 1.1–1.2× delay / 1.2–1.4× p99 sits at the knee, uniform
+across arms, offline-unpredictable, and DP-collected on tails. That reserve is
+the target of the online-adaptivity stage (improved temporal+spatial DP; the
+bar is always-DP, the ceiling is the oracle's +4.2%/+11.6%).
+
+## Surviving offline-geometry results (supporting material, not claims)
+
+- **Escape room is free; global path variety is expensive** (`desc_price.py`,
+  n=22): \(r(D_{esc},CC) = -0.221\) (ns) vs \(r(PV_{global},CC) = +0.859\);
+  3.3× escape room for +0.007 CC. Kept as the F3/desc-price exhibit; it
+  explains *why* rescue costs nothing, but neither quantity predicts gain (C4).
+- **The absorption question** (open, offline-checkable): \(D_{esc}\) says how
+  much load can leave \(\ell^*\); whether the alternatives absorb it decides
+  the realised peak. Recompute the link field after removing the escapable
+  share — not run, and not needed for Paper 1.
+- **Convergence-axis observation** (in-sample only, n=8): sustained/PEL−PIL/
+  scatter-reduce composition tracks p99 reserve (spearman +0.88). Optional
+  falsification on ResNet (16,1,16) exists with a prediction on record
+  (p99 reserve ≥ 1.43×); run only if promoted beyond an observation.
+
+**Terminology.** The regime boundary is the design-space line where PL crosses
+PF; the hinge is the statistical device that detects it. Argue the regime
+boundary in prose, cite the hinge regression as evidence. "The knee" is a
+load point (onset of congestive delay growth); the regime boundary is a
+design-space line — do not conflate them.

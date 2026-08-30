@@ -1,0 +1,212 @@
+% =====================================================================
+% RESULTS -- structured by the claim set (PROJECT-RESEARCH-NOTES §33).
+% Budget: ~2.5 pages of the 6.  Slots: F0, F1, F2 + tables T3 (+defs).
+% Policy rule: DP appears only in the Claim-4 material (R3/R4);
+% R1/R2 are argued BL-only.
+% =====================================================================
+\section{Results}
+\label{sec:results}
+
+\subsection{Metrics and operating point}
+\label{sec:defs}
+For a packing $(c,r,s)$ and a placement of its tiles onto the $6{\times}6{\times}3$
+mesh, all predictors below are computed offline from the traffic table alone.
+
+\begin{itemize}
+  \item \textbf{Port floor} $\PF = \max(\mathrm{PIL},\mathrm{PEL})$: the peak
+  per-node injection (PIL) or ejection (PEL) rate, in flits/cycle. Both terms are
+  fixed by the flow graph, so $\PF$ is \emph{placement-invariant}: remapping
+  relabels which node is hot, never how hot it is (verified identical to six
+  decimal places across random permutations).
+  \item \textbf{Peak link load} $\PL$: the maximum offered rate on any
+  router-to-router channel when each flow spreads evenly over its admissible
+  minimal paths under the routing function. $\PL$ is the only term a placement
+  moves.
+  \item \textbf{Binding load} $\BIND = \max(\PF, \PL)$.
+  \item \textbf{Escapable fraction} $\Esc = 1 - \PL_f/\PL$ at the peak link,
+  where $\PL_f$ counts only flows for which \emph{every} admissible path crosses
+  that link. $\Esc$ is the share of the hot link's load that a selection policy
+  could, in principle, divert.
+  \item \textbf{Per-mapping capacity} $\kstar$: the injection scale at which a
+  mapping reaches twice its own free-flow delay, interpolated from a load
+  ladder. Mappings are compared at their own $\kstar$, never at one global
+  load~\todo{cite the k* method note}.
+\end{itemize}
+
+Load is reported as the fraction $\PF{\cdot}k$ of the binding port's capacity;
+the three workloads all knee at 44--48\% of the dominant reduction sink's
+ejection bandwidth, so this normalization is workload-independent.
+
+\subsection{Packing sets the floor, and minimum traffic does not minimize it}
+\label{sec:r1}
+
+% ---- Claim 0 + Claim 2 (the PO half). Figure F0. BL-only section. ----
+
+At fixed density $c$, the orientation $(r,s)$ decides how much of the partial-sum
+reduction is internalised on-tile and how much reaches the NoC, and thereby sets
+$\PF$: across ResNet-50's eleven feasible $(c,r,s)$ points $\PF$ spans
+$0.258$--$1.494$ flits/cycle ($5.8\times$) before a single placement decision is
+made. Placement, by contrast, moves only $\PL$ (span $7.5\times$ within one
+packing). The two terms of $\BIND$ therefore belong to different design layers
+--- $\PF$ to packing, $\PL$ to placement --- and the rest of this section
+establishes which layer holds control in which regime.
+
+Fig.~\ref{fig:designspace} plots every feasible packing of the three workloads
+in the (traffic volume, $\PF$) plane. The classical pre-NoC objective ---
+minimize communication volume --- and the architecture-aware objective ---
+minimize $\PF$ --- select \emph{different} orientations in five of the eight
+$(workload, c)$ cells where more than one orientation exists. The disagreement
+is not marginal: at $c{=}16$, ResNet-50's minimum-volume orientation $(4,4)$
+carries a $2.78\times$ higher floor than $(2,8)$, which costs only $8\%$ more
+traffic; VGG-16 at $c{=}32$ shows the same pattern ($2.57\times$ the floor,
+$7\%$ traffic). Where the trade is expensive the figure says so: DeiT-S buys
+its $1.8$--$3.2\times$ floor reductions with $1.6\times$ the traffic. Minimum
+bytes selects the burstiest packings; it is the wrong objective whenever the
+floor, not the volume, binds --- which Sec.~\ref{sec:r2} shows is exactly the
+regime that matters.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig0_packing_designspace.pdf}
+  \caption{The packing design space: traffic volume against port floor $\PF$,
+  all feasible $(c,r,s)$ points, argmins taken \emph{within} each density $c$.
+  Arrows run from the minimum-volume orientation to the minimum-$\PF$
+  orientation at the same $c$; rings mark cells where the two objectives agree.
+  This figure argues about the floor; that the floor determines delay is
+  established in Fig.~\ref{fig:hinge}.}
+  \label{fig:designspace}
+\end{figure}
+
+\subsection{The regime boundary: delay is flat below the floor and steep above}
+\label{sec:r2}
+
+% ---- Claims 1-3. Figure F1 (BL only). Hinge + licence + margin hedge. ----
+
+Fig.~\ref{fig:hinge} plots mean delay against $\PL$ for 24 placements of one
+packing spanning $\PL = 0.127$--$0.490$ ($3.9\times$) at two loads, with path
+variety pinned so $\PL$ is the only moving predictor. Delay does not respond to
+$\PL$ until $\PL$ crosses $\PF$, and responds sharply after: a hinge regression
+at the floor yields $R^2 = 0.735$ (vs.\ $0.404$ linear), with a below-floor
+slope indistinguishable from zero ($t=-0.16$) and an above-floor slope of
+$+655$ cycles per unit load ($t=+5.13$, $p<10^{-4}$). The hinge replicates at a
+second load level ($R^2 = 0.705$; slope ratio $64$--$72\times$ across
+$k$)~\todo{regenerate fig with the E1 grid; cite exact fig file}.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{hill_pl_hinge.png}
+  \caption{Mean delay against peak link load $\PL$ under local (buffer-level)
+  selection, $\PF$ marked. Below the floor a $3.07\times$ spread in $\PL$ moves
+  delay $1.15$--$1.18\times$ (n.s.); above it a $1.20\times$ spread moves delay
+  $1.71$--$1.85\times$. \todo{replace with E1-grid version, BL only}}
+  \label{fig:hinge}
+\end{figure}
+
+\textbf{Below the floor, the packing orientation is the determining layer.}
+With $\BIND = \PF$, delay tracks the floor itself
+%(elasticity ${\approx}4.4$ against $\PF{\cdot}k$)
+\todo{E5: PF varied through $(r,s)$ at matched $k$ -- currently varied through
+$k$ only; run E5 before submission}, and placement is inert: seventeen
+placements spanning $3.07\times$ in $\PL$ move mean delay $1.15\times$
+(n.s.). We stress the constructive reading: \emph{verifying $\PL < \PF$ frees
+the entire mapping budget} for objectives that are not latency --- thermal
+spreading, energy, load balance --- at no delay or p99 penalty. On DeiT-S this
+licence replicates end-to-end: at two packings held below their floors, a
+placement searched for escapable fraction plus a free choice of selection
+policy buys $0.99$--$1.11\times$ over the classical minimum-hop mapping with
+local selection (1{,}344 runs; indistinguishable from parity at most loads).
+
+The licence carries one condition: \emph{margin}. Among eight placements all
+below the floor, capacity $\kstar$ still varies $1.28\times$ and correlates
+with proximity to the boundary ($r(\PL/\PF, \kstar) = -0.70$); at mid-load the
+two placements nearest the floor degrade $13.6\times$ earlier than the rest.
+The budget is free at $\PL \lesssim 0.6\,\PF$, not asymptotically up to the
+boundary.
+
+\textbf{Above the floor, control passes to placement.} Across the 24-placement
+grid of Sec.~\ref{sec:r4}, $\PL$ predicts per-mapping capacity at
+$r(\PL,\kstar) = -0.60$ ($p=0.002$), and capacity spans $1.50\times$ across
+placements of the \emph{same} packing. This is also the first simulator
+validation of the offline $\PL$ model ($R^2 = 0.37$): a moderate capacity
+predictor, no more~\todo{VGG replication: $r(\PL,\kstar)=-0.72$, BL arm; DP arm
+and DeiT-S pending (E7)}.
+
+\subsection{Selection pays only above the floor, and only where load can escape}
+\label{sec:r3}
+
+% ---- Claim 4, part 1. Table T3. DP enters the paper HERE. ----
+
+Table~\ref{tab:regime} compares the distributed cost-to-go policy (DP) against
+the local buffer-level heuristic (BL) on identical placements, split by regime.
+Below the floor the policies are statistically indistinguishable --- no routing
+decision reaches a flit that has not entered the network --- while above it DP
+removes $7$--$10\%$ of mean delay. The gain is not universal: it requires
+escapable load. Pooled across five workload/packing arms ($n{=}71$
+placements), DP's capacity gain tracks the escapable fraction $\Esc$ on
+ejection-bound packings ($r = +0.59$, $p=0.0002$) and vanishes on
+injection-bound ones ($r = +0.07$, n.s.), where the binding port is upstream of
+every routing decision.
+
+\begin{table}[t]
+  \caption{DP vs.\ BL mean delay on identical placements, by regime
+  (24 placements, $n{=}30$ seeds).}
+  \label{tab:regime}
+  \centering
+  \begin{tabular}{lcccc}
+    \toprule
+    & \multicolumn{2}{c}{$k=1.60$} & \multicolumn{2}{c}{$k=1.80$} \\
+    regime & $\Delta$ & $p$ & $\Delta$ & $p$ \\
+    \midrule
+    below floor ($n{=}17$) & $-0.0\%$ & $0.98$ & $-1.1\%$ & $0.37$ \\
+    above floor ($n{=}7$)  & $\mathbf{-10.0\%}$ & $0.0005$ & $\mathbf{-6.7\%}$ & $0.008$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Adaptive selection returns the mapping freedom that congestion took}
+\label{sec:r4}
+
+% ---- Claim 4, part 2. Figure F2 (c4_spread). The variance story. ----
+
+The headline effect of DP is not its mean --- it is its \emph{variance across
+placements}. Fig.~\ref{fig:spread} compares the two policies over placements of
+equal $\PL$ above the floor. DP does not make the best placements faster (BL
+matches or beats it there); it removes the tail: across 21 equal-$\PL$
+placements the delay spread contracts from $1.59\times$ to $1.45\times$ (CV
+$0.145 \to 0.101$), and in a population containing BL-collapse cases from
+$64\times$ to $8.6\times$. On the capacity axis the same grid gives DP a mean
+$+10.3\%$ $\kstar$ gain ($p=2.3\times10^{-4}$, positive on 18/24), sized by
+$\Esc$: a two-predictor model $\mathrm{gain} \sim \Esc + \PL$ reaches adjusted
+$R^2 = 0.55$, and every placement where DP loses is low-$\Esc$.
+
+The design consequence mirrors Sec.~\ref{sec:r2}: once a $\PL$ level is fixed,
+the choice \emph{among} equal-$\PL$ placements matters far less under DP than
+under BL --- adaptive selection extends the below-floor mapping licence into
+the congested regime. What it does not do is substitute for the placement
+decision itself: the $\kstar$ spread across $\PL$ levels survives under both
+policies.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{c4_spread.png}
+  \caption{Delay across placements of equal peak link load, BL vs.\ DP, above
+  the floor ($k=0.65$). DP compresses the spread across placements rather than
+  shifting its floor. \todo{final styling pass; confirm k in caption}}
+  \label{fig:spread}
+\end{figure}
+
+\subsection{Scope and threats to validity}
+\label{sec:r5}
+
+% ---- the caveats that must travel with any citation ----
+
+$\PL$, $\PL_f$ and $\Esc$ are offline path-enumeration models; only $\PL$ has
+been validated against the simulator, and only as a moderate capacity predictor
+($R^2=0.37$). The even-spreading assumption behind $\PL$ models an ideal
+balancer, which BL is not --- BL underperforms its own $\PL$ estimate in
+proportion to $\Esc$. All results use one $6{\times}6{\times}3$ mesh; mesh-size
+generality is out of scope. Partial sums are carried at INT32, a convention
+that \emph{overstates} the reduction traffic the contribution exploits; the
+placement rankings survive at 16-bit for ResNet and VGG. Cross-workload
+replication is complete for the hinge and the licence, partial for the
+selection results~\todo{close with E7 + VGG DP arm, then finalize}.
