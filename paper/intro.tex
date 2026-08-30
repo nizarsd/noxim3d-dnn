@@ -1,0 +1,15 @@
+% =====================================================================
+% §1 INTRODUCTION — 0.75 pp, no figure.
+% Plan per STRUCTURE.md: P1 hook-a, P2 hook-b, P3 chain+contributions,
+% P4 scope+organisation.
+% This file holds the POINTS TO BE EXPRESSED per paragraph, as bullets.
+% Prose gets written here only after the points are agreed.
+% =====================================================================
+\section{Introduction}
+\label{sec:intro}
+Deep Neural Networks (DNNs) have become the dominant workload class across computing. They underpin the vast majority of AI-based applications, and DNN inference has become infrastructure, running continuously from edge devices to warehouse-scale data centers~\cite{jouppi2017tpu}. The latency and energy budget of DNN accelerators is therefore a first-order design metric, and a primary axis of competition among chip designers and manufacturers.  Weight movement is what drives this budget in conventional accelerators~\cite{horowitz2014energy,sze2017efficient}. In-Memory Computing (IMC) eliminates weight traffic by keeping weights in place and performing Multiply-Accumulate (MAC) operations locally. This alleviates the weight-movement bottleneck, improving performance while reducing the communication energy budget and launching a new generation of IMC DNN accelerators~\cite{sebastian2020memory,shafiee2016isaac,chi2016prime}. However, single array capacity is nowhere near occupying all weights for a full, DNN making tile architecture inevitable. For example one ResNet-50 block requires 736 crossbars (CBs) and a full network requires over ten thousand. Because ADC peripherals have a large area and power overhead, they are shared across the area of a tile. This limits the number of CBs that fit in a tile resulting in the computation being split among hundreds or even thousands of tiles \cite{shafiee2016isaac}.
+
+
+IMC therefore does not remove communication; it relocates it: activations and, dominantly, partial-sum reductions — roughly 82\% of the block's bytes — now travel between tiles over the on-chip network.
+
+
