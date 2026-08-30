@@ -1,0 +1,62 @@
+% DATE submission scaffold -- IEEE conference format, 6 pages.
+% Compile with pdflatex (Overleaf: set compiler to pdfLaTeX).
+\documentclass[conference]{IEEEtran}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage[colorlinks=false,pdfborder={0 0 0}]{hyperref}
+
+\graphicspath{{../figs/}{figs/}}
+
+% draft aids -- strip before submission
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+
+% metric macros -- keep notation consistent everywhere
+\newcommand{\PF}{\mathrm{PF}}
+\newcommand{\PL}{\mathrm{PL}}
+\newcommand{\BIND}{\mathrm{BIND}}
+\newcommand{\Esc}{E}
+\newcommand{\kstar}{k^{*}}
+
+\begin{document}
+
+\title{\todo{title -- current favourite: Communication-Aware DSE for IMC DNN
+Accelerators: Co-Optimizing Crossbar Packing, Tile Placement, and Adaptive
+3D-NoC Selection}}
+
+\author{\IEEEauthorblockN{\todo{authors}}
+\IEEEauthorblockA{\todo{affiliation}}}
+
+\maketitle
+
+\begin{abstract}
+\todo{abstract -- write last}
+\end{abstract}
+
+\section{Introduction}
+\todo{intro -- opens with the regime contrast (below floor a $3.07\times$
+spread in peak link load moves delay $1.15\times$; above it a $1.20\times$
+spread moves delay $1.71\times$), then the four-claim thesis}
+
+\section{Background and Related Work}
+\todo{background}
+
+\section{System Model and Metrics}
+\todo{fold the definitions block in results back here if space allows}
+
+\section{Methodology}
+\todo{converter, offline scorer, search, simulator setup}
+
+\input{results}
+
+\section{Conclusion}
+\todo{conclusion + the three directions (temporal DP, thermal-aware mapping,
+router design for reduction sinks)}
+
+\bibliographystyle{IEEEtran}
+% \bibliography{refs}
+
+\end{document}

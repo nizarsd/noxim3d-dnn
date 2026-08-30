@@ -1,0 +1,4 @@
+BL vs DP -- every placement evaluated at its OWN k*_BL (2x its own free-flow).
+gain = BL / DP, so >1 means DP is faster.  3 sim seeds per point.
+
+                   arm                  note    n | delay mean    med    max     win | p99 mean    med    max     win
