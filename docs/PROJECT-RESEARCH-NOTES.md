@@ -2222,9 +2222,9 @@ This file is the **single active source of truth** for project-wide research sta
 
 **Status: LOCKED, synced 2026-08-30 to the claim-set artifact** ("The Eight
 Claims", claude.ai/code/artifact/ad29f1c7-494b-48c5-854a-5883d09e5987, label
-`e7-complete`) — the artifact is the authoritative rendering; this section is
-its in-repo record. Evidence base: ~20,600 simulations, 0 failures, all under
-`results_stage3/mapping_pilot/pool1000/hill/`.
+`sustained-convergence`) — the artifact is the authoritative rendering; this
+section is its in-repo record. Evidence base: ~21,300 simulations, 0 failures,
+all under `results_stage3/mapping_pilot/pool1000/hill/`.
 
 **This supersedes the four-claim set of 2026-08-27 and both of its Claim-4
 drafts** ("buy path diversity with communication cost"; "D_esc is the lever" —
@@ -2412,10 +2412,45 @@ offline metric supplies (C8).
 
 ## Bridge to the next stage
 
-The **knee reserve**: 1.1–1.2× delay / 1.2–1.4× p99 sits at the knee, uniform
-across arms, offline-unpredictable, and DP-collected on tails. That reserve is
-the target of the online-adaptivity stage (improved temporal+spatial DP; the
-bar is always-DP, the ceiling is the oracle's +4.2%/+11.6%).
+The **runtime gain** — baseline (min-CC + BL) p99 over the best runtime arm
+(minCC+DP / fairE+BL / fairE+DP) at the best knee-window rung — sits at the
+knee, spans 1.16–1.69× p99 (1.10–1.44× delay) across the nine arms, is graded
+by **sustained convergence** (next subsection), seed-unpredictable offline,
+and DP-collected on tails. That gain is the target of the online-adaptivity
+stage (improved temporal+spatial DP; the bar is always-DP, the ceiling is the
+oracle's +4.2%/+11.6%).
+
+## Sustained convergence — what grades the runtime gain
+
+**Sustained convergence** = the time-averaged load of the busiest port over
+the whole period. It is the *max time-averaged* port, **not** the PF port —
+for the DeiT injection-bound packings the PF port time-averages to only
+0.07–0.10 and the sustained port is a different, ejection port. In 7 of 9
+arms that port is a psum-collection funnel.
+
+- **Result:** sustained convergence vs p99 runtime gain across arms: Spearman
+  ρ = +0.930 (exact permutation p = 0.0005), Pearson +0.919, n = 9 arms
+  (8 distinct packings — ResNet (8,2,4) appears twice). LOO |err| 0.055 vs
+  sd 0.139. Beats PEL/PIL (+0.87) and the z-composite (+0.87); one feature,
+  no combination helps.
+- **Out-of-sample pass:** ResNet (16,1,16), off-scale on the axis (sust
+  0.576, PEL/PIL 3.54), was predicted ≥ 1.43× p99 *before* running; measured
+  **1.694× p99 / 1.436× delay** at k = 0.52 (7/8 and 6/8 seeds gain;
+  jackknife floor 1.447×; 688 sims, 0 failures). Files:
+  `flow_r1616_sel.csv`, `res_r1616_{bl,dp}.txt`, `run_r1616.log`.
+- **Division of labour with PF:** PF (the burst peak) sets the floor and the
+  regime; sustained convergence (the duty-cycle max; sust ≤ PF,
+  k_max = 1/sust) sets the runtime gain. On ejection-bound packings both
+  live on one port, so the highest-gain packing is also the highest-floor
+  one — (16,1,16) has both (PF 0.959).
+- **Scatter/reduce is the side label, not a gradient:** at the hot port the
+  class mix is binary — pure reduce when ejection-bound, scatter-dominated
+  when injection-bound — so it adds nothing over PEL/PIL.
+- **Caveats:** packing-granularity only — within a packing no offline metric
+  separates gaining from non-gaining seeds (48 placement-pairs, all
+  |r| < 0.25; consistent with C4/C8) — and (16,1,16) is an off-flow point
+  (ResNet's min-PF at c=16 is (16,2,8)), so this grades the mechanism, not
+  the design flow.
 
 ## Surviving offline-geometry results (supporting material, not claims)
 
@@ -2427,10 +2462,9 @@ bar is always-DP, the ceiling is the oracle's +4.2%/+11.6%).
   much load can leave \(\ell^*\); whether the alternatives absorb it decides
   the realised peak. Recompute the link field after removing the escapable
   share — not run, and not needed for Paper 1.
-- **Convergence-axis observation** (in-sample only, n=8): sustained/PEL−PIL/
-  scatter-reduce composition tracks p99 reserve (spearman +0.88). Optional
-  falsification on ResNet (16,1,16) exists with a prediction on record
-  (p99 reserve ≥ 1.43×); run only if promoted beyond an observation.
+- ~~Convergence-axis observation~~ — promoted 2026-08-30 to the sustained
+  convergence subsection above, after the ResNet (16,1,16) out-of-sample
+  pass.
 
 **Terminology.** The regime boundary is the design-space line where PL crosses
 PF; the hinge is the statistical device that detects it. Argue the regime
