@@ -109,7 +109,9 @@ channels, so injection and ejection are independent).
 | **PD** / **PO** | packing density `c` / orientation `(r,s)`, `r·s = c` | no |
 | **PIL** / **PEL** | peak injection / ejection load | **no** |
 | **PF** | port floor = `max(PIL, PEL)` — never their sum | **no** |
+| **SC** | sustained convergence = `max_p (1/T)·∫ load_p(t) dt`, highest time-integrated port load; `SC ≤ PF`, `k_max = 1/SC`; runtime-gain correlation ρ=+0.93 is IN-SAMPLE (n=9) — out-of-sample 1 pass / 1 FAIL (VGG (32,4,8): predicted 1.8×, measured 1.11× p99) | **no** |
 | **PL** | peak link load (inter-router, first hop included) | yes |
+| **ES** | escape slope = E₂₀ − E₅ (load-weighted escapable fraction of the top-20% vs top-5% hottest links); flat ES = rigid hot tier = more runtime gain. The 5→20 span is the **empirically shown best** of 18 tested (Q² +0.55/+0.60; neighbouring spans null or sign-flipped) — shown, not derived; FAILED VGG (32,4,8) validation (seed-level sign-inconsistent) — diagnostic only | yes |
 | **BIND** | `max(PL, PF)` — the delay predictor, r ≈ +0.86 | yes |
 | **PLf** | forced link load (edges every admissible path uses) | yes |
 | **CC** / **PV** / **PR** | comm cost / path variety / peak router load | yes |
@@ -132,8 +134,12 @@ channels, so injection and ejection are independent).
   reverses the ranking.
 - **Thermal is out of scope as analysis** — it appears only as the *motivation* for
   spreading a placement (which is what puts the design in the regime where DP pays).
-- **PL and PLf are offline models, never validated against the simulator.**
-  `-detailed` reports per-(src,dst) pairs, not per-link. Say so when citing them.
+- **PL and PLf are offline models; PL now spot-validated via DPTRACE**
+  (2026-08-31, one placement, 7 links ranks 1-50): measured/predicted 0.88-1.01
+  under BL, rank order ρ=+0.89; model biased slightly high on hot links, and DP
+  shifts load from the top link onto cool ones (rank-50 at 1.25× model). Still
+  unvalidated in general — `-detailed` reports per-(src,dst) pairs, not per-link;
+  per-link truth needs a DPTRACE rerun per link. Say so when citing.
 - **Never compare an optimised point against arbitrary ones.** That error produced
   two wrong conclusions in one session. Optimise both arms, or compare within a
   single sampling regime.

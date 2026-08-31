@@ -2220,11 +2220,12 @@ This file is the **single active source of truth** for project-wide research sta
 
 # 33. Paper 1 thesis — the eight-claim conclusion set
 
-**Status: LOCKED, synced 2026-08-30 to the claim-set artifact** ("The Eight
+**Status: LOCKED, synced 2026-08-31 to the claim-set artifact** ("The Eight
 Claims", claude.ai/code/artifact/ad29f1c7-494b-48c5-854a-5883d09e5987, label
-`sustained-convergence`) — the artifact is the authoritative rendering; this
-section is its in-repo record. Evidence base: ~21,300 simulations, 0 failures,
-all under `results_stage3/mapping_pilot/pool1000/hill/`.
+`predictor-campaign`) — the artifact is the authoritative rendering; this
+section is its in-repo record. Evidence base: ~36,000 simulations, 0 true
+failures, under `results_stage3/mapping_pilot/pool1000/hill/` and
+`results_stage3/z_sensitivity/`.
 
 **This supersedes the four-claim set of 2026-08-27 and both of its Claim-4
 drafts** ("buy path diversity with communication cost"; "D_esc is the lever" —
@@ -2404,53 +2405,80 @@ TSV clustering, and multi-tenancy all leave \(PL/PF < 1\).
 
 ## Design rule (paper-facing)
 
-Pick the orientation on **PF**. Map with **min-CC**. If searching further,
-minimise **PL**. For tail latency run **DP everywhere**; above the floor run DP
-unconditionally; below it DP still buys the tail (C7) but costs 0.5–3% on the
-mean, and the 4–12% from per-placement policy choice needs an online signal no
-offline metric supplies (C8).
+Pick the orientation on **PF**. Map with **min-CC**, then run the free
+**maxES** climb (max ES s.t. CC ≤ CCmin, PL ≤ PL(minCC)): if ES moves
+(≥ ~+0.05), keep the maxES placement — it buys ~5–12% mean delay and up to
+1.43× p99 at the knee, under either policy, at zero CC/PL cost (**3
+workloads** — ResNet (8,2,4), DeiT (16,1,16), VGG (8,4,2); 3-arm Fisher:
+BL p99 p = 0.016, BL delay 0.025, DP delay 0.046); if ES will not move,
+the packing is in the dominant-flow regime and there is nothing to collect (the checkpoint IS the
+applicability test — VGG (32,4,8) has neither headroom nor, when a budget
+forces the contrast, any effect). If searching further, minimise **PL**.
+For tail latency run **DP everywhere**; above the floor run DP
+unconditionally; below it DP still buys the tail (C7) but costs 0.5–3% on
+the mean, and the 4–12% from per-placement policy choice needs an online
+signal no offline metric supplies (C8).
 
 ## Bridge to the next stage
 
 The **runtime gain** — baseline (min-CC + BL) p99 over the best runtime arm
 (minCC+DP / fairE+BL / fairE+DP) at the best knee-window rung — sits at the
-knee, spans 1.16–1.69× p99 (1.10–1.44× delay) across the nine arms, is graded
-by **sustained convergence** (next subsection), seed-unpredictable offline,
-and DP-collected on tails. That gain is the target of the online-adaptivity
-stage (improved temporal+spatial DP; the bar is always-DP, the ceiling is the
-oracle's +4.2%/+11.6%).
+knee, spans **1.06–1.69× p99 (1.06–1.44× delay) across the ten arms**,
+is seed-unpredictable offline (see below), and DP-collected on tails. That
+gain is the target of the online-adaptivity stage (improved temporal+spatial
+DP; the bar is always-DP, the ceiling is the oracle's +4.2%/+11.6%).
 
-## Sustained convergence — what grades the runtime gain
+## The predictor campaign — outcome (2026-08-31)
 
-**Sustained convergence** = the time-averaged load of the busiest port over
-the whole period. It is the *max time-averaged* port, **not** the PF port —
-for the DeiT injection-bound packings the PF port time-averages to only
-0.07–0.10 and the sustained port is a different, ejection port. In 7 of 9
-arms that port is a psum-collection funnel.
+An exhaustive attempt to predict runtime gain offline. Net result: **no
+offline quantity predicts it at either granularity**, and the exhaustiveness
+is itself the strongest evidence behind C8. ~15,000 additional sims.
 
-- **Result:** sustained convergence vs p99 runtime gain across arms: Spearman
-  ρ = +0.930 (exact permutation p = 0.0005), Pearson +0.919, n = 9 arms
-  (8 distinct packings — ResNet (8,2,4) appears twice). LOO |err| 0.055 vs
-  sd 0.139. Beats PEL/PIL (+0.87) and the z-composite (+0.87); one feature,
-  no combination helps.
-- **Out-of-sample pass:** ResNet (16,1,16), off-scale on the axis (sust
-  0.576, PEL/PIL 3.54), was predicted ≥ 1.43× p99 *before* running; measured
-  **1.694× p99 / 1.436× delay** at k = 0.52 (7/8 and 6/8 seeds gain;
-  jackknife floor 1.447×; 688 sims, 0 failures). Files:
-  `flow_r1616_sel.csv`, `res_r1616_{bl,dp}.txt`, `run_r1616.log`.
-- **Division of labour with PF:** PF (the burst peak) sets the floor and the
-  regime; sustained convergence (the duty-cycle max; sust ≤ PF,
-  k_max = 1/sust) sets the runtime gain. On ejection-bound packings both
-  live on one port, so the highest-gain packing is also the highest-floor
-  one — (16,1,16) has both (PF 0.959).
-- **Scatter/reduce is the side label, not a gradient:** at the hot port the
-  class mix is binary — pure reduce when ejection-bound, scatter-dominated
-  when injection-bound — so it adds nothing over PEL/PIL.
-- **Caveats:** packing-granularity only — within a packing no offline metric
-  separates gaining from non-gaining seeds (48 placement-pairs, all
-  |r| < 0.25; consistent with C4/C8) — and (16,1,16) is an off-flow point
-  (ResNet's min-PF at c=16 is (16,2,8)), so this grades the mechanism, not
-  the design flow.
+- **SC (sustained convergence, `max_p (1/T)·∫load_p dt`) — dead as an
+  unscoped predictor; survives RE-SCOPED as an unvalidated hypothesis.**
+  Unscoped: in-sample ρ = +0.930 (n = 9), one registered pass (ResNet
+  (16,1,16): predicted ≥1.43×, measured 1.694×), then a registered fail
+  (VGG (32,4,8): predicted 1.8× p99, measured 1.106×) and pooled-n=10
+  collapse (p99 Pearson +0.14). **Scoped to ensemble-regime packings**
+  (top-flow T5 dominance ≲ 17% / nonzero free-ES headroom — both
+  measurable offline before any gain), the ordering holds at **p99
+  Spearman +0.946 (n = 9, exact p = 0.00025)** with VGG in-scope via
+  (8,4,2) at its flow-protocol gain (1.213×/1.391×, baselines completed
+  2026-08-31; 7/9 arms now flow-protocol). The boundary is mechanistic
+  (ensemble metrics fail on single-commodity congestion) and coincides
+  with the maxES applicability boundary (4/4 tests) — but the scope was
+  set AFTER the falsification, so this is a re-scoped hypothesis needing
+  one registered in-scope out-of-sample test before any predictive claim.
+  SC's unconditional roles remain definitional: k_max = 1/SC, SC ≤ PF.
+- **The escape family — every variant null as a predictor.** E, ES at 18+
+  spans, phase-gated forms, absolute/period-integrated forms, PV_SC, E_SC,
+  hot-tier ΣPL/E at 4 widths, relief = supply×absorption (raw, path-
+  bottlenecked, horizon-discounted), and all combinations: |r| ≤ ~0.4 at
+  seed level (most ≤ 0.2), nothing survives out-of-sample or CC control as
+  a *predictor*. Within-packing gain remains offline-dark (C8 upheld
+  against ~30 challengers).
+- **The one constructive survivor: maxES as an intervention** (see design
+  rule above). Causal paired tests confirm on THREE workloads — ResNet
+  (8,2,4), DeiT (16,1,16), VGG (8,4,2) (3-arm Fisher: BL p99 p = 0.016,
+  BL delay 0.025, DP delay 0.046, DP p99 0.081; knee-local,
+  policy-agnostic — the collecting policy varies by arm); VGG (32,4,8)
+  null even at 6× contrast under a matched 1.19× CC budget. Boundary =
+  dominant-flow congestion — a property of that PACKING (one pair owns
+  92% of the peak link / 22% of the hot tier, λ_max 0.87), not of VGG the
+  workload (at (8,4,2): λ_max 0.22, 5% share, headroom +0.154) — detected
+  in advance by the free-headroom checkpoint.
+- **Mechanism map (verified, descriptive):** min-CC adjacency locks the
+  hot core (single-path, E≈0 — a theorem of the objective, not a bug);
+  core relief is **temporal** (measured drain tails 0.8–1.5k cycles);
+  below the floor absorption never binds (path-bottleneck-corrected slack
+  ≥ 90% everywhere) so supply is the only pipe; the one causal spatial
+  knob is **shoulder drainage** (what maxES sets); exploitation of
+  alternatives is horizon-limited (BL ≈ 2 hops, DP ≈ 10 — measured
+  directly: DP used a rank-50 receiver BL ignored).
+- **PL spot-validated online** (retiring "never validated"): DPTRACE on 7
+  links, ranks 1–50: measured/model 0.88–1.01 under BL, rank order
+  ρ = +0.89; model biased slightly high; DP shifts load from the top link
+  (0.80×) onto cool ones (1.25×).
 
 ## Surviving offline-geometry results (supporting material, not claims)
 
