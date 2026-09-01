@@ -2300,10 +2300,13 @@ the earlier DeiT null (+0.00) was undersampling; it reads +0.52 at n=21.
 
 ## Group 3 — what predicts it
 
-**C4 — Peak link load predicts capacity; escape room does not.** *(verified for
-PL · E retracted)* Capacity regressed on \(PL/PF\) and \(E\), read at matched
-congestion (4× own free-flow). \(r(PL)\) is negative in **5 of 5 populations**;
-\(E\)'s sign flips and its coefficient is 4× smaller:
+**C4 — Peak link load predicts capacity, but escape *shape* is a free,
+causal delay lever.** *(a) verified · (b) verified, 3 workloads · E-as-level
+retracted*
+
+**(a) Capacity.** Regressed on \(PL/PF\) and \(E\), read at matched congestion
+(4× own free-flow). \(r(PL)\) is negative in **5 of 5 populations**; \(E\)'s
+sign flips and its coefficient is 4× smaller:
 
 | population | n | r(PL) | r(E) | R(PL+E) |
 |---|---|---|---|---|
@@ -2313,6 +2316,72 @@ congestion (4× own free-flow). \(r(PL)\) is negative in **5 of 5 populations**;
 | VGG (8,4,2) | 8 | −0.838 | +0.285 | 0.957 |
 | DeiT-S (E7) | 21 | −0.561 | +0.091 | 0.571 |
 | **pooled** | **69** | **β −0.584** | **β +0.143** | **0.582** |
+
+**(b) Delay at the knee.** What escape *level* fails to do, escape *shape*
+does — and causally, not just correlationally. At fixed PF, guarded PL and
+**CC ≤ CCmin** (zero communication-cost budget), maximising
+\(ES = E_{20} - E_5\) improves delay at the knee. Paired interventions
+(minES vs maxES, same seed, same CC and PL by construction) on three
+workloads:
+
+| arm | best cell | mean delay | best placement | mean p99 | best p99 |
+|---|---|---|---|---|---|
+| DeiT (16,1,16) | k 0.55, BL | 1.246× | 1.845× | 1.433× | 2.988× |
+| VGG (8,4,2) | k 0.55, BL | 1.138× | 1.641× | 1.276× | 2.245× |
+| ResNet (8,2,4) | k 1.15, DP | 1.126× | 1.321× | 1.258× | 1.688× |
+
+3-arm Fisher: **BL p99 p = 0.016, BL delay 0.025, DP delay 0.046** (DP p99
+0.081). Effect is knee-local (gone one rung past) and policy-agnostic — the
+collecting policy varies by arm. So at min-CC, **up to 46% mean delay and
+67% p99** remain available at zero cost (20%/30% at arm level), where the
++15% CC budget of C1 bought E but paid it straight back in floor delay
+(net ≈ 1.00× at load).
+
+**Scope: ensemble traffic, and the flow already selects for it.** The lever
+needs congestion built from *many* flows rather than one. It is null on
+VGG (32,4,8), where a single pair carries 92% of the peak link and 22% of
+the hot tier (λ_max = 0.870) — no free ES headroom exists there, and none
+appears even at a matched 1.19× CC budget with 6× the ES contrast.
+
+Three advance-computable tests agree on the boundary, in increasing order of
+directness: single-flow rate λ_max (≤ 0.44 in every ensemble case measured,
+0.87 in the dominant one), top-flow share of the hot tier (5–17% vs 22%),
+and the **free-ES headroom check** — the direct one, correct in 4 of 4 tests
+(three positives, one null), and cheap (an offline climb, minutes).
+
+**Min-PF orientations sit inside the regime.** All nine min-PF points (one
+per workload × c) have λ_max in 0.063–0.436, the measured-ensemble range,
+while the dominant packing is not min-PF at its c (VGG's c = 32 min-PF is
+(32,8,4), PF 0.760, λ_max 0.434). Evidence: three confirmed by intervention
+(ResNet (8,2,4), DeiT (16,1,16), VGG (8,4,2)), one by screen
+(VGG (32,8,4)), five consistent by λ_max alone. This is mechanistic, not
+coincidental — a fat flow inflates the port load at its endpoints, so
+minimising PF avoids orientations whose traffic one pair dominates. The
+design flow's own first step therefore lands in the regime where the lever
+works, and the headroom check becomes confirmation rather than a gate.
+
+**Layer assignment — the same split as C0, one layer down.** *SC* is fixed
+by the packing: once \((c,r,s)\) are chosen no downstream decision changes
+it. It caps throughput (k_max = 1/SC) and, across the min-PF ensemble
+packings measured, grades how much runtime gain that packing leaves behind.
+*ES* is the handle that **passes to the mapping layer**: it is set by the
+placement, and it is an **objective, not a forecast** — maximise it inside
+the min-CC level set rather than reading it off. So where C0 pairs a
+packing-fixed quantity with a mapping-set one for the *delay regime*
+(PF / PL), SC / ES is the corresponding pair for the *runtime gain*.
+
+**The zero-budget condition is part of the claim.** The measured effect
+holds at CC ≤ CCmin. ES bought with communication cost is not the same
+lever: +15% CC costs +3.7–6.7% free-flow delay (C1) and the E-budget
+frontier shows the useful escape only becomes reachable at 1.10–1.12× CC,
+where cost and benefit cancel (net ≈ 1.00× at load). Maximise ES *inside*
+the min-CC level set; do not buy it.
+
+**Corollary.** Across these packings the residual runtime gain is *graded*
+by both quantities: **ES (delay ρ = −0.98, n = 9, exact p = 0.00002)** and
+**SC (p99 ρ = +0.95, exact p = 0.00025)** — ES from the mapping side, SC
+from the packing side. Within a packing, which placement collects the gain
+remains offline-unpredictable (C8).
 
 ## Group 4 — what the policy buys: two faces of one lever
 
@@ -2332,11 +2401,11 @@ The peak tracks **each packing's own knee**, not a fixed \(PF\cdot k\). Every
 arm built by a normal mapping search came out flat because those searches drive
 PL down — see C8.
 
-**C7 — DP as a robustness lever: it returns the mapping freedom PL took
-away.** *(verified — CLOSED 2026-08-30)* DP narrows the spread of delay across
-placements wherever spread exists and load is at or below the knee — **8 of 8
-qualifying populations**, spanning 3 workloads, 3 densities, 8 orientations,
-both regimes. Mechanism: **rescue of the worst placements** — on the fastest
+**C7 — DP as a robustness lever, unconditional in regime: it returns the
+mapping freedom PL took away.** *(verified — CLOSED 2026-08-30)* DP narrows
+the spread of delay across placements **wherever that spread exists** —
+**8 of 8 qualifying populations**, spanning 3 workloads, 3 densities, 8
+orientations, and **both regimes (above and below the floor alike)**. Mechanism: **rescue of the worst placements** — on the fastest
 placements BL matches or beats DP; the worst case improves up to 7.6×
 (5566 → 732 ns). Read in each population's compression window:
 
@@ -2358,31 +2427,47 @@ caused by PL itself** (that is BIND): the two PL-varying arms show none
 *predicted failure modes*, not anomalies: past the knee saturation equalises
 placements (VGG (8,2,4) reads 0.69× at 22× ff but 2.93× at its knee), and with
 nothing to compress there is no compression (ResNet (8,2,4) below-floor spreads
-only 1.05–1.43× under BL; DP never exceeds 1.01×). **The robustness window is
-the throughput window (C5): the knee.** Scope: compression ratios are max/min
+only 1.05–1.43× under BL; DP never exceeds 1.01×). **The window belongs to the congestion, not to
+the policy.** Placement spread is itself a knee phenomenon — over the same 8
+placements it runs 1.34× at PF·k 0.26, **13.62× at the knee**, and 1.28×
+saturated (C2b): placements are interchangeable at light load and uniformly
+bad in saturation, and only near saturation does the steep queueing
+nonlinearity amplify small load differences into large delay differences
+(*critical amplification*). DP compresses whenever there is variation to
+compress; variation lives at the knee. That is also why the robustness
+window coincides with the throughput window of C5. Scope: compression ratios are max/min
 statistics over 7–24 placements at 3 sim seeds; the PL-pinned CV results are
 the tightest-measured members.
 
-**C8 — Below the floor the policy choice is placement-specific and
-offline-unpredictable.** *(verified · no predictor found)* Above the floor the
-question is moot — DP wins 65/71 and a perfect oracle switch adds 0.3%. Below
-it, always-DP is *worse* than always-BL, DP wins 84 of 162, and a per-placement
-oracle beats always-DP by **1.042× delay / 1.116× p99**:
+**C8 — DP is the right default in both regimes; the residue below the floor
+is offline-unpredictable.** *(verified · no predictor found)* Always-DP beats
+always-BL everywhere, at every load band including free-flow. Above the floor
+it is effectively optimal — a perfect per-cell oracle adds 1.1–2.5%. Below the
+floor DP still loses 24–37% of cells (1.10–1.19× each), leaving an oracle
+ceiling of 3.8–7.7%. Knee-window placement×rung cells, 3 sim seeds each
+(above: 6 grids, n = 701; below: 3 PL-spread sets, n = 128):
 
-| regime | always BL | always DP | oracle | DP vs BL | oracle vs DP | DP wins |
-|---|---|---|---|---|---|---|
-| above, mean (n=71) | 31.0 | 27.2 | 27.1 | 1.140× | 1.003× | 65/71 |
-| below, mean (n=162) | 20.9 | 21.0 | 20.1 | 0.995× | 1.042× | 84/162 |
-| above, p99 | 222 | 170 | 168 | 1.304× | 1.015× | 60/71 |
-| below, p99 | 191 | 197 | 176 | 0.970× | 1.116× | 88/162 |
+| regime | metric | always BL | always DP | oracle | DP vs BL | oracle vs DP | DP wins |
+|---|---|---|---|---|---|---|---|
+| above | delay | 83.6 ns | 45.2 | 44.7 | 1.850× | 1.011× | 610/701 (87%) |
+| above | p99 | 1384 ns | 580 | 566 | 2.386× | 1.025× | 580/701 (83%) |
+| below | delay | 45.2 ns | 39.3 | 37.9 | 1.150× | 1.038× | 97/128 (76%) |
+| below | p99 | 581 ns | 472 | 438 | 1.231× | 1.077× | 81/128 (63%) |
 
-Every offline predictor tested has failed: E flips sign, E_transit is actively
-harmful, PL/PF is weak below the floor, CC is null. What does predict DP's gain
-is **how badly BL is doing — observable only online**. This is the bridge to a
-learned selection policy: the 4–12% below the floor is real, per-placement, and
-needs an online signal. (Per-seed detail: on p99 DP collects the gain on 20 of
-29 gaining seeds and owns every gain above 1.7× — hence "DP everywhere for
-tail" in the design rule.)
+*This supersedes the earlier row reporting always-DP as worse below the floor
+(0.995× / 0.970×, 84/162): that population could not be reproduced from any
+identifiable set, and its absolute values (~20 ns ≈ 2.5× free-flow) indicate
+light-load rungs. The claim that "DP costs 0.5–3% on the mean below the floor"
+is retracted — DP is ahead at light (1.045×), knee (1.084×) and saturated
+(1.262×) loads alike.* Figure: `figs/f6_policy`.
+
+**What remains true, and is the claim's content:** *which* cells DP loses is
+called by nothing offline. E flips sign, E_transit is actively harmful, PL/PF
+is weak below the floor, CC is null, and ~30 further candidates failed this
+session at seed level. What does predict DP's advantage is how badly BL is
+doing — observable only at runtime. So the decision a designer faces is not
+"which policy" (always DP) but whether an online policy can claim the
+remaining 4–8%, which is the next stage's target.
 
 ## Group 5 — scope
 
@@ -2414,10 +2499,55 @@ BL p99 p = 0.016, BL delay 0.025, DP delay 0.046); if ES will not move,
 the packing is in the dominant-flow regime and there is nothing to collect (the checkpoint IS the
 applicability test — VGG (32,4,8) has neither headroom nor, when a budget
 forces the contrast, any effect). If searching further, minimise **PL**.
-For tail latency run **DP everywhere**; above the floor run DP
-unconditionally; below it DP still buys the tail (C7) but costs 0.5–3% on
-the mean, and the 4–12% from per-placement policy choice needs an online
-signal no offline metric supplies (C8).
+**Run DP everywhere, unconditionally** — it is
+ahead of BL in both regimes and at every load band, by 1.85×/2.39× above the
+floor and 1.15×/1.23× below it (C8), and it also compresses placement spread
+(C7). Above the floor that is within 1–3% of a perfect oracle; below it a
+further 4–8% remains, reachable only with an online signal no offline metric
+supplies (C8).
+
+## Conclusion and next stage — DP's efficiency gap
+
+**DP is the right fixed policy in both regimes; the open problem is that it
+is far less efficient below the floor than above it, and the deficit is
+temporal.** Measured over knee-window placement×rung cells (ABOVE: 6 grids,
+n = 701; BELOW: 3 PL-spread sets, n = 128; 3 sim seeds per cell):
+
+| regime | metric | always BL | always DP | oracle | available | DP achieves | **DP captures** |
+|---|---|---|---|---|---|---|---|
+| above | delay | 83.6 ns | 45.2 | 44.7 | 1.870× | 1.850× | **98%** |
+| above | p99 | 1384 ns | 580 | 566 | 2.446× | 2.386× | **96%** |
+| below | delay | 45.2 ns | 39.3 | 37.9 | 1.193× | 1.150× | **78%** |
+| below | p99 | 581 ns | 472 | 438 | 1.326× | 1.231× | **71%** |
+
+DP wins 87%/83% of cells above and 76%/63% below, and is ahead at every load
+band including free-flow. (This supersedes the earlier "always-DP is worse
+below the floor" row, which could not be reproduced from any identifiable
+population and reads at ~2.5× free-flow, i.e. light load.) Figure:
+`figs/f6_policy` — DP/BL versus congestion per (arm, rung), and the
+three-policy comparison by regime.
+
+**Why the remaining work must be online, in five steps.** (1) The policy
+question is settled — DP is best as a fixed choice everywhere — so further
+gain requires a *better DP*, not a different policy. (2) Above the floor
+nothing is left (oracle +1–3%), and by C6 that regime is not naturally
+reachable. (3) Below the floor DP still loses 24–37% of cells at 1.10–1.19×
+each; the switching oracle is +4–8%. (4) That residue is unreachable from
+design time — ~30 offline metrics failed at seed level, and the
+exhaustiveness is C8's evidence. (5) The mechanism is temporal: drain tails
+of 0.8–1.5k cycles at phase boundaries, core relief that is temporal rather
+than spatial, and a cost field reconverging in 648 cycles against
+5k–23k-cycle phase windows.
+
+**The target, as an efficiency gap.** Raise below-floor capture from 71–78%
+toward the **96–98% the same policy already achieves above the floor**. The
+above-floor figure proves the gap is closable in principle — identical
+spatial machinery, different congestion statistics: above the floor
+congestion is *persistent*, so a 648-cycle reconvergence is accurate almost
+everywhere; below it congestion is *transient* and boundary-clustered, so
+the same lag lands precisely on the events that matter. The oracle is a
+BL/DP *switching* bound, so an improved DP is not obliged merely to match BL
+on the cells it loses — 100% capture is a floor on the target, not a cap.
 
 ## Bridge to the next stage
 
