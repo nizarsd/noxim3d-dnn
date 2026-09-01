@@ -1,7 +1,10 @@
 # Noxim3D — Research Findings: DP vs bufferlevel
 
 Rolling record of the DP-vs-BL selection study on odd-even-balanced routing.
-Engineering/perf notes are in [PERFORMANCE.md](PERFORMANCE.md).
+Engineering/perf notes are in [PERFORMANCE.md](PERFORMANCE.md). Stage-3 results
+(DNN traffic on 6×6×3) start at [Stage 3](#stage-3--dp-vs-bl-at-scale-always-dp-and-where-it-is-still-inefficient);
+the authoritative claim record for that stage is §33 of
+[PROJECT-RESEARCH-NOTES.md](PROJECT-RESEARCH-NOTES.md).
 
 Fixed conditions unless stated: routing `oddevenbalanced`, traffic `transpose1`,
 Poisson injection, buffer 16, seeds {2, 6, 10}.
@@ -506,6 +509,88 @@ the pre-knee ls 0.020 before quoting), and the premise that p99 is the right end
 the DAG barrier argument, **not** on measured per-phase completion times — that instrumentation
 is unbuilt.
 
+## Stage 3 — DP vs BL at scale: always-DP, and where it is still inefficient
+
+*Stage-3 substrate: 6×6×3, relaxed OEB, `-dpcost occupancy -cinterval 648`,
+buffer 16, packet 16 flits, DNN traffic tables from the packing sweep. The
+authoritative claim record is §33 of [PROJECT-RESEARCH-NOTES.md](PROJECT-RESEARCH-NOTES.md)
+(claims C0–C8) and the claim-set artifact; this section carries only what
+bears on DP vs BL. ~36,000 simulations across the stage, 0 true failures.*
+
+### Always-DP is the right fixed policy in both regimes
+
+Knee-window placement×rung cells, 3 sim seeds each (above the floor: 6 grids,
+n = 701 — ResNet (8,1,8) E1, DeiT-S E7, VGG E3, VGG (8,2,4), VGG (8,4,2),
+DeiT E3; below the floor: 3 PL-spread sets, n = 128 — ResNet (8,1,8),
+ResNet (8,2,4), VGG (8,4,2)):
+
+| regime | metric | always BL | always DP | oracle | DP vs BL | oracle vs DP | DP wins |
+|---|---|---|---|---|---|---|---|
+| above | delay | 83.6 ns | 45.2 | 44.7 | 1.850× | 1.011× | 610/701 (87%) |
+| above | p99 | 1384 ns | 580 | 566 | 2.386× | 1.025× | 580/701 (83%) |
+| below | delay | 45.2 ns | 39.3 | 37.9 | 1.150× | 1.038× | 97/128 (76%) |
+| below | p99 | 581 ns | 472 | 438 | 1.231× | 1.077× | 81/128 (63%) |
+
+DP is ahead at **every load band** on the below-floor arms — light (< 3× ff)
+1.045×, knee (3–30×) 1.084×, saturated (> 30×) 1.262× — so there is no load
+regime in which BL is the better default. Figure: `figs/f6_policy`, script
+`plot_f6.py` (documents both populations).
+
+**This supersedes the earlier Stage-3 reading that always-DP was worse than
+always-BL below the floor** (0.995× delay / 0.970× p99 over "162 placements"):
+that population could not be reproduced from any identifiable set and its
+absolute values (~20 ns ≈ 2.5× free-flow) indicate light-load rungs.
+
+### The efficiency gap — DP's remaining weakness is temporal
+
+Expressed as the fraction of the achievable BL→oracle improvement that
+always-DP already takes:
+
+| regime | metric | available | DP achieves | **DP captures** |
+|---|---|---|---|---|
+| above | delay | 1.870× | 1.850× | **98%** |
+| above | p99 | 2.446× | 2.386× | **96%** |
+| below | delay | 1.193× | 1.150× | **78%** |
+| below | p99 | 1.326× | 1.231× | **71%** |
+
+Same policy, same spatial machinery, two efficiencies. The difference tracks
+the *kind* of congestion: above the floor it is persistent (a link is
+oversubscribed for the whole phase, so a 648-cycle reconvergence is accurate
+nearly everywhere); below it, congestion is transient and clustered at phase
+boundaries — measured drain tails of 0.8–1.5k cycles against 5k–23k-cycle
+phase windows — so the same lag lands precisely on the events that matter.
+Closing 71–78% toward the 96–98% DP already demonstrates is the next stage's
+target. Which cells DP loses is called by **nothing offline**: ~30 metrics
+(link loads, escape geometry at every aggregation, supply/absorption, horizon
+models) all null at seed level.
+
+### DP's robustness benefit holds in both regimes (C7)
+
+DP narrows the spread of delay across placements wherever that spread exists —
+8 of 8 qualifying populations, up to 64.26× → 8.57×, above and below the floor
+alike. The mechanism is rescue of the worst placements: on the fastest ones BL
+matches or beats DP. Spread is itself a knee phenomenon (1.34× at light load,
+13.62× at the knee, 1.28× saturated), so the compression window belongs to the
+congestion, not to the policy. A new policy that wins mean delay but widens
+placement spread is a regression.
+
+### DP's behaviour observed directly (DPTRACE)
+
+The `DPTRACE=<node>:<dir>` hook streams per-cycle queue occupancy and cumulative
+flits for one channel (zero code change, [TRouter.cpp](../noxim3d_src/TRouter.cpp)).
+Fourteen runs on 7 links of one placement, ranks 1–50:
+
+- **Offline PL spot-validated**: measured/model 0.88–1.01 under BL, rank order
+  ρ = +0.89; the model is biased slightly high on hot links.
+- **DP's redistribution is visible**: the rank-1 link cools to 0.80× of model
+  under DP while the rank-50 link heats to 1.25× — DP moves load onto distant
+  alternatives BL leaves idle (measured exploitation horizon: BL ≈ 2 hops,
+  DP ≈ 10).
+- **Cross-period learning caught live**: at the next period's burst onset DP
+  holds the same hot link at 0.036 fl/cyc versus BL's 0.091, having been
+  near-identical in period 1 — the phase-indexed-DP mechanism, observed.
+- **Drain tails measured**: 763–1485 cycles of residual traffic after `t_off`.
+
 ## Open items
 
 - **Routing-variant generality** — modified2 (both-exclusive OEB) only tested on transpose1
@@ -528,10 +613,13 @@ is unbuilt.
   on this mesh and the 2×2 as posed is unrealisable.
 - **(Stage 2) n=30 on CELL A** — the +34.51% that overturns the "hops hurt DP"
   reading is the least-replicated number in the section (n=10). 20 runs.
-- **(Stage 2) Validate the routing port** — `oeb_path_diversity.py` reproduces the
-  router by construction and by the axis-aligned single-path argument, but has
-  **not** been cross-checked against simulator hop traces. Do this before any
-  path-count number goes in a paper.
+- **(Stage 2/3) Validate the routing port** — `oeb_path_diversity.py` reproduces the
+  router by construction and by the axis-aligned single-path argument. **Partly
+  discharged (Stage 3):** the link loads it predicts were checked against DPTRACE on
+  7 links and came in at 0.88–1.01 of model with rank order ρ = +0.89, which is
+  strong indirect evidence the path enumeration is right. **Still unchecked
+  directly:** per-flow path *counts* against simulator hop traces — do that before
+  any path-count number goes in a paper.
 - **(Stage 2) Deadlock argument** — the claim that all three OEB variants are
   deadlock-free rests on "turn-set subset/superset of the published baseline",
   which is only valid for a **subset**. `modified2` (in use) is the restrictive
@@ -554,6 +642,13 @@ is unbuilt.
   `results_diag_6x6x3` (6×6×3 placement pair, n=5), `results_ci2499` /
   `results_settle_grid` (DP timing negatives). All gitignored — the runner scripts
   `run_*.bash` are the record and each carries its timing derivation.
+- **Stage 3 (DNN traffic, 6×6×3, packing sweep):** ~36,000 sims, 0 true failures, all
+  under `results_stage3/` (gitignored). Policy tables from `plot_f6.py` (populations
+  documented in its docstring); paired ES interventions `esx_search.py` / `esxd_search.py`
+  / `esxv_search.py` with `res_esx*`; registered predictions in
+  `registered_predictions_vgg3248.txt` and `registered_esx_deit.txt`; DPTRACE traces
+  `trace_{bl,dp}_<node>_<dir>.csv` and `trace_validation.csv`; z-sensitivity in
+  `results_stage3/z_sensitivity/`. Claim record: §33 of PROJECT-RESEARCH-NOTES.md.
 - **Stage 2 (EWMA on DP congestion field):** substrate = 6×6×3 relaxed-OEB + noskip,
   `-dpcost occupancy`, interior accumulators, ls 0.028. [run_ewma_p99.bash](../run_ewma_p99.bash)
   (arms B/C + the bit-exact `DPDECAY=0` gate), [run_ewma_d.bash](../run_ewma_d.bash) (arm D,
