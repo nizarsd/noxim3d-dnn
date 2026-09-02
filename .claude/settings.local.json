@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 plot_dnn_sweep.py)",
+      "Bash(python3 -)",
+      "Bash(echo \"=== HANDOVER.md in git history? ===\"; git log --all --oneline -- HANDOVER.md; echo \"=== any other handover-ish files ===\"; find /home/user -maxdepth 3 -iname '*handover*' -not -path '*/.git/*' 2>/dev/null; echo \"=== who wrote current one ===\"; git show --stat 4c337b5 | head)",
+      "Bash(python3 -c ' *)",
+      "Bash(awk -F, 'NR>1{n++} END{print \"placement rows \\(tiles placed\\):\", n}' traffics_dnn/resnet50_bottleneck3_xb128_6x6x3_placement.csv)",
+      "Bash(DNN_MESH=7x7x3 DNN_TABLE_DIR=__TRACKED_VAR__ python3 stage2_dnn_traffic.py)",
+      "Bash(pkill -9 -x noxim)",
+      "Bash(pkill -9 -f noximrun_dnn_traffic.bash)",
+      "Bash(pkill -9 -f run_ls022_n30)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(kill -9 25484)",
+      "Bash(ps -eo pid,cmd)"
+    ]
+  }
+}

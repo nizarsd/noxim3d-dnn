@@ -2268,6 +2268,21 @@ decides whether you get it.** *((a),(b) verified; (c) partial)*
   with mapping held at min-CC on both arms (`test1_po.py` / `test1c8_po.py`) —
   so this is orientation, not placement. \((16,2,8)\) vs \((16,4,4)\): 1.80×;
   \((8,2,4)\) vs \((8,1,8)\): 1.56×. The lower-PF orientation wins in both.
+
+  The \((16,4,4)\) arm is also the **min-bytes** orientation, so this pair
+  prices F0's ResNet arrow directly: **2.78× lower port floor for 7.1% more
+  bytes** buys **11.6× mean delay and 18.7× p99** at matched load
+  (\(k=1.0\), BL; 13.8× / 20.3× under DP). Both arms sit **below their own
+  floor** (PL/PF 0.42–0.55 min-bytes vs 0.53–0.58 min-PF, the min-bytes arm
+  being the better-placed one), so the gap is not a placement artifact —
+  min-PF is the PO-layer design choice, measured. Coverage: min-bytes and
+  min-PF disagree in **5 of 9 (workload, \(c\)) cells**, costing 1.27–3.15×
+  in PF (`results_stage3/packing_pf/packing_sc.csv`); ResNet \(c{=}16\) is
+  the only ResNet cell where they disagree, so ResNet is complete and the
+  other four cells rest on the measured PF→delay mechanism, not on new runs.
+  Note \((8,2,4)\) vs \((8,1,8)\) is min-PF vs the *ejection-bound*
+  orientation, **not** a second min-bytes contrast (`test1c8_po.py` carries a
+  stale copy of the c=16 docstring).
 - **(b)** Placement is **not second-order**: its spread exists only in a band
   around the knee. Same 8 below-floor placements of (8,1,8)
   (`belowfloor_mapping_impact.log`):
