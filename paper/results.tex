@@ -6,6 +6,16 @@
 % =====================================================================
 \section{Results}
 \label{sec:results}
+\subsection{Experimental Setup and Tools}
+\label{sec:setup}
+All results are obtained with Noxim3D, a cycle-accurate SystemC network-on-chip simulator extended to three dimensions. The substrate is a 6×6×3 mesh of 108 IMC tiles, each holding 128×128 crossbars; links and injection/ejection ports carry one 4-byte flit per 1 ns cycle, giving 4 GB/s per channel, with injection and ejection modelled as independent channels. 
+Routing is odd-even-balanced adaptive routing [dahir2013oeb], on top of which we compare two selection policies: a local buffer-occupancy heuristic (BL) and a distributed multi-hop congestion cost-to-go field (DP) \cite{makdpn2009}, whose cost field reconverges every 648 cycles and is clocked at 4× the network clock.
+
+Workloads are ResNet-50, VGG-16 and DeiT-S, converted offline into statistical traffic tables whose rows carry per-pair injection rates and phase windows reproducing the layer-sequential structure of inference; one inference period is 38 536, 115 606 and 58 097 cycles respectively. Each measurement point is warmed up for 1 944 cycles and averaged over three seeds, with offered load swept by a scalar multiplier on all injection rates; unless stated otherwise, comparisons are made inside the knee window, defined as the load range in which mean BL latency stays below 30× its free-flow value. Placement search and all offline metrics (PF, PL, CC, ES) are computed in Python from the traffic tables and the permutation alone. The results below aggregate approximately 36 000 simulation runs.
+
+Traffic is generated from statistical tables rather than dependency-driven traces. This bounds absolute latency accuracy, but not the comparisons the paper makes: every result is a ratio between placements measured under the same model, so a systematic bias cancels unless it reorders them. The model follows established practice for DNN NoC studies \cite{krishnan2022impact}, and the phase windows preserve the layer-sequential structure that the temporal results depend on.
+
+
 
 \subsection{Metrics and operating point}
 \label{sec:defs}
