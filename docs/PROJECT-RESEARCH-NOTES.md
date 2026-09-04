@@ -2161,7 +2161,7 @@ a finding.
 - **Flow figure (the chain of §30e.2)** — PD → PO → {PF, active tiles} → mapping
   → PL → BIND → delay/p99, with the selection box hanging off BIND as a
   characterisation rather than an objective. Not yet drawn. The contrast against
-  the decoupled flow is specified in `docs/PD-PO-ARCHITECTURE-AWARE-PROMPTS.md`
+  the decoupled flow is specified in `docs/archive/PD-PO-ARCHITECTURE-AWARE-PROMPTS.md`
   (Prompts 2 and 3).
 - **Hinge figure** — `figs/hill_pl_hinge.png` exists.
 - **Metric-space figure** — `figs/pool1000_hill_metric_space.png` exists (shows
@@ -2234,9 +2234,9 @@ results that survive the supersession are listed at the end of this section.
 
 **Thesis, one breath:** Packing sets the achievable operating point. Placement
 decides whether you reach it. Adaptive routing buys throughput only under two
-conditions — but buys robustness across placements of equal PL under none — and
-below the floor the choice between policies is a coin flip no offline metric
-can call.
+conditions — but buys robustness across placements of equal PL under none. DP
+is the right fixed policy in both regimes; what no offline metric can call is
+*which* placements it wins on below the floor.
 
 **Reading discipline:** all gains are measured at each placement's own capacity
 point \(k^*\) or at loads fixed in advance — never at an operating point derived

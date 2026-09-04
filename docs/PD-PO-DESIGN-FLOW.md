@@ -1,8 +1,17 @@
 # PD–PO–Mapping design flow
 
-**Status: 2026-08-26.** Derived from ~4,300 simulation runs on ResNet-50, 6×6×3,
-plus offline metric studies over 2,000 scored placements. Every step is marked
-with its evidence level — read those markers before citing anything here.
+**Status: 2026-09-02.** Derived from ~36,000 simulation runs across ResNet-50,
+VGG-16 and DeiT-S on 6×6×3, plus offline metric studies over 2,000 scored
+placements. Every step is marked with its evidence level — read those markers
+before citing anything here.
+
+**Superseded since the 2026-08-26 revision** (four items, all in Step 5 and
+"Not established"): DP is now the right policy in **both** regimes, not only
+above the floor; DP **does** compress placement spread; PL is spot-validated
+online; and PV has been tested and failed. A free **maxES** climb has been added
+to Step 4. The claim-level record is
+[PROJECT-RESEARCH-NOTES.md](PROJECT-RESEARCH-NOTES.md) §33 (C0–C8) — if this
+doc and §33 disagree, §33 wins.
 
 Companion docs: [MAPPING-FORMULATION.md](MAPPING-FORMULATION.md) (problem
 statement), [PACKING-CRS-SWEEP.md](PACKING-CRS-SWEEP.md) (the `(c,r,s)` sweep),
@@ -19,6 +28,8 @@ statement), [PACKING-CRS-SWEEP.md](PACKING-CRS-SWEEP.md) (the `(c,r,s)` sweep),
 | **PIL** | peak injection load | max over PE→router ports, flits/cycle | no |
 | **PEL** | peak ejection load | max over router→PE ports | no |
 | **PF** | port floor | `max(PIL, PEL)` | **no** |
+| **SC** | sustained convergence | `max_p (1/T)·∫ load_p(t) dt`; `SC ≤ PF`, `k_max = 1/SC` | **no** |
+| **ES** | escape slope | `E₂₀ − E₅`, load-weighted escapable fraction of the top-20% vs top-5% hottest links | yes |
 | **PL** | peak link load | max over directed router→router channels | **yes** |
 | **BIND** | binding port | `max(PL, PF)` | yes |
 | **PLf** | forced link load | PL counting only edges *every* admissible path uses | yes |
@@ -73,6 +84,25 @@ min-bytes `(32,16,2)` has burst 5.0× and peak PF 1.95 versus `(32,8,4)`'s 0.76.
 The green *GLOBAL MIN* cells in `packing_crs_sweep.xlsx` optimise the wrong
 quantity.
 
+**✅ Established — min-PF beats min-bytes, measured.** ResNet c=16, min-PF
+`(16,2,8)` vs min-bytes `(16,4,4)`, min-CC mapping on both arms, 3 placements ×
+3 sim seeds per rung (`test1_po.py`, `res_test1_{bl,dp}.txt`): **2.78× lower
+port floor for 7.1% more bytes** buys **11.6× mean delay and 18.7× p99** at
+k=1.0, and 13.8× / 20.3× under DP — not policy-dependent. Both arms sit *below
+their own floor* (PL/PF 0.42–0.55 min-bytes vs 0.53–0.58 min-PF, the min-bytes
+arm the better-placed one), so the gap is orientation, not placement. The two
+objectives disagree in **5 of 9 (workload, c) cells** at 1.27–3.15× in PF
+(`results_stage3/packing_pf/packing_sc.csv`); ResNet c=16 is the only ResNet
+cell where they disagree, so the other four rest on the PF→delay mechanism
+rather than on runs. Note `test1c8_po.py` carries a stale copy of this
+docstring — it runs (8,2,4) vs (8,1,8), min-PF vs *ejection-bound*, and is not
+a second min-bytes contrast.
+
+**⚠️ SC is the feasibility filter, never the ranking key.** Selecting on SC
+would pick DeiT `(16,4,4)`, which sits 2.8× above the port floor. In 3 of the 5
+disagreeing cells the min-bytes pick has *lower* SC than the min-PF pick — total
+bytes tracks the time-average, delay is set by the peak.
+
 **⚠️ Feasibility is SUSTAINED rate, not peak.** PF is a peak over one interval
 that is only 13% of the period. 18 of 34 points have PF > 1 but only **5** have
 sustained > 1 — the rest are burst-limited and bufferable. ResNet has **zero**
@@ -98,12 +128,31 @@ same 7 of 24 at both k=1.60 and k=1.80).
 ## Step 4 — Placement
 
 ```
-objective     min PL           BIND = max(PL, PF) predicts delay, r = +0.86
-co-objective  min CC           energy; orthogonal to delay, therefore free
+step 1        min CC           the classical objective; start here
+step 2        max ES           FREE climb: max ES s.t. CC <= CCmin AND PL <= PL(minCC)
+step 3        min PL           only if searching further; BIND = max(PL,PF), r = +0.86
 target        PL < PF if reachable
-do NOT        optimise PV (null) or PLf (83% collinear with PL)
+do NOT        optimise PV (tested, failed) or PLf (83% collinear with PL)
+              do NOT buy ES with CC -- +15% CC costs +3.7-6.7% free-flow delay
 verify        check PL after the search rather than constraining it up front
 ```
+
+**✅ Established — the free maxES climb.** At fixed PF, guarded PL and zero CC
+budget, maximising `ES = E₂₀ − E₅` improves knee delay causally. Paired
+interventions (minES vs maxES, same seed, CC and PL matched by construction) on
+three workloads — ResNet (8,2,4), DeiT (16,1,16), VGG (8,4,2); 3-arm Fisher:
+BL p99 p=0.016, BL delay 0.025, DP delay 0.046. Worth ~5–12% mean delay and up
+to 1.4–1.7× p99 at the knee, either policy, at **zero cost by construction**.
+Knee-local and policy-agnostic.
+
+**⚠️ Scope — ensemble traffic, and the flow already selects for it.** The lever
+needs congestion built from many flows, not one. It is null on VGG (32,4,8),
+where one pair carries 92% of the peak link (λ_max 0.870). Detect this in
+advance with the **free-ES headroom check** (correct 4 of 4): if ES will not
+move inside the min-CC level set, the packing is dominant-flow-bound and there
+is nothing to collect. All nine min-PF points have λ_max 0.063–0.436, inside the
+measured ensemble range — minimising PF lands the design in the regime where the
+lever works.
 
 **✅ Established — the hinge at PF.** Delay is flat against PL below the floor and
 steep above it. Replicated across k=1.60/1.80 × BL/DP, 2,880 runs, zero failures:
@@ -158,7 +207,23 @@ Throughput identical throughout (0.0327 flit/cycle/IP) — neither is saturated.
 (99.5 / 1129) beats m2 under DP (109.3 / 1429) on both metrics. DP repairs
 placement damage; it does not reach anywhere a good placement could not.
 
-**✅ DP's regime is above PF, and only there** (24 placements, n=30):
+**⚠️ Do not read this as "avoid escape".** It says do not *rely* on DP to undo a
+bad placement. It is not in tension with the maxES climb of Step 4, which raises
+escape **shape** at fixed PL and zero CC — a different quantity from the escape
+**level** at a worse PL that this pair contrasts. Escape level is not a mapping
+objective (its sign flips once the congestion confound is removed); escape shape
+is.
+
+**⚠️ SUPERSEDED — the table below is the 2026-08-26 reading and is retained for
+history only.** It was measured on 24 placements at two loads. The 829-cell
+recomputation (C5/C8, knee-window placement×rung cells, 3 seeds each) shows
+**always-DP leads always-BL in both regimes and at every load band including
+free-flow**: 1.850× delay / 2.386× p99 above the floor, 1.150× / 1.231× below
+it, winning 87%/83% of cells above and 76%/63% below. **Run DP everywhere,
+unconditionally.** What remains offline-unpredictable is *which* cells DP loses
+below the floor, not whether to use it.
+
+*(historical, 24 placements, n=30)*
 
 | k | regime | DP−BL avg | p | DP−BL p99 | p |
 |---|---|---|---|---|---|
@@ -167,10 +232,15 @@ placement damage; it does not reach anywhere a good placement could not.
 | 1.80 | below PF | −1.1% | 0.366 | −2.0% | 0.087 |
 | 1.80 | above PF | **−6.7%** | 0.0083 | **−5.7%** | 0.039 |
 
-Below the floor the bottleneck is the injection port — no routing decision
-reaches a flit that has not entered the network. **DP does not flatten the
-placement spread** above the floor either (BL 1.71× → DP 1.79× at k=1.80,
-1.86× → 1.81× at k=1.60): it lowers the level, not the sensitivity.
+**⚠️ Both sentences that followed this table are retracted.** (i) "DP's regime
+is above PF, and only there" — superseded above. (ii) "DP does not flatten the
+placement spread" — contradicted by C7: DP compresses placement spread in **8 of
+8 qualifying populations**, spanning 3 workloads, 3 densities, 8 orientations
+and both regimes (e.g. ResNet (8,1,8) above floor 31.81× → 18.76×; ResNet (16,2,8)
+with PL pinned 64.26× → 8.57×). The two arms quoted in the old sentence were
+**PL-varying**, where compression is not expected — DP cannot compress variation
+caused by PL itself, since that is BIND. Compression is read in the knee window;
+past the knee saturation equalises placements and DP can widen spread.
 
 ---
 
@@ -197,14 +267,21 @@ the peak governs average delay.
 
 ## Not established
 
-- **Whether PV gives DP headroom independently.** Untested, not refuted — the one
-  available test (n=21) had power only for |r| > 0.57 and returned −0.283.
+- ~~**Whether PV gives DP headroom independently.**~~ **RESOLVED — tested and
+  failed.** PV is null as an objective and buys no DP headroom; it costs CC
+  (r = +0.86) and returns nothing. Its only retained role is absorbing diverted
+  load. Do not optimise it.
 - **Whether the hinge generalises beyond (8,2,4).** It rests on **7 above-floor
   placements**, r = +0.756 at p = 0.049. (16,2,8) offers *less* above-floor room,
   so the cheaper fix is to re-target the (8,2,4) search densely in PL 0.40–0.60.
 - **The escapable-fraction rule at n > 2.**
-- **PL and PLf are offline models, never validated against the simulator.**
-  `-detailed` reports per-(src,dst) pairs, not per-link.
+- **PL and PLf are offline models; PL is now spot-validated, not generally
+  validated.** DPTRACE on one placement, 7 links spanning ranks 1–50
+  (2026-08-31): measured/predicted **0.88–1.01** under BL, rank order ρ = **+0.89**.
+  The model runs slightly high on hot links, and DP shifts load off the top link
+  onto cool ones (rank-50 reads 1.25× model). Still unvalidated in general —
+  `-detailed` reports per-(src,dst) pairs, not per-link, so per-link truth needs
+  a DPTRACE rerun per link. Say so when citing.
 
 ## Data
 

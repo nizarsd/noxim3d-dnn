@@ -122,6 +122,10 @@ channels, so injection and ejection are independent).
 - **Rank POs on PF, never on min total bytes.** Min-bytes selects the burstiest
   packings (burst ratio spans 1.7–9.9×). `docs/packing_crs_sweep.xlsx` still
   highlights min-bytes cells as GLOBAL MIN — wrong objective, not yet fixed.
+  **Measured, not inferred:** ResNet c=16, min-PF (16,2,8) vs min-bytes (16,4,4),
+  min-CC on both arms — 2.78× lower floor for 7.1% more bytes buys **11.6× mean
+  delay / 18.7× p99** at k=1.0 (`test1_po.py`). The two objectives disagree in
+  5 of 9 (workload, c) cells at 1.27–3.15× in PF (`results_stage3/packing_pf/`).
 - **Mapping objective:** `PL < PF` as a hard constraint (delay is flat below the
   floor, steep above), then min PL, with CC minimised throughout as energy overhead.
   **Do not optimise PV** (null) **or PLf** (83% collinear with PL). PLf is a
