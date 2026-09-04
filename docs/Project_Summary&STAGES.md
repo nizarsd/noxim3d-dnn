@@ -191,14 +191,33 @@ confirm or revise it before it is committed to.
 
 ## Current position (as of 18 Aug 2026)
 
-**Stages 1–3: complete.** Stages 4–7: not started.
+**Stages 1–3: complete** (~36,000 simulations; claims C0–C8 closed — see
+[PROJECT-RESEARCH-NOTES.md](PROJECT-RESEARCH-NOTES.md) §33 or the standalone
+[CLAIMS-C0-C8.md](CLAIMS-C0-C8.md)). **Paper 1 is in drafting** under `paper/`
+(DATE, 6 pages; abstract 13 Sep, full paper 20 Sep). Stages 4–7: not started,
+and reframed — see the correction below.
 
 ### Deviation from the plan — read this before acting
 
+> **⚠️ CORRECTED 2026-09-02 — the headline of this section is no longer true.**
+> "DP fails under DNN traffic" described a diagnosis that has since been
+> **resolved**: the causes listed below were bugs and setup artifacts, and they
+> were fixed. On the current build, **always-DP beats always-BL in both regimes
+> and at every load band** — 1.850× delay / 2.386× p99 above the port floor,
+> 1.150× / 1.231× below it, winning 87%/83% of cells above and 76%/63% below
+> (C5/C8, 829 knee-window cells, 3 seeds each). DP also compresses placement
+> spread in 8 of 8 qualifying populations (C7). The design rule is **run DP
+> everywhere, unconditionally**. What remains open is not *whether* to use DP
+> but that it captures only **71–78%** of the achievable improvement below the
+> floor against **96–98%** above it — an efficiency gap whose cause is temporal.
+> That gap, not a policy choice, is what the next stage targets.
+>
+> The diagnosis below is retained because it explains how the work got here.
+
 The plan assumed the non-learning baseline was settled at Stage 1. It was not.
-Stage 3 characterisation revealed that **DP (the global congestion-aware
-selection policy) fails under DNN traffic**, for reasons that took several
-sessions to isolate:
+Stage 3 characterisation revealed that DP, **as configured at that time**,
+underperformed under DNN traffic, for reasons that took several sessions to
+isolate:
 
 - DP's congestion term was averaged over a window tied to the DP cycle and reset
   each interval, diluting bursts to near zero. The cost field collapsed to pure
@@ -222,7 +241,10 @@ path diversity, congestion estimator design, and phase-indexed DP.
   cannot also be a variable.
 - **Paper 2 — routing / selection.** RL vs DP; local-vs-global, temporal-vs-spatial.
   This is Stages 4–7. Deferred; inherits a validated baseline and a known-good
-  mapping from Paper 1.
+  mapping from Paper 1. **Scope now sharpened:** the bar is always-DP (not BL),
+  and the target is the below-floor efficiency gap (71–78% → 96–98%), whose
+  mechanism is temporal — drain tails of 0.8–1.5k cycles at phase boundaries
+  against a field that reconverges in 648 cycles over 5k–23k-cycle phase windows.
 
 ### Standing rules
 
@@ -240,8 +262,9 @@ path diversity, congestion estimator design, and phase-indexed DP.
 - `FINDINGS.md` — Stage 1 DP-vs-bufferlevel results
 - `PERFORMANCE.md` — correctness fixes and profiling
 - `STAGE2.md` — Stage 2 traffic-representation decisions
-- `SESSION-NOTES.md` — **current state**: latest results, open items, and work queue
+- `archive/SESSION-NOTES.md` — historical snapshot (20 Aug 2026), superseded by
+  `PROJECT-RESEARCH-NOTES.md`; kept for context only
 - `MAPPING-FORMULATION.md` — two-stage mapping formulation (packing, then placement)
 - `CROSSBAR-ADC-PACKING.md` — crossbar/ADC constraints behind the `c`/`r`/`s` notation
 - `docs/archive/STAGE3-MAPPING-FINDINGS.md` — aggregation hotspot, interior placement
-  (superseded; see SESSION-NOTES §5.1 for the corrections to it)
+  (superseded; see `archive/SESSION-NOTES.md` §5.1 for the corrections to it)

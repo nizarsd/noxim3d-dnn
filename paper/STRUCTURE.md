@@ -1,7 +1,20 @@
 # Paper 1 — structure draft (for discussion, nothing locked)
 
-DATE, 6 pages incl. references. Every paragraph below is one line = its job.
-Slots: 4 figures + 2 tables. Claims per §33 (C0–C8).
+DATE 2027 — CFP verified 2026-09-04 (date-conference.com/call-for-papers):
+**6 pages of content, plus ONE extra page for references only** (nothing else may
+spill onto page 7). PDF only; A4/Letter, double column, Times, min 10pt, no Type-3
+fonts. **Double-blind**: no author names or acknowledgements; prior work by the same
+authors cited in the third person. Abstract **13 Sep 2026 AoE**, full paper
+**20 Sep 2026 AoE**, notification 23 Nov 2026, camera-ready 16 Dec 2026.
+Every paragraph below is one line = its job.
+Slots: ~5 total. Claims per §33 (C0–C8).
+
+**⚠️ Partly superseded (2026-09-02).** Three things moved after this draft:
+always-DP is now the design rule in **both** regimes (not "conditional below
+the floor"); the free **maxES** climb is a step in the flow and one of the four
+contributions; and the C2a packing result is measured at 11.6×/18.7×, not just
+1.56–1.80× in k*. Numbers below are marked where they are stale. The current
+exhibit budget and contribution list live in the paper-writing plan.
 
 ---
 
@@ -87,28 +100,37 @@ speed lever) → design rule → one headline number per finding.
 - **R3 — adaptivity as a throughput lever** [C5, C4] — no slot, prose
   - above floor unconditional (1.153×/1.364×, 65/71); below floor conditional
     on knee + placement (1.10–1.35× by arm, peak at each packing's own knee).
+  - ⚠️ **stale framing**: on the 829-cell recomputation always-DP leads in both
+    regimes — 1.850×/2.386× above, 1.150×/1.231× below, ahead at every load band.
   - C4 one sentence: PL predicts capacity (β −0.584, negative 5/5), E does
     not (retracted).
 - **R4 — adaptivity as a robustness lever, and its limit** [C7, C8] —
   **Fig 4: C7 compression** + **Tab 2: oracle table**
   - C7: compression 8/8 qualifying populations; mechanism = worst-case rescue
     (5566→732); cannot compress PL-caused spread; window = the knee.
-  - C8: below floor the choice is placement-specific and offline-
-    unpredictable; oracle beats always-DP 1.042×/1.116×; bridge to learned
-    selection.
+  - C8: always-DP is the right default in **both** regimes; what stays offline-
+    unpredictable is *which* cells it loses below the floor. Oracle over
+    always-DP is **1.011×/1.025× above** the floor and **1.038×/1.077× below**
+    (the old 1.042×/1.116× pair is superseded). Bridge to online selection.
 - **R5 — scope, threats, design rule** — prose + boxed rule
   - offline-model caveat (PL validated as moderate capacity predictor only),
     one mesh, INT32 convention, max/min-at-3-seeds caveat, retractions named.
-  - **Design rule box:** orientation on PF → min-CC map → then min PL → DP
-    everywhere for tail; above floor DP unconditional.
+  - **Design rule box:** orientation on PF (11.6×/18.7× over the classical
+    min-bytes pick) → min-CC map → **free maxES climb** (zero CC/PL cost) →
+    min PL if searching further → **DP everywhere, unconditionally**.
 
 ## §6 Conclusion & directions — 0.25 pp
 
 - design rule recap in two sentences.
-- the knee reserve (1.1–1.2× / 1.2–1.4×, offline-unpredictable) as the bridge
-  to online/learned selection; thermal-as-measurement; sink-side router design.
+- the **efficiency gap** as the bridge to online selection: DP captures 96–98%
+  of the achievable improvement above the floor but only 71–78% below it, and
+  the deficit is temporal. (Term note: this is *runtime gain*, not "reserve" —
+  one term per concept.)
 
-## References — 0.5 pp
+## References — OFF-BUDGET (page 7, references only)
+
+The 0.5 pp previously reserved here returns to the body: Results 2.25 → 2.5 pp,
+or the Discussion subsection if it is short.
 
 ---
 
@@ -117,14 +139,16 @@ speed lever) → design rule → one headline number per finding.
 | slot | object | § | claim | state |
 |---|---|---|---|---|
 | Fig 1 | flow figure (nested vs decoupled) | 4 | method | undrawn |
-| Fig 2 | F0 packing design space | 5.R1 | C0/C2a | drawn v2 |
+| Fig 2 | F0 packing design space | 5.R1 | C0/C2a | drawn — `figs/fig0_packing_designspace` |
 | Fig 3 | regime map, delay vs PL/PF, BL only | 5.R2 | C2b/C3 | regenerate from E1+below-floor data |
 | Fig 4 | C7 compression (f5 variants exist) | 5.R4 | C7 | drawn, pick variant |
 | Tab 1 | metric definitions | 3 | — | trivial |
-| Tab 2 | always-BL / always-DP / oracle | 5.R4 | C5/C8 | numbers final |
+| Tab 2 | always-BL / always-DP / oracle | 5.R4 | C5/C8 | ⚠️ regenerate — 829-cell numbers |
+| — | maxES paired table, 3 workloads | 5 | C4b | candidate slot, not in this draft |
 
 Inline-only (no slot): C4 table → one sentence; knee-band triplet; C1 CC
-numbers; C2a 1.56–1.80×; C6; hinge coefficients (Fig 3 caption).
+numbers; C2a's 11.6×/18.7× priced onto F0's ResNet arrow; C6; hinge
+coefficients (Fig 3 caption); z-sensitivity; DPTRACE PL validation.
 Dropped: below-floor DP-vs-load curve, thermal Pareto figs, coefficient table.
 
 ## Open questions for discussion

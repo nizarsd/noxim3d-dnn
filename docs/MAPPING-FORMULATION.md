@@ -4,7 +4,19 @@ Formulation for Paper 1 (mapping / design-space exploration). Absorbs the former
 `MAPPING.md` (placement objective, rules, per-workload structure). Companion to
 [PROJECT-RESEARCH-NOTES.md](PROJECT-RESEARCH-NOTES.md) §31, which holds the active work queue derived from this.
 
-Status: formulation settled in discussion; **not yet implemented**.
+**Status: 2026-09-02 — HISTORICAL.** The formulation below was settled in
+discussion and has since been implemented, tested, and in part **superseded by
+measurement**. Read it for the problem statement and the two-stage decomposition,
+which stand. Do **not** take its objectives as current:
+
+- *Arrival-face load* is inactive below the knee and was dropped.
+- *Path variety (PV)* was tested and failed — null as an objective, and it costs
+  CC (r = +0.86). Its only retained role is absorbing diverted load.
+- The live objective is lexicographic: **min PF** via `(c,r,s)` → **min CC** →
+  **free maxES climb** → **min PL** if searching further → **DP everywhere**.
+
+Current authority: [PD-PO-DESIGN-FLOW.md](PD-PO-DESIGN-FLOW.md) for the flow and
+[PROJECT-RESEARCH-NOTES.md](PROJECT-RESEARCH-NOTES.md) §33 (C0–C8) for the claims.
 
 ---
 

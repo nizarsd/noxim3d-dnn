@@ -14,12 +14,20 @@ work happens here.
 ## Project stages
 
 1. Validate 3D Noxim + odd–even routing — **complete** (inherited from base repo).
-2. Generate DNN traffic traces (ResNet-50, VGG-16) — **in progress**.
-3. Baseline characterisation: DNN vs synthetic traffic.
-4. Minimal RL selection agent, generic congestion objective.
-5. Run generic RL agent on DNN traffic, unmodified.
-6. Analyse distinguishing features of DNN traffic (evidence-driven).
-7. DNN-aware RL router — the novel contribution.
+2. DNN traffic generation (ResNet-50, VGG-16, DeiT-S) — **complete**; statistical
+   tables with `t_on`/`t_off` phase windows. See [STAGE2.md](docs/STAGE2.md).
+3. Cross-layer packing / mapping / routing study — **complete** (~36,000 runs).
+   Claims C0–C8 are closed; see [§33 of PROJECT-RESEARCH-NOTES.md](docs/PROJECT-RESEARCH-NOTES.md)
+   or the standalone [CLAIMS-C0-C8.md](docs/CLAIMS-C0-C8.md).
+   Paper 1 (DATE, 6 pages) is in drafting under `paper/`.
+4. Online adaptivity — **next**. Target is DP's efficiency gap: it captures
+   96–98% of the achievable improvement above the port floor but only 71–78%
+   below it, and the deficit is temporal.
+5. Learned selection policy — the intended novel contribution, gated on stage 4.
+
+Stages 4–5 were previously framed as "minimal RL agent → DNN-aware RL router".
+That framing is superseded: the policy question is settled (always-DP), so the
+open problem is a *better* DP, not a different policy.
 
 See `CLAUDE.md` for detailed design notes and open decisions.
 
