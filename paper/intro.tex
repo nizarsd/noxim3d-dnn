@@ -13,12 +13,7 @@ Deep Neural Networks (DNNs) have become the dominant workload class across compu
 The consequence is that IMC does not eliminate communication; it relocates it. What remains mobile is activation scatter traffic and the dominant partial-sum reduction traffic: with default packing, roughly 82\% of a block's NoC bytes is reduction that converge on few accumulator tiles via the on-chip network. The accelerator's bottleneck that governs its performance and energy becomes communication, and the design focus shifts from being computation-centric to communication-centric. Communication on IMC DNN accelerators is not set by a single design choice, nor within a single design layer, but by a chain of dependent choices taken at different layers.
 
 This paper presents a cross-layer design space exploration spanning three main layers---packing, mapping and routing---in which the design choices available at each layer are evaluated both for their performance impact within that layer and for their impact on the layers downstream. A delay- and inference-time-aware design flow is proposed, and is shown to significantly reduce both average and tail delays, the latter measured as the p99 latency that governs inference time. The contributions are:
-The contributions are:
 \begin{itemize}
-\item a cross-layer design-space exploration for IMC-based DNN
-      accelerators, spanning the packing, mapping and routing layers,
-      in which each layer is evaluated for its own effect and for the
-      constraints it imposes downstream;
 \item an attribution of communication delay to the layer that controls
       it: an invariant port floor fixed by the packing orientation and a
       peak link load fixed by the placement, with the binding term
