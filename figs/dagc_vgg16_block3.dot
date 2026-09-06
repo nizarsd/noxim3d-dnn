@@ -1,0 +1,68 @@
+digraph clusters {
+  rankdir=LR; splines=line; bgcolor="white"; newrank=true;
+  graph [margin=0.3,pad=0.25,nodesep=0.16,ranksep=1.5,fontname="Helvetica"];
+  node [shape=circle,style=filled,fixedsize=true,width=0.34,label="",penwidth=1.1,color="#333333",fontname="Helvetica"];
+  edge [arrowsize=0.45,penwidth=0.7];
+  labelloc="t"; fontsize=13; label=<<b>VGG-16 block 3</b><br/><font point-size="9">one circle = one reduce cluster (the tiles sharing an accumulator) &#183; arrow = inter-cluster traffic &#183; colour = source layer &#183; volume not encoded</font>>;
+  subgraph cluster_key {
+    label=""; style="invis";
+    "key_0" [shape=plaintext,style="",fixedsize=false,label=<<table border="0" cellborder="0" cellspacing="1"><tr><td><font face="Helvetica" point-size="15" color="#555555">&#9679;</font></td><td align="left"><font face="Helvetica" point-size="10">conv5  (5 tiles per cluster)</font></td></tr></table>>];
+    "key_1" [shape=plaintext,style="",fixedsize=false,label=<<table border="0" cellborder="0" cellspacing="1"><tr><td><font face="Helvetica" point-size="15" color="#7f8c8d">&#9679;</font></td><td align="left"><font face="Helvetica" point-size="10">conv6  (9 tiles per cluster)</font></td></tr></table>>];
+    "key_0" -> "key_1" [style=invis];
+    "key_2" [shape=plaintext,style="",fixedsize=false,label=<<table border="0" cellborder="0" cellspacing="1"><tr><td><font face="Helvetica" point-size="15" color="#4a90d9">&#9679;</font></td><td align="left"><font face="Helvetica" point-size="10">conv7  (9 tiles per cluster)</font></td></tr></table>>];
+    "key_1" -> "key_2" [style=invis];
+  }
+  // ---- conv5
+  { rank=same; "conv5:0"; "conv5:1"; "conv5:2"; "conv5:3"; }
+  "conv5:0" [fillcolor="#ffffff",penwidth=1.6];
+  "conv5:1" [fillcolor="#ffffff",penwidth=1.6];
+  "conv5:2" [fillcolor="#ffffff",penwidth=1.6];
+  "conv5:3" [fillcolor="#ffffff",penwidth=1.6];
+  // ---- conv6
+  { rank=same; "conv6:0"; "conv6:1"; "conv6:2"; "conv6:3"; }
+  "conv6:0" [fillcolor="#7f8c8d",penwidth=1.6];
+  "conv6:1" [fillcolor="#7f8c8d",penwidth=1.6];
+  "conv6:2" [fillcolor="#7f8c8d",penwidth=1.6];
+  "conv6:3" [fillcolor="#7f8c8d",penwidth=1.6];
+  // ---- conv7
+  { rank=same; "conv7:0"; "conv7:1"; "conv7:2"; "conv7:3"; }
+  "conv7:0" [fillcolor="#4a90d9",penwidth=1.6];
+  "conv7:1" [fillcolor="#4a90d9",penwidth=1.6];
+  "conv7:2" [fillcolor="#4a90d9",penwidth=1.6];
+  "conv7:3" [fillcolor="#4a90d9",penwidth=1.6];
+  "conv5:0" -> "conv5:1" [color="#555555"];
+  "conv5:0" -> "conv5:2" [color="#555555"];
+  "conv5:0" -> "conv5:3" [color="#555555"];
+  "conv5:0" -> "conv6:0" [color="#555555"];
+  "conv5:0" -> "conv6:1" [color="#555555"];
+  "conv5:0" -> "conv6:2" [color="#555555"];
+  "conv5:0" -> "conv6:3" [color="#555555"];
+  "conv5:1" -> "conv6:0" [color="#555555"];
+  "conv5:1" -> "conv6:1" [color="#555555"];
+  "conv5:1" -> "conv6:2" [color="#555555"];
+  "conv5:1" -> "conv6:3" [color="#555555"];
+  "conv5:2" -> "conv6:0" [color="#555555"];
+  "conv5:2" -> "conv6:1" [color="#555555"];
+  "conv5:2" -> "conv6:2" [color="#555555"];
+  "conv5:2" -> "conv6:3" [color="#555555"];
+  "conv5:3" -> "conv6:0" [color="#555555"];
+  "conv5:3" -> "conv6:1" [color="#555555"];
+  "conv5:3" -> "conv6:2" [color="#555555"];
+  "conv5:3" -> "conv6:3" [color="#555555"];
+  "conv6:0" -> "conv7:0" [color="#7f8c8d"];
+  "conv6:0" -> "conv7:1" [color="#7f8c8d"];
+  "conv6:0" -> "conv7:2" [color="#7f8c8d"];
+  "conv6:0" -> "conv7:3" [color="#7f8c8d"];
+  "conv6:1" -> "conv7:0" [color="#7f8c8d"];
+  "conv6:1" -> "conv7:1" [color="#7f8c8d"];
+  "conv6:1" -> "conv7:2" [color="#7f8c8d"];
+  "conv6:1" -> "conv7:3" [color="#7f8c8d"];
+  "conv6:2" -> "conv7:0" [color="#7f8c8d"];
+  "conv6:2" -> "conv7:1" [color="#7f8c8d"];
+  "conv6:2" -> "conv7:2" [color="#7f8c8d"];
+  "conv6:2" -> "conv7:3" [color="#7f8c8d"];
+  "conv6:3" -> "conv7:0" [color="#7f8c8d"];
+  "conv6:3" -> "conv7:1" [color="#7f8c8d"];
+  "conv6:3" -> "conv7:2" [color="#7f8c8d"];
+  "conv6:3" -> "conv7:3" [color="#7f8c8d"];
+}

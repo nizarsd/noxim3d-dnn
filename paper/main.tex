@@ -6,6 +6,7 @@
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{multirow}
 \usepackage{xcolor}
 \usepackage[colorlinks=false,pdfborder={0 0 0}]{hyperref}
 
@@ -17,23 +18,49 @@
 % metric macros -- keep notation consistent everywhere
 \newcommand{\PF}{\mathrm{PF}}
 \newcommand{\PL}{\mathrm{PL}}
-\newcommand{\BIND}{\mathrm{BIND}}
+\newcommand{\BIND}{B}
 \newcommand{\Esc}{E}
 \newcommand{\kstar}{k^{*}}
 
+% ---- spacing (tightened for the 6-page limit) ----
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\floatsep}{6pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{4pt}
+\setlength{\belowcaptionskip}{0pt}
+\AtBeginDocument{%
+  \setlength{\abovedisplayskip}{4pt plus 1pt minus 1pt}
+  \setlength{\belowdisplayskip}{4pt plus 1pt minus 1pt}
+  \setlength{\abovedisplayshortskip}{2pt}
+  \setlength{\belowdisplayshortskip}{2pt}}
+
 \begin{document}
 
-\title{\todo{title -- current favourite: Communication-Aware DSE for IMC DNN
-Accelerators: Co-Optimizing Crossbar Packing, Tile Placement, and Adaptive
-3D-NoC Selection}}
+\title{From Packing to Routing: Cross-Layer Design Space Exploration for IMC
+DNN Accelerators on 3D NoCs}
 
-\author{\IEEEauthorblockN{\todo{authors}}
-\IEEEauthorblockA{\todo{affiliation}}}
+%\author{\IEEEauthorblockN{\todo{authors}}
+%\IEEEauthorblockA{\todo{affiliation}}}
 
 \maketitle
 
 \begin{abstract}
-\todo{abstract -- write last}
+In-memory computing removes weight traffic from DNN accelerators but relocates
+the rest onto the on-chip network, where hundreds of crossbar tiles reduce
+partial sums through a few accumulator ports. Communication is then set by
+three decisions --- how crossbars are packed into tiles, where tiles are placed,
+and how packets are routed --- each optimised today with the others held fixed.
+This paper explores the three as one design space on a 3D NoC, in
+cycle-accurate simulation of three DNN blocks. The layers couple through one
+quantity, the port floor that packing fixes: choosing packing for that floor
+rather than for traffic volume lowers mean delay $11.6\times$ and p99
+$18.6\times$; below the floor, a zero-cost placement refinement recovers up to
+$46\%$ of delay and $67\%$ of p99; and adaptive selection wins in both regimes
+($1.85\times$/$2.39\times$ above, $1.15\times$/$1.23\times$ below) yet leaves
+a residue below the floor that no offline metric predicts. Packing thus sets
+the operating point that placement can only reach and routing can only defend,
+while the residue routing leaves is temporal, calling for selection that adapts
+in time as well as space.
 \end{abstract}
 
 \input{intro}
@@ -46,10 +73,29 @@ Accelerators: Co-Optimizing Crossbar Packing, Tile Placement, and Adaptive
 \input{results}
 
 \section{Conclusion}
-\todo{conclusion + the three directions (temporal DP, thermal-aware mapping,
-router design for reduction sinks)}
+This paper presents a cross-layer design flow for IMC DNN accelerators on a
+3D NoC. Prior studies design for a single layer, which limits design freedom
+and forgoes the gains shown here. The proposed flow is evaluated on three
+workloads. The design layers are found to be highly coupled. The first layer
+(packing), which decides the port floor, is shown to have the highest impact:
+the optimal design choice for delay lowers mean delay $11.6\times$ and p99
+$18.7\times$ at matched load. Below that floor, mapping can be optimized
+through a proposed metric (escape slope); around the knee, at no communication
+cost, this metric is shown to recover up to $46\%$ of mean delay and $67\%$ of
+p99. At the selection layer, adaptive selection is the better fixed policy in
+both regimes, by $1.85\times$/$2.39\times$ above the floor and
+$1.15\times$/$1.23\times$ below it.
+
+Always-DP is shown to capture $96$--$98\%$ of the improvement an
+oracle switching policy per placement and load would achieve above the floor and $71$--$78\%$ below it. No offline
+quantity predicts which cells it loses, because the residue is temporal:
+operating below the floor produces transient congestion clustered at phase
+boundaries, on a timescale a spatially adaptive policy cannot track. Closing
+this residue motivates a temporally as well as spatially adaptive selection
+policy. The same design flow admits other objectives, such as thermal-aware
+placement and load balancing.
 
 \bibliographystyle{IEEEtran}
-\bibliography{refs}
+\bibliography{refs3}
 
 \end{document}
