@@ -10,7 +10,7 @@
 \usepackage{xcolor}
 \usepackage[colorlinks=false,pdfborder={0 0 0}]{hyperref}
 
-\graphicspath{{../figs/}{figs/}}
+\graphicspath{{figs/}}
 
 % draft aids -- strip before submission
 \newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
@@ -23,16 +23,24 @@
 \newcommand{\kstar}{k^{*}}
 
 % ---- spacing (tightened for the 6-page limit) ----
-\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
-\setlength{\floatsep}{6pt plus 2pt minus 2pt}
-\setlength{\intextsep}{8pt plus 2pt minus 2pt}
-\setlength{\abovecaptionskip}{4pt}
+\setlength{\textfloatsep}{4pt plus 1pt minus 1pt}
+\setlength{\floatsep}{4pt plus 1pt minus 1pt}
+\setlength{\intextsep}{4pt plus 1pt minus 1pt}
+\setlength{\abovecaptionskip}{2pt}
 \setlength{\belowcaptionskip}{0pt}
 \AtBeginDocument{%
   \setlength{\abovedisplayskip}{4pt plus 1pt minus 1pt}
   \setlength{\belowdisplayskip}{4pt plus 1pt minus 1pt}
   \setlength{\abovedisplayshortskip}{2pt}
   \setlength{\belowdisplayshortskip}{2pt}}
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd{\@makecaption}{\par\addvspace{0.5\baselineskip}\egroup}{\par\addvspace{2pt}\egroup}{}{}
+\patchcmd{\section}{1.5ex plus 1.5ex minus 0.5ex}{1ex plus 1ex minus 0.3ex}{}{}
+\patchcmd{\section}{0.7ex plus 1ex minus 0ex}{0.3ex plus 0.5ex minus 0ex}{}{}
+\patchcmd{\subsection}{1.5ex plus 1.5ex minus 0.5ex}{1ex plus 1ex minus 0.3ex}{}{}
+\patchcmd{\subsection}{0.7ex plus .5ex minus 0ex}{0.3ex plus 0.5ex minus 0ex}{}{}
+\makeatother
 
 \begin{document}
 
@@ -49,7 +57,7 @@ In-memory computing removes weight traffic from DNN accelerators but relocates
 the rest onto the on-chip network, where hundreds of crossbar tiles reduce
 partial sums through a few accumulator ports. Communication is then set by
 three decisions --- how crossbars are packed into tiles, where tiles are placed,
-and how packets are routed --- each optimised today with the others held fixed.
+and how packets are routed --- each optimized today with the others held fixed.
 This paper explores the three as one design space on a 3D NoC, in
 cycle-accurate simulation of three DNN blocks. The layers couple through one
 quantity, the port floor that packing fixes: choosing packing for that floor

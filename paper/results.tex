@@ -78,14 +78,25 @@ Workloads are ResNet-50 \cite{heDeepResidualLearning2016}, VGG-16 \cite{simonyan
 \label{sec:search}
 The flow evaluated below selects the orientation that minimizes $\PF$, places
 at minimum communication cost, refines by maximizing $\mathrm{ES}$ subject to
-$\mathrm{CC}\le\mathrm{CC}_{\min}$ and $\PL\le\PL(\mathrm{CC}_{\min})$,
-minimizes $\PL$ where search budget remains, and applies adaptive selection;
-each step is evaluated with the layers above it at their chosen point.
+$\mathrm{CC}\le\mathrm{CC}_{\min}$ and $\PL\le\PL(\mathrm{CC}_{\min})$, and
+applies adaptive selection; $\PL$ is held below the floor throughout, since
+Sec.~\ref{sec:r2} shows it controls delay only above it.
 Placements are searched by a guarded hill-climb from a random permutation,
 300 steps of 50 candidate moves (a transposition, or with probability $0.3$ a
 relocation to an idle node), the constraint applied in the move filter and the
 best strictly improving move accepted. All searches are seeded and
 reproducible.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{f_po_ladder_norm.pdf}
+  \caption{Load response of the min-$\PF$ (dotted) and min-traffic (dashed)
+  orientations on the three workloads under BL: load relative to the
+  min-traffic arm's $\kstar$, delay relative to the measured zero-load delay,
+  ladders shown to about three times the min-traffic knee; bars span three
+  placements, ticks mark the min-$\PF$ arm's $\kstar$.}
+  \label{fig:ladder}
+\end{figure}
 
 \subsection{Packing Impact}
 \label{sec:r1}
@@ -105,7 +116,7 @@ bandwidth. Across ResNet-50's eleven feasible points $\PF$ spans
 $0.258$--$1.494$ flits/cycle, a factor of $5.8$. Orientation therefore fixes
 the floor, and no later decision can lower it.
 
-\begin{table}[t]
+\begin{table}[b]
   \caption{Min-$\PF$ vs.\ min-traffic orientation per density; last column:
   floor gained / traffic cost of selecting on $\PF$ (``---'': same
   orientation). $\PF$ in flits/cycle.}
@@ -135,33 +146,27 @@ the floor, and no later decision can lower it.
 \end{table}
 
 Whether a lower floor is worth its traffic overhead cannot be settled offline,
-so we simulate the widest disagreement on ResNet-50: $c{=}16$, the min-$\PF$
-orientation $(2,8)$ against the min-traffic orientation $(4,4)$, a
-$2.78\times$ lower floor for $8\%$ more traffic. To keep the comparison at the
-packing layer, both arms receive minimum-communication-cost placements and are
-swept over the same load ladder, three placements per arm at three seeds per
-rung, under local selection (BL).
+so we simulate each workload's widest disagreement in
+Table~\ref{tab:packing}, the cell with the largest floor ratio. To keep the
+comparison at the packing layer, both arms receive
+minimum-communication-cost placements and are swept over the same load
+ladder, three placements per arm at three seeds per rung, under local
+selection (BL).
 
-Fig.~\ref{fig:ladder} shows both arms across the ladder: the min-traffic arm
-bends between $k = 0.7$ and $1.0$ and is saturated by $1.6$, while the
-min-$\PF$ arm bends at $2.0$--$2.5$, a $1.85\times$ higher $\kstar$. At
-$k = 1.0$ the gap is $11.6\times$ in mean delay and $18.6\times$ in p99, and
-it widens with load. Both arms stay below their own floor throughout
-($\PL/\PF \le 0.58$), so the gap is not a placement artefact, and under DP the
-same rung reads $13.8\times$ / $20.3\times$.
+Fig.~\ref{fig:ladder} overlays the three ladders, with load relative to the
+min-traffic arm's $\kstar$ and delay relative to the measured zero-load delay.
+The three min-traffic arms fall on one band and the three min-$\PF$ arms on
+another: $\kstar$ is $1.75$--$2.10\times$ higher on the min-$\PF$
+orientation, and two rungs past the min-traffic knee (ResNet-50 at
+$k = 1.0$, DeiT-S and VGG-16 at $k = 0.4$) the gap is $12\times$, $25\times$
+and $64\times$ in mean delay and $19\times$, $30\times$ and $107\times$ in
+p99. All arms stay below their own floor ($\PL/\PF \le 0.91$), so the gap is
+not a placement artefact, and the same holds under DP.
 
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\linewidth]{f_po_ladder.pdf}
-  \caption{Load response of ResNet-50 $c{=}16$ min-$\PF$ $(2,8)$ vs
-  min-traffic $(4,4)$ under BL; bars span three placements, dotted lines mark
-  each arm's $\kstar$.}
-  \label{fig:ladder}
-\end{figure}
-
-The floor is therefore worth its bandwidth overhead, and the classical
-minimum-traffic objective is the wrong one to rank orientations by: packing
-sets the operating point that every downstream layer inherits.
+The floor is therefore worth its bandwidth overhead on all three workloads,
+and the classical minimum-traffic objective is the wrong one to rank
+orientations by: packing sets the operating point that every downstream layer
+inherits.
 
 % ---------------------------------------------------------------------
 % NOTE (rewrite guide):
@@ -220,7 +225,7 @@ floor.
 
 Hop count acts separately but weakly: on three arms of the same packing at
 identical $\BIND$ below the floor, $15\%$ more communication cost adds
-$3.7$--$6.7\%$ to free-flow delay, while adding $\mathrm{CC}$ to a $\BIND$
+$3.7$--$6.7\%$ to low-load delay, while adding $\mathrm{CC}$ to a $\BIND$
 model moves its adjusted $R^2$ by at most $0.01$ --- communication cost sets
 where the delay curve starts, $\BIND$ where it bends.
 
@@ -330,7 +335,7 @@ knee window. Fig.~\ref{fig:spread} shows one population in each regime.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{f5_two_regime.pdf}
+  \includegraphics[width=\linewidth]{f5_two_regime_paper.pdf}
   \caption{Delay across placements, BL vs.\ DP: 12 equal-$\PL$ placements of
   ResNet-50 $(16,2,8)$ above the floor (top) and 8 placements of $(8,1,8)$
   at the knee below it (bottom).}
@@ -352,6 +357,15 @@ The compression window is the knee window of Sec.~\ref{sec:r2}: adaptive
 selection is a throughput lever above the floor and a robustness lever
 wherever placements differ, and both live at the knee.
 
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{f_stack_layers_paper.pdf}
+  \caption{Measured gain by layer per workload, each at its own operating
+  point (Fig.~\ref{fig:ladder} rung; Table~\ref{tab:es} arm and rung);
+  ResNet-50 and VGG-16 packing at $c{=}16$/$32$, other layers at $c{=}8$.}
+  \label{fig:layers}
+\end{figure}
+
 \subsection{Policy Choice and Its Limit}
 \label{sec:r4}
 
@@ -362,20 +376,12 @@ above the floor, $128$ below, three seeds each --- and three policies are
 compared on identical cells: always-BL, always-DP, and a per-cell oracle
 taking the better of the two.
 
-Fig.~\ref{fig:policy} shows the result. DP is ahead of BL in both regimes and
-at every load band: by $1.85\times$ in mean delay and $2.39\times$ in p99 above
-the floor, and by $1.15\times$ and $1.23\times$ below it. The oracle adds
-$1.1\%$ and $2.5\%$ above the floor but $3.8\%$ and $7.7\%$ below it: of the
+DP is ahead of BL in both regimes and in $61$ of the $62$ load bands
+measured: by $1.85\times$ in mean delay and $2.39\times$ in p99 above the
+floor, and by $1.15\times$ and $1.23\times$ below it. The oracle adds $1.1\%$
+and $2.5\%$ above the floor but $3.8\%$ and $7.7\%$ below it: of the
 improvement available between always-BL and the oracle, always-DP captures
 $98\%$ and $96\%$ above the floor but only $78\%$ and $71\%$ below it.
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\linewidth]{f6_policy.pdf}
-  \caption{Left: DP's advantage over BL per cell vs.\ congestion. Right:
-  speed-up over always-BL of always-DP and of a per-cell oracle, by regime.}
-  \label{fig:policy}
-\end{figure}
 
 The remaining $4$--$8\%$ below the floor is the only headroom left, so we ask
 whether the cells DP loses can be identified at design time. About thirty
@@ -387,6 +393,15 @@ a registered ceiling of $0.10$.
 
 Adaptive selection is therefore the right fixed policy in both regimes, and
 what it leaves below the floor is not a design-time quantity.
+
+Fig.~\ref{fig:layers} stacks each layer's measured gain per workload at its
+own operating point: the orientation gap at the rung of
+Fig.~\ref{fig:ladder}, the refinement of Table~\ref{tab:es}, and the better
+policy on the refined placement at that rung. Packing carries the gain;
+mapping adds $1.13$--$1.25\times$ and selection $1.03$--$1.11\times$ in mean
+delay, selection least at the min-$\PF$ packing's own knee, where DP's
+below-floor gain is smallest.
+
 
 \label{sec:r5}
 \emph{Scope.} $\PL$, $\PL_f$ and $\Esc$ are offline path-enumeration models under an

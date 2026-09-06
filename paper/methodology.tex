@@ -8,15 +8,6 @@
 % Budget: ~0.8 pp.
 % =====================================================================
 \section{Formulations and Methodology}
-\label{sec:method}
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=0.8\linewidth]{fig_methodflow_flow.pdf}
-  \caption{The layered design flow: what each layer fixes, what it chooses,
-  and what it passes down. Each step is evaluated with the layers above it at
-  their chosen point.}
-  \label{fig:flow}
-\end{figure}
 Classical NoC traffic differs dramatically from DNN traffic on a tiled IMC
 substrate. Most of a block's NoC traffic is partial-sum reduction, sunk by a few
 accumulator nodes, so that a handful of ejection ports become the hotspots of
@@ -35,19 +26,11 @@ Finally, the endpoint that matters is the tail rather than the mean, because
 reduction is a barrier in which the accumulator waits for the slowest arriving
 partial sum -- the arrival that determines the inference time. 
 
-The rest of this section defines the quantities these properties demand: the three design layers, the design-time quantities that determine each layer's decision, the port and link load characterizations, and the proposed optimization objectives. It also describes the search that turns these into the proposed design flow.
-
-
 \subsection{The Three Design Layers}
 \label{sec:layers}
-This work proposes a cross-layer design flow decomposed into three layers, in which the design decisions and constraints made at a layer are inherited by the layers below it. Every layer is therefore evaluated not only for its own performance but also for its downstream effect.
+This work proposes a cross-layer design flow decomposed into three layers (Fig.~\ref{fig:flow}). Every layer is  evaluated not only for its own performance but also for its downstream effect.
 
 The top layer is \emph{architecture and packing}. For a given hardware design it fixes how many crossbars share a tile (packing density, PD), and it decides the \emph{layer-to-tile} mapping, i.e.\ how a DNN layer's rows (reduce, $r$) and columns (scatter, $s$) are grouped across those crossbars (packing orientation, PO). Together, PD and PO fix how much of a layer's traffic has to pass through a single tile port --- a floor on delay that no later decision can lower. The second layer is \emph{tile-to-node} placement, or \emph{mapping}, which assigns NoC mesh nodes to those tiles and sets the peak single-link load across the NoC (PL). The third is the \emph{routing and selection} policy, which decides, at run time, how much of that load can be steered off that link.
-
-The layers are searched in that order, and the search is nested, not sequential.
-Each PO creates its own traffic graph \emph{and} its own mapping space, so two
-POs can be compared only when both are at their best mappings. Comparing a PO with a tuned mapping against a PO with an arbitrary one confounds the two layers
-(packing and mapping).
 
 \subsection{Packing Density, Orientation and Port Floor}
 \label{sec:packing}
