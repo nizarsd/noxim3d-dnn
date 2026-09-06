@@ -1,6 +1,34 @@
-% =====================================================================
-% RELATED WORK
-
 \section{Background and Related Work}
 \label{sec:related}
-Wafer-scale integration shows what collapsing memory into compute costs at the largest scale yet built: Cerebras' WSE-3 holds 44 GB on-wafer at 21 PB/s while provisioning 214 Pb/s of on-chip fabric — as reported, more aggregate bandwidth in the network than in the memory it serves \cite{CerebrasWSE2025}. Crossbar-based accelerators make the same collapse at tile granularity, so the interconnect rather than memory becomes the resource that mapping must be designed against \cite{CerebrasWSE2025}.
+Communication is a recognised bottleneck of DNN accelerators. Dataflow
+accelerators attack it by scheduling data reuse so that fewer bytes
+move~\cite{chenEyerissSpatialArchitecture2016,szeEfficientProcessingDeep2017};
+IMC accelerators attack it by keeping weights stationary in crossbar
+tiles~\cite{shafieeISAACConvolutionalNeural2016,chiPRIMENovelProcessinginMemory2016,longFerroelectricFETBasedProcessinginMemory2019},
+which removes weight traffic but relocates the rest onto the on-chip network,
+making the interconnect the design object~\cite{nabavinejadOverviewEfficientInterconnection2020}.
+
+The closest precedent is Krishnan et
+al.~\cite{krishnanImpactOnchipInterconnect2022}, who map DNN layers to tiles
+on a mesh and drive the NoC with per-pair injection rates, the traffic model
+adopted here, and conclude that the network is uncongested at average rates
+--- a conclusion about the mean that Sec.~\ref{sec:r2} qualifies. The same
+group models IMC and its NoC end to
+end~\cite{krishnanSIAMChipletbasedScalable2021} and synthesises a NoC per
+DNN~\cite{mandalLatencyOptimizedReconfigurableNoC2020}, taking topology as
+the variable where this work keeps a regular 3D mesh and varies routing and
+selection. On 3D NoCs, TTNNM~\cite{liTTNNMThermalTrafficAware2024} and
+TEFLON~\cite{narangTEFLONThermallyEfficient2024} optimise placement or fabric
+with the packing given; adaptive routing and
+selection~\cite{dahirHighlyAdaptiveDeadlockFree2013,makDPnetworkOptimalDynamic2009,choiOnChipCommunicationNetwork2018}
+have been developed largely on synthetic traffic. At wafer scale the
+Cerebras WSE provisions more fabric than memory
+bandwidth~\cite{miyajimaBenchmarkingCerebrasWafer2025}: past a certain
+integration the problem is communication-centric by construction.
+
+Each of these works optimises one layer with the others held fixed: packing
+for utilisation or traffic volume, placement for hops or heat, routing for a
+given placement. None asks how a choice at one layer changes what the next can
+achieve. The results below show that this is where the largest effects lie:
+the minimum-traffic packing is the wrong one, placement matters only in a
+regime that packing decides, and what selection yields depends on both.

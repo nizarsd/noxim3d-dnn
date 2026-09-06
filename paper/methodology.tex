@@ -4,166 +4,132 @@
 % simulator, workloads/traffic and the measurement protocol live in
 % §Results.  Moved out of here: substrate block, the "why 3D" paragraph,
 % workloads/traffic model, measurement protocol.
-% Metric definitions currently duplicated at results.tex §V.B -- delete
 % them there if this section is adopted.
 % Budget: ~0.8 pp.
 % =====================================================================
 \section{Formulations and Methodology}
 \label{sec:method}
-DNN traffic on a tiled IMC substrate is not the traffic classical NoC design
-assumes. It is a funnel rather than a permutation: roughly 82\% of a block's NoC
-bytes are partial-sum reduction converging on a handful of accumulator tiles,
-whose single ejection port is 18--148$\times$ oversubscribed at true model rates.
-The binding constraint is therefore a port rather than a link, and it is
-invariant to placement and routing --- every placement reachable by ordinary
-means leaves the peak link load below that port floor. The traffic graph is
-itself a design variable, not an input: how much reduction is internalised
-on-tile is decided by the packing, which moves the port floor $5.8\times$ before
-any placement exists. It is also non-stationary --- layer-sequential execution
-gives each flow a disjoint activity window inside one inference period, so peak
-and average diverge by $1.7$--$9.9\times$, separating feasibility from
-performance --- and its congestion is transient and clustered at phase
-boundaries, with drain tails of 0.8--1.5\,k cycles against phase windows of
-5--23\,k, precisely the timescale an adaptive policy's cost field must track.
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.8\linewidth]{fig_methodflow_flow.pdf}
+  \caption{The layered design flow: what each layer fixes, what it chooses,
+  and what it passes down. Each step is evaluated with the layers above it at
+  their chosen point.}
+  \label{fig:flow}
+\end{figure}
+Classical NoC traffic differs dramatically from DNN traffic on a tiled IMC
+substrate. Most of a block's NoC traffic is partial-sum reduction, sunk by a few
+accumulator nodes, so that a handful of ejection ports become the hotspots of
+the whole network. This makes \emph{DNN traffic a funnel, not a permutation}.
+Thus the binding bottleneck is a port and not a link, and it is unaffected by
+mapping and routing unless mapping or routing creates a hotspot link whose load
+exceeds the port bottleneck --- an extreme case, as this study shows and
+intuition supports (a hot accumulator has one ejection port but up to six
+incoming links).
+
+Based on the above, the \emph{traffic graph itself becomes a design variable,
+not an input}. Packing determines how much of the reduction is internalized on-tile and how much reaches the NoC, before any mapping or routing exists. Temporally, the traffic is non-stationary and bursty ---
+layer-sequential execution gives each flow a disjoint activity window inside one
+inference period, so peak and average load diverge: the average decides whether a packing is feasible, while the peak decides the delay it will incur. Congestion is therefore transient and clustered at phase boundaries, on the timescale an adaptive policy's cost field need track if it is to work.
 Finally, the endpoint that matters is the tail rather than the mean, because
 reduction is a barrier in which the accumulator waits for the slowest arriving
-partial sum; below saturation, throughput is uninformative --- across
-configurations spanning $260\%$ in delay, delivered throughput varied by
-$0.83\%$ [REF].
+partial sum -- the arrival that determines the inference time. 
 
-This section defines the quantities that characterisation makes necessary, the
-design layers that set them, and the search that optimises them.
+The rest of this section defines the quantities these properties demand: the three design layers, the design-time quantities that determine each layer's decision, the port and link load characterizations, and the proposed optimization objectives. It also describes the search that turns these into the proposed design flow.
 
-\subsection{The three design layers}
+
+\subsection{The Three Design Layers}
 \label{sec:layers}
-The top layer is \emph{architecture and packing}. For a given hardware design it fixes how many crossbars share a tile (packing density, PD), and it decides the \emph{layer-to-tile} mapping, i.e.\ how a DNN layer's rows (reduce, $r$) and columns (scatter, $s$) are grouped across those crossbars (packing orientation, PO). Together, PD and PO fix how much of a layer's traffic has to pass through a single tile port --- a floor on delay that no later decision can lower. The second layer is \emph{tile-to-node} placement, or \emph{mapping}, which assigns NoC mesh nodes to those tiles and sets the peak single-link load across the NoC. The third is the \emph{routing and selection} policy, which decides, at run time, how much of that load can be steered off that link.
+This work proposes a cross-layer design flow decomposed into three layers, in which the design decisions and constraints made at a layer are inherited by the layers below it. Every layer is therefore evaluated not only for its own performance but also for its downstream effect.
 
-The layers are searched in that order, and the search is nested rather than
-sequential: each PO induces its own traffic graph \emph{and} its own placement
-space, so two orientations are comparable only when each is evaluated at its
-own best placement. Comparing a tuned placement of one orientation against an
-arbitrary placement of another confounds two layers.
+The top layer is \emph{architecture and packing}. For a given hardware design it fixes how many crossbars share a tile (packing density, PD), and it decides the \emph{layer-to-tile} mapping, i.e.\ how a DNN layer's rows (reduce, $r$) and columns (scatter, $s$) are grouped across those crossbars (packing orientation, PO). Together, PD and PO fix how much of a layer's traffic has to pass through a single tile port --- a floor on delay that no later decision can lower. The second layer is \emph{tile-to-node} placement, or \emph{mapping}, which assigns NoC mesh nodes to those tiles and sets the peak single-link load across the NoC (PL). The third is the \emph{routing and selection} policy, which decides, at run time, how much of that load can be steered off that link.
 
-\subsection{Packing: PD, PO and the port floor}
+The layers are searched in that order, and the search is nested, not sequential.
+Each PO creates its own traffic graph \emph{and} its own mapping space, so two
+POs can be compared only when both are at their best mappings. Comparing a PO with a tuned mapping against a PO with an arbitrary one confounds the two layers
+(packing and mapping).
+
+\subsection{Packing Density, Orientation and Port Floor}
 \label{sec:packing}
-A packing $(c,r,s)$ with $r\cdot s=c$ assigns the crossbars of a DNN layer to
-tiles: $r$ groups crossbars along the reduction dimension, internalising
-partial-sum traffic on-tile, and $s$ groups them along the scatter dimension,
-internalising input broadcast. It induces a \emph{traffic graph} whose nodes
-are logical tiles and whose arcs are flows. Flow $f$ carries rate $\lambda_f$
+A packing $(c,r,s)$ determines how crossbars of a DNN layer are split among tiles, with $c=r\cdot s$, where $r$ defines reduction dimension grouping, internalizing partial-sum traffic on-tile, and $s$ defines scatter dimension grouping, internalizing input activation broadcast. Packing results in a \emph{traffic graph} whose nodes
+are logical tiles and arcs are inter-tile data flows. Flow $f$ is characterized by data rate $\lambda_f$
 flits/cycle from tile $u_f$ to tile $v_f$ and is active over the window
-$[t^{\mathrm{on}}_f, t^{\mathrm{off}}_f)$ of the inference period $T$.
+$[t^{\mathrm{on}}_f, t^{\mathrm{off}}_f)$ of the inference period $T$. 
 
-Because injection and ejection are independent channels, a tile's two port
-rates bind separately. Over the elementary intervals $\mathcal{I}$ --- the
-maximal windows on which the active flow set is constant, cut at every
-$t^{\mathrm{on}}_f$ and $t^{\mathrm{off}}_f$ --- the peak injection and
-ejection loads and the \emph{port floor} are
+A tile's injection (outbound) and ejection (inbound) channels are different which causes tile's two port rates bind separately. The elementary intervals $\mathcal{I}$ are the
+maximal windows on which the active flow set is constant. Following the above formulation Peak injection (PIL) and
+ejection (PEL) loads and the \emph{port floor} (PF) are
+
 \begin{align}
-  \mathrm{PIL} &= \max_{I\in\mathcal{I}}\ \max_{n}
+  \mathrm{PIL} &= \max_{I\in\mathcal{I},\ n\in\mathcal{N}}
     \sum_{f\,:\,u_f=n,\ f\ \mathrm{active}\ \mathrm{in}\ I} \lambda_f,
   \label{eq:pil}\\
-  \mathrm{PEL} &= \max_{I\in\mathcal{I}}\ \max_{n}
+  \mathrm{PEL} &= \max_{I\in\mathcal{I},\ n\in\mathcal{N}}
     \sum_{f\,:\,v_f=n,\ f\ \mathrm{active}\ \mathrm{in}\ I} \lambda_f,
   \label{eq:pel}\\
   \PF &= \max(\mathrm{PIL},\mathrm{PEL}).
   \label{eq:pf}
 \end{align}
-Equations~\eqref{eq:pil}--\eqref{eq:pf} involve no placement variable, so
-$\PF$ is \emph{placement-invariant}: remapping relabels which physical node is
-hot, never how hot it is. It is the quantity the packing layer alone controls,
-and $1/\PF$ upper-bounds the load the design can sustain in a burst.
 
-\subsection{Placement: peak link load}
-\label{sec:placement}
-A placement is an injective map $\pi$ from tiles to mesh nodes. Under a
-routing function $\mathcal{R}$, let $\varphi_f(\ell,\pi)\in[0,1]$ be the
+where $I$ ranges over $\mathcal{I}$ and $n$ over the tiles of the traffic graph ($\mathcal{N}$).
+
+These metrics are mapping-independent because equations~\eqref{eq:pil}--\eqref{eq:pf} involve no placement variable, so $\mathrm{PIL}$, $\mathrm{PEL}$ and hence
+$\PF$ are \emph{placement-invariant}: remapping determines which NoC node is
+hot, but not how hot it is.  $\PF$ is the quantity that the packing layer controls. The upper bound on the load the system can sustain  in a burst is $1/\PF$.
+
+\subsection{Mapping: Peak Link Load}
+\label{sec:mapping} 
+A mapping is an injective map $\pi$ that assigns tiles to mesh nodes. Once $\pi$ is fixed, the inter-tile flows are carried on NoC links through the routing function $\mathcal{R}$. Let $\varphi_f(\ell,\pi)\in[0,1]$ be the
 fraction of flow $f$'s minimal $\mathcal{R}$-admissible paths that traverse
-directed link $\ell$, so that an even spread over admissible paths gives the
-offered link load $\Lambda_\ell = \sum_f \lambda_f\,\varphi_f(\ell,\pi)$,
-again maximised over $\mathcal{I}$. The placement layer is then characterised
-by
-\begin{equation}
-  \PL = \max_{\ell} \Lambda_\ell,
-  \qquad
-  \mathrm{CC} = \sum_f \lambda_f\, h\!\left(\pi(u_f),\pi(v_f)\right),
-  \label{eq:pl}
-\end{equation}
-with $h$ the Manhattan hop distance. $\PL$ is the only term a placement moves;
-$\mathrm{CC}$ is the hop-count energy proxy. Writing $\ell^{*}$ for the
-argmax link, the two layers meet at the \emph{binding load}
+directed link $\ell$. An even spread over admissible paths gives the offered link load $\Lambda_\ell = \sum_f \lambda_f\,\varphi_f(\ell,\pi)$,
+again maximized over $\mathcal{I}$. The mapping layer is then characterized by peak link load (PL) and communication cost (CC) --- a hop-count energy proxy
+\begin{align}
+  \PL &= \max_{\ell} \Lambda_\ell,
+  \label{eq:pl}\\
+  \mathrm{CC} &= \sum_f \lambda_f\, h\!\left(\pi(u_f),\pi(v_f)\right).
+  \label{eq:cc}
+\end{align}
+with $h$ the Manhattan hop distance. $\PL$ and $\mathrm{CC}$ are determined by $\pi$; $\PF$ is fixed at the upstream packing layer. The link attaining PL is denoted  $\ell^{*}$.
+
+The packing and mapping layers meet at the \emph{binding load}
 \begin{equation}
   \BIND = \max(\PF, \PL),
   \label{eq:bind}
 \end{equation}
-which is the predictor the flow optimises: below $\PF$ the placement term is
-inactive and delay is flat in $\PL$; above it $\PL$ binds and delay is steep.
+which is a design objective optimized by the  proposed flow.
 
-\subsection{Routing and selection}
+\subsection{Routing and Selection}
 \label{sec:routing}
-Routing is odd-even-balanced adaptive routing~\cite{dahir2013oeb}, a
-deadlock-free 3D turn model that admits, for most source--destination pairs,
-several minimal paths; $\mathcal{R}$ in \eqref{eq:pl} is this admissible set.
-Which admissible output a packet takes is the \emph{selection} decision, and
-we compare two policies. \textbf{BL} is local: it picks the admissible output
-whose downstream input buffer has the most free slots, so its view of
-congestion extends one hop. \textbf{DP} is distributed and multi-hop: each
-router maintains, per destination, a congestion cost-to-go estimate obtained
-by relaxing its neighbours' estimates over admissible turns, and selects the
-output minimising local occupancy plus that neighbour's cost-to-go. DP
-therefore steers around congestion several hops ahead, at the cost of a field
-that must reconverge whenever the traffic pattern changes.
+The third layer is \emph{routing and selection}. It decides how traffic is relayed for a given packing and mapping. Routing computes the set of allowed paths  $\mathcal{R}$, which binds to the mapping layer through $\varphi_f(\ell,\pi)$. More permissive paths for a flow $f$ help to spread it over more links, lowering $\PL$ for the same $\pi$.
 
-\subsection{Proposed metrics}
+Selection then determines which  output, among the admissible ones, a packet is forwarded to. It is the only decision 
+that can respond to congestion (or any run-time optimization metric) rather than predict it. However, it is bounded by what the upstream layers have left: load can be moved off $\ell^{*}$ only insofar as the flows sharing it have alternatives. Thus, mapping has an impact on what selection can achieve, provided a proper offline metric captures the escapable load. This is the key idea behind the metrics proposed in this work and described below. 
+
+
+\subsection{Proposed Metrics: Escapable Load Fraction and Slope}
 \label{sec:metrics}
-Selection can only divert load that has somewhere to go. For link $\ell$, the
-share of its load carried by flows with an alternative is the
-\emph{escapable fraction}
+The proposed metrics stem from the fact that \emph{selection can only divert load that has somewhere to go}. A flow whose  fraction on link $\ell$ is 1 ($\varphi_f(\ell)=1$) is \emph{forced} through $\ell$. We define the \emph{escapable fraction} for link $\ell$ as the share of its load carried by flows with an alternative path
 \begin{equation}
-  E(\ell) = 1 - \frac{1}{\Lambda_\ell}
-            \sum_{f\,:\,\varphi_f(\ell)=1} \lambda_f ,
-  \label{eq:e}
+E(\ell) = 1 - \frac{1}{\Lambda_\ell}
+\sum_{f\,:\,\varphi_f(\ell)=1} \lambda_f ,
+\label{eq:e}
 \end{equation}
-the complement of the \emph{forced} load, i.e.\ of the flows every one of whose
-admissible paths crosses $\ell$. We write $E = E(\ell^{*})$.
 
-A single hot link, however, does not describe how the escape room is
-distributed across the links that actually congest. Let $\mathcal{L}_q$ be the
+i.e. it is the complement of the \emph{forced} load. We write escapable fraction of the link with peak load (PL) $E = E(\ell^{*})$.
+
+The hottest link escape, however, does not fully account for how the escape room is distributed across the congested links. 
+
+Let $\mathcal{L}_q$ be the
 top-$q$ fraction of links ordered by $\Lambda_\ell$, and let
 $E_q = \sum_{\ell\in\mathcal{L}_q} E(\ell)\Lambda_\ell \big/
        \sum_{\ell\in\mathcal{L}_q}\Lambda_\ell$
-be the load-weighted escapable fraction of that tier. We propose the
-\emph{escape slope}
+be the load-weighted escapable fraction of that tier. We propose the \emph{escape slope}
 \begin{equation}
-  \mathrm{ES} = E_{20} - E_{5},
+  \mathrm{ES} = E_{q_2} - E_{q_1},
   \label{eq:es}
 \end{equation}
-the change in escape room between the top 5\% and the top 20\% of links.
-$\mathrm{ES}$ is computed offline from the traffic graph and the permutation
-alone, is invariant to the load scale, and --- unlike $E$ --- is free at fixed
-$\PL$ and $\mathrm{CC}$, which is what makes it usable as a refinement
-objective rather than a description.
+the change in escape room between the top $q_1$ and the top $q_2$ of links ($q_2 > q_1$; we use $q_1 = 5\%$, $q_2 = 20\%$).
+$\mathrm{ES}$ is computed offline from the logical traffic graph and the mapping
+alone. 
 
-Finally, because different placements saturate at different loads, capacity is
-measured per mapping: $\kstar$ is the injection scale at which a mapping
-reaches twice its \emph{own} free-flow delay, interpolated from a load ladder.
-Mappings are compared at their own $\kstar$, never at one global load.
-
-\subsection{The design flow and its search}
-\label{sec:search}
-The flow instantiates the layer order above: choose the orientation that
-minimises $\PF$; place at minimum $\mathrm{CC}$; refine that placement by
-maximising $\mathrm{ES}$ subject to $\mathrm{CC}\le\mathrm{CC}_{\min}$ and
-$\PL\le\PL(\mathrm{CC}_{\min})$, which costs nothing at either upstream layer;
-minimise $\PL$ if further search is affordable; and run adaptive selection
-throughout.
-
-All of \eqref{eq:pil}--\eqref{eq:es} are evaluated from the traffic graph and
-the permutation alone, with no simulation. Placements are searched by a
-guarded hill-climb seeded from a pool of $1\,000$ random permutations: a step
-draws 60 candidate moves --- a transposition of two occupied nodes, or, with
-probability $0.3$, a relocation of one tile to an idle node --- discards any
-candidate violating the active constraint, and accepts the best strictly
-improving one. Applying constraints inside the move filter rather than as a
-post-hoc rejection is what makes the guarded objectives above searchable
-directly. All searches are seeded and reproducible.
+$\mathrm{ES}$ stems from  the observation that hot links are typically created by forced traffic, whose load cannot move, while the load queued on the links feeding them can. Thus, high $\mathrm{ES}$ means high escape room just below the peak, allowing backed-up load to drain sideways before it reaches the forced high-load core (the top $q_1$). Conversely, low $\mathrm{ES}$ means the shoulder is as rigid as the core and nothing drains. To improve the performance of the selection policy, $\mathrm{ES}$ is therefore maximized.

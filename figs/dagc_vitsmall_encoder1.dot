@@ -1,0 +1,155 @@
+digraph clusters {
+  rankdir=LR; splines=line; bgcolor="white"; newrank=true;
+  graph [margin=0.3,pad=0.25,nodesep=0.16,ranksep=1.5,fontname="Helvetica"];
+  node [shape=circle,style=filled,fixedsize=true,width=0.34,label="",penwidth=1.1,color="#333333",fontname="Helvetica"];
+  edge [arrowsize=0.45,penwidth=0.7];
+  labelloc="t"; fontsize=13; label=<<b>DeiT-S encoder block</b><br/><font point-size="9">one circle = one reduce cluster (the tiles sharing an accumulator) &#183; arrow = inter-cluster traffic &#183; colour = source layer &#183; volume not encoded</font>>;
+  subgraph cluster_key {
+    label=""; style="invis";
+    "key_0" [shape=plaintext,style="",fixedsize=false,label=<<table border="0" cellborder="0" cellspacing="1"><tr><td><font face="Helvetica" point-size="15" color="#555555">&#9679;</font></td><td align="left"><font face="Helvetica" point-size="10">q  (3 tiles per cluster)</font></td></tr></table>>];
+    "key_1" [shape=plaintext,style="",fixedsize=false,label=<<table border="0" cellborder="0" cellspacing="1"><tr><td><font face="Helvetica" point-size="15" color="#7f8c8d">&#9679;</font></td><td align="left"><font face="Helvetica" point-size="10">k  (3 tiles per cluster)</font></td></tr></table>>];
+    "key_0" -> "key_1" [style=invis];
+    "key_2" [shape=plaintext,style="",fixedsize=false,label=<<table border="0" cellborder="0" cellspacing="1"><tr><td><font face="Helvetica" point-size="15" color="#4a90d9">&#9679;</font></td><td align="left"><font face="Helvetica" point-size="10">v  (3 tiles per cluster)</font></td></tr></table>>];
+    "key_1" -> "key_2" [style=invis];
+    "key_3" [shape=plaintext,style="",fixedsize=false,label=<<table border="0" cellborder="0" cellspacing="1"><tr><td><font face="Helvetica" point-size="15" color="#f2d024">&#9679;</font></td><td align="left"><font face="Helvetica" point-size="10">o  (3 tiles per cluster)</font></td></tr></table>>];
+    "key_2" -> "key_3" [style=invis];
+    "key_4" [shape=plaintext,style="",fixedsize=false,label=<<table border="0" cellborder="0" cellspacing="1"><tr><td><font face="Helvetica" point-size="15" color="#2eab6b">&#9679;</font></td><td align="left"><font face="Helvetica" point-size="10">ff1  (3 tiles per cluster)</font></td></tr></table>>];
+    "key_3" -> "key_4" [style=invis];
+    "key_5" [shape=plaintext,style="",fixedsize=false,label=<<table border="0" cellborder="0" cellspacing="1"><tr><td><font face="Helvetica" point-size="15" color="#f0932b">&#9679;</font></td><td align="left"><font face="Helvetica" point-size="10">ff2  (12 tiles per cluster)</font></td></tr></table>>];
+    "key_4" -> "key_5" [style=invis];
+  }
+  // ---- q
+  { rank=same; "q:0"; "q:1"; "q:2"; }
+  "q:0" [fillcolor="#ffffff",penwidth=1.6];
+  "q:1" [fillcolor="#ffffff",penwidth=1.6];
+  "q:2" [fillcolor="#ffffff",penwidth=1.6];
+  // ---- k
+  { rank=same; "k:0"; "k:1"; "k:2"; }
+  "k:0" [fillcolor="#7f8c8d",penwidth=1.6];
+  "k:1" [fillcolor="#7f8c8d",penwidth=1.6];
+  "k:2" [fillcolor="#7f8c8d",penwidth=1.6];
+  // ---- v
+  { rank=same; "v:0"; "v:1"; "v:2"; }
+  "v:0" [fillcolor="#4a90d9",penwidth=1.6];
+  "v:1" [fillcolor="#4a90d9",penwidth=1.6];
+  "v:2" [fillcolor="#4a90d9",penwidth=1.6];
+  // ---- o
+  { rank=same; "o:0"; "o:1"; "o:2"; }
+  "o:0" [fillcolor="#f2d024",penwidth=1.6];
+  "o:1" [fillcolor="#f2d024",penwidth=1.6];
+  "o:2" [fillcolor="#f2d024",penwidth=1.6];
+  // ---- ff1
+  { rank=same; "ff1:0"; "ff1:1"; "ff1:2"; "ff1:3"; "ff1:4"; "ff1:5"; "ff1:6"; "ff1:7"; "ff1:8"; "ff1:9"; "ff1:10"; "ff1:11"; }
+  "ff1:0" [fillcolor="#2eab6b",penwidth=1.6];
+  "ff1:1" [fillcolor="#2eab6b",penwidth=1.6];
+  "ff1:2" [fillcolor="#2eab6b",penwidth=1.6];
+  "ff1:3" [fillcolor="#2eab6b",penwidth=1.6];
+  "ff1:4" [fillcolor="#2eab6b",penwidth=1.6];
+  "ff1:5" [fillcolor="#2eab6b",penwidth=1.6];
+  "ff1:6" [fillcolor="#2eab6b",penwidth=1.6];
+  "ff1:7" [fillcolor="#2eab6b",penwidth=1.6];
+  "ff1:8" [fillcolor="#2eab6b",penwidth=1.6];
+  "ff1:9" [fillcolor="#2eab6b",penwidth=1.6];
+  "ff1:10" [fillcolor="#2eab6b",penwidth=1.6];
+  "ff1:11" [fillcolor="#2eab6b",penwidth=1.6];
+  // ---- ff2
+  { rank=same; "ff2:0"; "ff2:1"; "ff2:2"; }
+  "ff2:0" [fillcolor="#f0932b",penwidth=1.6];
+  "ff2:1" [fillcolor="#f0932b",penwidth=1.6];
+  "ff2:2" [fillcolor="#f0932b",penwidth=1.6];
+  "ff1:0" -> "ff2:0" [color="#2eab6b"];
+  "ff1:0" -> "ff2:1" [color="#2eab6b"];
+  "ff1:0" -> "ff2:2" [color="#2eab6b"];
+  "ff1:1" -> "ff2:0" [color="#2eab6b"];
+  "ff1:1" -> "ff2:1" [color="#2eab6b"];
+  "ff1:1" -> "ff2:2" [color="#2eab6b"];
+  "ff1:2" -> "ff2:0" [color="#2eab6b"];
+  "ff1:2" -> "ff2:1" [color="#2eab6b"];
+  "ff1:2" -> "ff2:2" [color="#2eab6b"];
+  "ff1:3" -> "ff2:0" [color="#2eab6b"];
+  "ff1:3" -> "ff2:1" [color="#2eab6b"];
+  "ff1:3" -> "ff2:2" [color="#2eab6b"];
+  "ff1:4" -> "ff2:0" [color="#2eab6b"];
+  "ff1:4" -> "ff2:1" [color="#2eab6b"];
+  "ff1:4" -> "ff2:2" [color="#2eab6b"];
+  "ff1:5" -> "ff2:0" [color="#2eab6b"];
+  "ff1:5" -> "ff2:1" [color="#2eab6b"];
+  "ff1:5" -> "ff2:2" [color="#2eab6b"];
+  "ff1:6" -> "ff2:0" [color="#2eab6b"];
+  "ff1:6" -> "ff2:1" [color="#2eab6b"];
+  "ff1:6" -> "ff2:2" [color="#2eab6b"];
+  "ff1:7" -> "ff2:0" [color="#2eab6b"];
+  "ff1:7" -> "ff2:1" [color="#2eab6b"];
+  "ff1:7" -> "ff2:2" [color="#2eab6b"];
+  "ff1:8" -> "ff2:0" [color="#2eab6b"];
+  "ff1:8" -> "ff2:1" [color="#2eab6b"];
+  "ff1:8" -> "ff2:2" [color="#2eab6b"];
+  "ff1:9" -> "ff2:0" [color="#2eab6b"];
+  "ff1:9" -> "ff2:1" [color="#2eab6b"];
+  "ff1:9" -> "ff2:2" [color="#2eab6b"];
+  "ff1:10" -> "ff2:0" [color="#2eab6b"];
+  "ff1:10" -> "ff2:1" [color="#2eab6b"];
+  "ff1:10" -> "ff2:2" [color="#2eab6b"];
+  "ff1:11" -> "ff2:0" [color="#2eab6b"];
+  "ff1:11" -> "ff2:1" [color="#2eab6b"];
+  "ff1:11" -> "ff2:2" [color="#2eab6b"];
+  "o:0" -> "ff1:0" [color="#f2d024"];
+  "o:0" -> "ff1:1" [color="#f2d024"];
+  "o:0" -> "ff1:2" [color="#f2d024"];
+  "o:0" -> "ff1:3" [color="#f2d024"];
+  "o:0" -> "ff1:4" [color="#f2d024"];
+  "o:0" -> "ff1:5" [color="#f2d024"];
+  "o:0" -> "ff1:6" [color="#f2d024"];
+  "o:0" -> "ff1:7" [color="#f2d024"];
+  "o:0" -> "ff1:8" [color="#f2d024"];
+  "o:0" -> "ff1:9" [color="#f2d024"];
+  "o:0" -> "ff1:10" [color="#f2d024"];
+  "o:0" -> "ff1:11" [color="#f2d024"];
+  "o:0" -> "ff2:0" [color="#f2d024"];
+  "o:1" -> "ff1:0" [color="#f2d024"];
+  "o:1" -> "ff1:1" [color="#f2d024"];
+  "o:1" -> "ff1:2" [color="#f2d024"];
+  "o:1" -> "ff1:3" [color="#f2d024"];
+  "o:1" -> "ff1:4" [color="#f2d024"];
+  "o:1" -> "ff1:5" [color="#f2d024"];
+  "o:1" -> "ff1:6" [color="#f2d024"];
+  "o:1" -> "ff1:7" [color="#f2d024"];
+  "o:1" -> "ff1:8" [color="#f2d024"];
+  "o:1" -> "ff1:9" [color="#f2d024"];
+  "o:1" -> "ff1:10" [color="#f2d024"];
+  "o:1" -> "ff1:11" [color="#f2d024"];
+  "o:1" -> "ff2:1" [color="#f2d024"];
+  "o:2" -> "ff1:0" [color="#f2d024"];
+  "o:2" -> "ff1:1" [color="#f2d024"];
+  "o:2" -> "ff1:2" [color="#f2d024"];
+  "o:2" -> "ff1:3" [color="#f2d024"];
+  "o:2" -> "ff1:4" [color="#f2d024"];
+  "o:2" -> "ff1:5" [color="#f2d024"];
+  "o:2" -> "ff1:6" [color="#f2d024"];
+  "o:2" -> "ff1:7" [color="#f2d024"];
+  "o:2" -> "ff1:8" [color="#f2d024"];
+  "o:2" -> "ff1:9" [color="#f2d024"];
+  "o:2" -> "ff1:10" [color="#f2d024"];
+  "o:2" -> "ff1:11" [color="#f2d024"];
+  "o:2" -> "ff2:2" [color="#f2d024"];
+  "q:0" -> "k:0" [color="#555555"];
+  "q:0" -> "k:1" [color="#555555"];
+  "q:0" -> "k:2" [color="#555555"];
+  "q:0" -> "o:0" [color="#555555"];
+  "q:0" -> "o:1" [color="#555555"];
+  "q:0" -> "o:2" [color="#555555"];
+  "q:0" -> "q:1" [color="#555555"];
+  "q:0" -> "q:2" [color="#555555"];
+  "q:0" -> "v:0" [color="#555555"];
+  "q:0" -> "v:1" [color="#555555"];
+  "q:0" -> "v:2" [color="#555555"];
+  "v:0" -> "o:0" [color="#4a90d9"];
+  "v:0" -> "o:1" [color="#4a90d9"];
+  "v:0" -> "o:2" [color="#4a90d9"];
+  "v:1" -> "o:0" [color="#4a90d9"];
+  "v:1" -> "o:1" [color="#4a90d9"];
+  "v:1" -> "o:2" [color="#4a90d9"];
+  "v:2" -> "o:0" [color="#4a90d9"];
+  "v:2" -> "o:1" [color="#4a90d9"];
+  "v:2" -> "o:2" [color="#4a90d9"];
+}
