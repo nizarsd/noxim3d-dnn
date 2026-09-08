@@ -208,8 +208,8 @@ and reframed — see the correction below.
 > (C5/C8, 829 knee-window cells, 3 seeds each). DP also compresses placement
 > spread in 8 of 8 qualifying populations (C7). The design rule is **run DP
 > everywhere, unconditionally**. What remains open is not *whether* to use DP
-> but that it captures only **71–78%** of the achievable improvement below the
-> floor against **96–98%** above it — an efficiency gap whose cause is temporal.
+> but that it captures only **76–81%** of the achievable improvement below the
+> floor against **98–99%** above it — an efficiency gap whose cause is temporal.
 > That gap, not a policy choice, is what the next stage targets.
 >
 > The diagnosis below is retained because it explains how the work got here.
@@ -242,7 +242,7 @@ path diversity, congestion estimator design, and phase-indexed DP.
 - **Paper 2 — routing / selection.** RL vs DP; local-vs-global, temporal-vs-spatial.
   This is Stages 4–7. Deferred; inherits a validated baseline and a known-good
   mapping from Paper 1. **Scope now sharpened:** the bar is always-DP (not BL),
-  and the target is the below-floor efficiency gap (71–78% → 96–98%), whose
+  and the target is the below-floor efficiency gap (76–81% → 98–99%), whose
   mechanism is temporal — drain tails of 0.8–1.5k cycles at phase boundaries
   against a field that reconverges in 648 cycles over 5k–23k-cycle phase windows.
 

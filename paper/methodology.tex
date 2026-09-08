@@ -8,6 +8,7 @@
 % Budget: ~0.8 pp.
 % =====================================================================
 \section{Formulations and Methodology}
+\label{sec:method}
 Classical NoC traffic differs dramatically from DNN traffic on a tiled IMC
 substrate. Most of a block's NoC traffic is partial-sum reduction, sunk by a few
 accumulator nodes, so that a handful of ejection ports become the hotspots of
@@ -83,7 +84,7 @@ which is a design objective optimized by the  proposed flow.
 
 \subsection{Routing and Selection}
 \label{sec:routing}
-The third layer is \emph{routing and selection}. It decides how traffic is relayed for a given packing and mapping. Routing computes the set of allowed paths  $\mathcal{R}$, which binds to the mapping layer through $\varphi_f(\ell,\pi)$. More permissive paths for a flow $f$ help to spread it over more links, lowering $\PL$ for the same $\pi$.
+The third layer is \emph{routing and selection}.  Routing computes the set of allowed paths  $\mathcal{R}$, which binds to the mapping layer through $\varphi_f(\ell,\pi)$. More permissive paths for a flow $f$ help to spread it over more links, lowering $\PL$ for the same $\pi$.
 
 Selection then determines which  output, among the admissible ones, a packet is forwarded to. It is the only decision 
 that can respond to congestion (or any run-time optimization metric) rather than predict it. However, it is bounded by what the upstream layers have left: load can be moved off $\ell^{*}$ only insofar as the flows sharing it have alternatives. Thus, mapping has an impact on what selection can achieve, provided a proper offline metric captures the escapable load. This is the key idea behind the metrics proposed in this work and described below. 
@@ -111,8 +112,7 @@ be the load-weighted escapable fraction of that tier. We propose the \emph{escap
   \mathrm{ES} = E_{q_2} - E_{q_1},
   \label{eq:es}
 \end{equation}
-the change in escape room between the top $q_1$ and the top $q_2$ of links ($q_2 > q_1$; we use $q_1 = 5\%$, $q_2 = 20\%$).
-$\mathrm{ES}$ is computed offline from the logical traffic graph and the mapping
-alone. 
+the change in escape room between the top $q_1$ and the top $q_2$ of links ($q_2 > q_1$; the values used are set in Sec.~\ref{sec:refine}).
+$\mathrm{ES}$ is computed offline from the logical traffic graph and the mapping. 
 
 $\mathrm{ES}$ stems from  the observation that hot links are typically created by forced traffic, whose load cannot move, while the load queued on the links feeding them can. Thus, high $\mathrm{ES}$ means high escape room just below the peak, allowing backed-up load to drain sideways before it reaches the forced high-load core (the top $q_1$). Conversely, low $\mathrm{ES}$ means the shoulder is as rigid as the core and nothing drains. To improve the performance of the selection policy, $\mathrm{ES}$ is therefore maximized.

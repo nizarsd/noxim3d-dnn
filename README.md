@@ -21,7 +21,7 @@ work happens here.
    or the standalone [CLAIMS-C0-C8.md](docs/CLAIMS-C0-C8.md).
    Paper 1 (DATE, 6 pages) is in drafting under `paper/`.
 4. Online adaptivity — **next**. Target is DP's efficiency gap: it captures
-   96–98% of the achievable improvement above the port floor but only 71–78%
+   98–99% of the achievable improvement above the port floor but only 76–81%
    below it, and the deficit is temporal.
 5. Learned selection policy — the intended novel contribution, gated on stage 4.
 

@@ -41,6 +41,7 @@
 \patchcmd{\subsection}{1.5ex plus 1.5ex minus 0.5ex}{1ex plus 1ex minus 0.3ex}{}{}
 \patchcmd{\subsection}{0.7ex plus .5ex minus 0ex}{0.3ex plus 0.5ex minus 0ex}{}{}
 \makeatother
+\setcounter{topnumber}{1}   % one top float per column: keeps Fig. 5 off Fig. 4's column
 
 \begin{document}
 
@@ -53,22 +54,14 @@ DNN Accelerators on 3D NoCs}
 \maketitle
 
 \begin{abstract}
-In-memory computing removes weight traffic from DNN accelerators but relocates
-the rest onto the on-chip network, where hundreds of crossbar tiles reduce
-partial sums through a few accumulator ports. Communication is then set by
-three decisions --- how crossbars are packed into tiles, where tiles are placed,
-and how packets are routed --- each optimized today with the others held fixed.
-This paper explores the three as one design space on a 3D NoC, in
-cycle-accurate simulation of three DNN blocks. The layers couple through one
-quantity, the port floor that packing fixes: choosing packing for that floor
+In-memory computing with fixed weight location shapes the traffic of NoC-based DNN accelerators: hundreds of crossbar tiles reduce
+partial sums through a few accumulator ports. Design becomes communication-centric, and communication is then set by
+three design layers ---  crossbar-to-tile packing, tile-to-node mapping, and packet routing --- previous work optimizes one with the others held fixed. This paper explores the three as one design space on a 3D NoC across various DNN workloads. Results show that the layers couple through a metric fixed by packing, the port floor: choosing the packing for that floor
 rather than for traffic volume lowers mean delay $11.6\times$ and p99
-$18.6\times$; below the floor, a zero-cost placement refinement recovers up to
-$46\%$ of delay and $67\%$ of p99; and adaptive selection wins in both regimes
-($1.85\times$/$2.39\times$ above, $1.15\times$/$1.23\times$ below) yet leaves
-a residue below the floor that no offline metric predicts. Packing thus sets
-the operating point that placement can only reach and routing can only defend,
-while the residue routing leaves is temporal, calling for selection that adapts
-in time as well as space.
+$18.6\times$. Below the floor, a zero-cost mapping refinement, guided by a proposed design-time metric, recovers up to
+$46\%$ of delay and $67\%$ of p99. Adaptive selection wins in both regimes
+($1.85\times$/$2.39\times$ above, $1.15\times$/$1.23\times$ below), yet leaves
+a residue below the floor that no offline metric predicts. Thus, packing fixes the operating point that mapping can only reach and routing can only defend. The residue routing leaves is shown to be temporal, which motivates selection that adapts in both time and space.
 \end{abstract}
 
 \input{intro}
@@ -87,22 +80,22 @@ and forgoes the gains shown here. The proposed flow is evaluated on three
 workloads. The design layers are found to be highly coupled. The first layer
 (packing), which decides the port floor, is shown to have the highest impact:
 the optimal design choice for delay lowers mean delay $11.6\times$ and p99
-$18.7\times$ at matched load. Below that floor, mapping can be optimized
+$18.6\times$ at matched load. Below that floor, mapping can be optimized
 through a proposed metric (escape slope); around the knee, at no communication
 cost, this metric is shown to recover up to $46\%$ of mean delay and $67\%$ of
 p99. At the selection layer, adaptive selection is the better fixed policy in
 both regimes, by $1.85\times$/$2.39\times$ above the floor and
 $1.15\times$/$1.23\times$ below it.
 
-Always-DP is shown to capture $96$--$98\%$ of the improvement an
-oracle switching policy per placement and load would achieve above the floor and $71$--$78\%$ below it. No offline
+Always-DP is shown to capture $98$--$99\%$ of the improvement an
+oracle switching policy per placement and load would achieve above the floor and $76$--$81\%$ below it. No offline
 quantity predicts which cells it loses, because the residue is temporal:
 operating below the floor produces transient congestion clustered at phase
 boundaries, on a timescale a spatially adaptive policy cannot track. Closing
 this residue motivates a temporally as well as spatially adaptive selection
 policy. The same design flow admits other objectives, such as thermal-aware
 placement and load balancing.
-
+\newpage
 \bibliographystyle{IEEEtran}
 \bibliography{refs3}
 

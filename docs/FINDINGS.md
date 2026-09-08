@@ -548,10 +548,12 @@ always-DP already takes:
 
 | regime | metric | available | DP achieves | **DP captures** |
 |---|---|---|---|---|
-| above | delay | 1.870× | 1.850× | **98%** |
-| above | p99 | 2.446× | 2.386× | **96%** |
-| below | delay | 1.193× | 1.150× | **78%** |
-| below | p99 | 1.326× | 1.231× | **71%** |
+| above | delay | 1.870× | 1.850× | **99%** |
+| above | p99 | 2.446× | 2.386× | **98%** |
+| below | delay | 1.193× | 1.150× | **81%** |
+| below | p99 | 1.326× | 1.231× | **76%** |
+
+*Capture = (BL − DP)/(BL − oracle) on delay, the fraction of the achievable delay reduction DP takes; switched from (r_DP−1)/(r_oracle−1) on 2026-09-08 — same pooled values, 98/96/78/71 → 99/98/81/76.*
 
 Same policy, same spatial machinery, two efficiencies. The difference tracks
 the *kind* of congestion: above the floor it is persistent (a link is
@@ -559,7 +561,7 @@ oversubscribed for the whole phase, so a 648-cycle reconvergence is accurate
 nearly everywhere); below it, congestion is transient and clustered at phase
 boundaries — measured drain tails of 0.8–1.5k cycles against 5k–23k-cycle
 phase windows — so the same lag lands precisely on the events that matter.
-Closing 71–78% toward the 96–98% DP already demonstrates is the next stage's
+Closing 76–81% toward the 98–99% DP already demonstrates is the next stage's
 target. Which cells DP loses is called by **nothing offline**: ~30 metrics
 (link loads, escape geometry at every aggregation, supply/absorption, horizon
 models) all null at seed level.
