@@ -2,9 +2,7 @@
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{fig_methodflow_v2.pdf}
-  \caption{The layered design flow (left), what each layer sets on the 3D NoC
-  (center; colors match the arrows), and the ports and links of one node
-  (right).}
+  \caption{The layered design flow (left), what each layer sets on the 3D NoC (center), and one node's ports and links (right).}
   \label{fig:flow}
 \end{figure*}
 
@@ -22,7 +20,8 @@ The closest precedent is Krishnan et
 al.~\cite{krishnanImpactOnchipInterconnect2022}, who map DNN layers to tiles
 on a mesh and drive the NoC with per-pair injection rates, the traffic model
 adopted here, and conclude that the network is uncongested at average rates
---- a conclusion about the mean that Sec.~\ref{sec:r2} qualifies. The same
+--- a conclusion about the mean that Sec.~\ref{sec:method} and
+Fig.~\ref{fig:ladder} qualify. The same
 group models IMC and its NoC end to
 end~\cite{krishnanSIAMChipletbasedScalable2021} and synthesizes a NoC per
 DNN~\cite{mandalLatencyOptimizedReconfigurableNoC2020}, taking topology as
