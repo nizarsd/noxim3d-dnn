@@ -154,7 +154,7 @@ best and worst placement. That spread is  ordered by $\PL/\PF$  in every populat
 
 \subsection{Mapping Refinement}
 \label{sec:refine}
-For the below-floor mapping layer at its min-$\mathrm{CC}$ outcome, we investigate whether there is a room for further refinement through maximizing the proposed metric $\mathrm{ES}$ with $\mathrm{CC}$ and $\PL$ held constant. Escape room varies with $\PL$ and communication cost, so we tested it by 
+For the below-floor mapping at its min-$\mathrm{CC}$, we investigate whether there is a room for further refinement through maximizing the proposed metric $\mathrm{ES}$ with $\mathrm{CC}$ and $\PL$ held constant. Escape room varies with $\PL$ and communication cost, so we tested it by 
 intervention. The packing and the seed are fixed and search start from the
 min-$\mathrm{CC}$ placement, and run two guarded climbs from it, one
 minimizing and one maximizing $\mathrm{ES} = \Esc_{20} - \Esc_{5}$, both constrained to
@@ -167,7 +167,7 @@ mean delay by up to $1.25\times$ ($20\%$) and p99 by up to $1.43\times$
 ($30\%$) at the arm level, and by up to $1.85\times$ and $2.99\times$ ($46\%$ and $67\%$) on
 the best placement with no $\mathrm{CC}$ or $\PL$ overheads. The gain appears under BL on two arms and under DP on the third, which confirms it is a property of the placement, not of the selection.
 
-\begin{figure}[t]
+\begin{figure}[tb]
   \centering
   \includegraphics[width=\linewidth]{f_es_one_paper.pdf}
   \caption{maxES vs.\ minES from the same min-CC start at matched
@@ -179,14 +179,13 @@ the best placement with no $\mathrm{CC}$ or $\PL$ overheads. The gain appears un
 
 This lever has no effect on dominant-flow traffic, as expected. For example, on VGG-16 $(32,4,8)$, where one pair carries $92\%$ of the peak link, max$\mathrm{ES}$ returns nothing. This can be predicted by whether the climb can move $\mathrm{ES}$.
 
-\begin{figure}[t]
+\begin{figure}[tb]
   \centering
   \includegraphics[width=\linewidth]{f5_two_regime_paper.pdf}
   \caption{Delay across placements under BL and DP: 12 equal-$\PL$ placements
   of ResNet-50 $(16,2,8)$ above the floor (top), 8 of $(8,1,8)$ at the knee below (bottom).}
   \label{fig:spread}
 \end{figure}
---HERE-
 
 \subsection{Routing and Selection}
 \label{sec:r3}
