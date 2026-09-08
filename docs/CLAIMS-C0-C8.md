@@ -346,10 +346,12 @@ n = 701; BELOW: 3 PL-spread sets, n = 128; 3 sim seeds per cell):
 
 | regime | metric | always BL | always DP | oracle | available | DP achieves | **DP captures** |
 |---|---|---|---|---|---|---|---|
-| above | delay | 83.6 ns | 45.2 | 44.7 | 1.870× | 1.850× | **98%** |
-| above | p99 | 1384 ns | 580 | 566 | 2.446× | 2.386× | **96%** |
-| below | delay | 45.2 ns | 39.3 | 37.9 | 1.193× | 1.150× | **78%** |
-| below | p99 | 581 ns | 472 | 438 | 1.326× | 1.231× | **71%** |
+| above | delay | 83.6 ns | 45.2 | 44.7 | 1.870× | 1.850× | **99%** |
+| above | p99 | 1384 ns | 580 | 566 | 2.446× | 2.386× | **98%** |
+| below | delay | 45.2 ns | 39.3 | 37.9 | 1.193× | 1.150× | **81%** |
+| below | p99 | 581 ns | 472 | 438 | 1.326× | 1.231× | **76%** |
+
+*Capture = (BL − DP)/(BL − oracle) on delay, the fraction of the achievable delay reduction DP takes; switched from (r_DP−1)/(r_oracle−1) on 2026-09-08 — same pooled values, 98/96/78/71 → 99/98/81/76.*
 
 DP wins 87%/83% of cells above and 76%/63% below, and is ahead at every load
 band including free-flow. (This supersedes the earlier "always-DP is worse
@@ -370,8 +372,8 @@ of 0.8–1.5k cycles at phase boundaries, core relief that is temporal rather
 than spatial, and a cost field reconverging in 648 cycles against
 5k–23k-cycle phase windows.
 
-**The target, as an efficiency gap.** Raise below-floor capture from 71–78%
-toward the **96–98% the same policy already achieves above the floor**. The
+**The target, as an efficiency gap.** Raise below-floor capture from 76–81%
+toward the **98–99% the same policy already achieves above the floor**. The
 above-floor figure proves the gap is closable in principle — identical
 spatial machinery, different congestion statistics: above the floor
 congestion is *persistent*, so a 648-cycle reconvergence is accurate almost

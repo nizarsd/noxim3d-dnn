@@ -122,8 +122,8 @@ speed lever) → design rule → one headline number per finding.
 ## §6 Conclusion & directions — 0.25 pp
 
 - design rule recap in two sentences.
-- the **efficiency gap** as the bridge to online selection: DP captures 96–98%
-  of the achievable improvement above the floor but only 71–78% below it, and
+- the **efficiency gap** as the bridge to online selection: DP captures 98–99%
+  of the achievable improvement above the floor but only 76–81% below it, and
   the deficit is temporal. (Term note: this is *runtime gain*, not "reserve" —
   one term per concept.)
 

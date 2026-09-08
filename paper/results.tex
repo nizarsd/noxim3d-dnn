@@ -1,38 +1,3 @@
-% =====================================================================
-% RESULTS -- structured by the claim set (PROJECT-RESEARCH-NOTES §33).
-% Budget: ~2.5 pages of the 6.  Slots: F0, F1, F2 + tables T3 (+defs).
-% Policy rule: DP appears only in the Claim-4 material (R3/R4);
-% R1/R2 are argued BL-only.
-% =====================================================================
-% =====================================================================
-% REWRITE GUIDE (added 2026-09-02) -- delete before submission.
-% Evidence: docs/PROJECT-RESEARCH-NOTES.md §33 (claims C0-C8) and the claim
-% artifact.  Every number in these notes traces there.
-%
-% STATUS OF THIS FILE
-%   * sec:r3 is built on a SUPERSEDED population -- see the note there.
-%   * Two figures are drawn, current, and NOT referenced anywhere:
-%       figs/f6_policy.pdf            (C8 + the efficiency gap)
-%       figs/f5_cc12_compression.pdf  (C7's strongest population)
-%   * The setup + traffic paragraphs belong HERE (simulator and traffic are
-%     Results material); the metric DEFINITIONS are now duplicated by
-%     §Formulations and Methodology and should be deleted from this file.
-%
-% MISSING SUBSECTIONS (in the evidence, absent from this file)
-%   - C4(a) capacity regression: r(PL) negative in 5 of 5 populations,
-%     pooled n=69 beta -0.584; E flips sign, coefficient 4x smaller.
-%   - ES / maxES (C4b) -- contribution (iii) of the intro depends on it.
-%   - C6: the above-floor regime is not naturally reachable (min-CC, thermal
-%     spreading, link faults, TSV clustering, multi-tenancy all leave
-%     PL/PF <= 0.949-1.000).
-%   - C8 and the efficiency gap: DP captures 98%/96% above the floor,
-%     71%/78% below.  LOAD-BEARING -- the conclusion and contribution (iv)
-%     both rest on it, and nothing in this file states it.
-%   - the ML ceiling test: leave-one-arm-out R^2 = -0.03 on DP delay gain
-%     and on DP p99 gain (56 placements, 15 offline features, protocol
-%     registered before training).
-%   - the min-bytes ladder (see the note at sec:r1).
-% =====================================================================
 \section{Results}
 \label{sec:results}
 \subsection{Experimental Tools and Setup}
@@ -41,17 +6,28 @@ To evaluate the  proposed design flow and metrics, we employ Noxim, a cycle-accu
 
 The DP cost field reconvergence time is determined by the topology diameter and node count. For the target mesh it is 648 cycles with DP clocked at $4\times$ the network clock.
 
-The 3D NoC size is a $6\times6\times3$ mesh of 108 tiles. Each tile holds $c$ $128\times128$ crossbars of single-bit cells, with 8-bit weights spread over eight bit-planes. Flit size is 4 bytes, the packet is fixed at 16 flits, input buffers size is 16 flits, and the substrate runs at 1GHz clock. NoC links and tile's injection/ejection ports carry one 4-byte flit per 1 ns cycle, giving 4 GB/s per channel, with independent injection and ejection channels. 
+A 3D mesh NoC is adopted building on recent work in tiled DNN accelerators~\cite{liTTNNMThermalTrafficAware2024,narangTEFLONThermallyEfficient2024}. The main motive for 3D NoC is the rise in fan-out and fan-in, which the
+third dimension provides (4 links per node in 2D vs 6 in 3D) and which the funnel DNN bottleneck can best exploit. This is also confirmed by our results: confining a 36-node placement to one
+plane of the same mesh, against a $3\times4\times3$ block (packing $(32,4,8)$,
+three workloads, three seeds), costs up to $40\%$ in communication cost and
+$50\%$ in peak link load, and $2.2\times$ in p99 under congestion. Load
+capacity, however, is unchanged, since it is packing-dependent and
+placement-invariant and is set by the port floor in both geometries.
+
+
+The NoC is a $6\times6\times3$ mesh of 108 tiles. A tile holds $c$ crossbars of $128\times128$   1-bit cells, with 8-bit weights spread over eight bit-planes; activations are INT8 and partial sums
+INT32, as the accumulation depth requires. 
+
+NoC Flit size is 4 bytes, the packet is fixed at 16 flits, input buffers size is 16 flits, and the substrate runs at 1GHz clock. NoC links and tile's injection/ejection ports carry one 4-byte flit per 1 ns cycle, giving 4 GB/s per channel, with independent injection and ejection channels. 
 
 Changing the mesh simultaneously redefines both the mapping space and the routing substrate, because topology is not another layer below routing but a parallel design axis. Thus, in this work the topology is fixed to keep the layer attribution identifiable.
 \subsection{Workloads and Traffic Generation}
 \label{sec:workloads}
 Workloads are ResNet-50 \cite{heDeepResidualLearning2016}, VGG-16 \cite{simonyanVeryDeepConvolutional2014}  and DeiT-S \cite{touvronTrainingDataefficientImage2020}. The three DNN workloads span a residual CNN, a plain CNN and a transformer encoder. They differ in partial-sum-to-activation ratio from $8\times$ (DeiT-S) to $33\times$ (VGG-16), and NoC bandwidth demand, by $5$–$6\times$, and in structure: a deep reduction funnel with a parallel shortcut (ResNet-50), load distributed across many sinks of similar weight with no isolated funnel (DeiT-S), and a sequence of deep reductions (VGG-16). They are converted offline into statistical traffic tables the simulator can run, with per-pair injection rates and phase windows. Table~\ref{tab:workloads} lists the three workloads. A workload inference period (compute time) is identical across its packings, and the activation and partial-sum volumes shown are per inference and packing-independent. 
 
- All runs use an appropriate warm-up and are averaged over 3 to 30 seeds, with offered load swept by a scalar multiplier $k$ on all injection rates. Unless stated otherwise, comparisons are made inside the knee window, defined as the load range in which mean BL delay stays below an empirically set multiple ($30\times$) of its free-flow value. Because mappings differ in their saturation loads, capacity is measured per mapping as $\kstar$: the injection scale at which a mapping's delay reaches twice its \emph{own} free-flow delay. The mapping search and the computation of design-time metrics (PF, PL, CC, ES)  are  done in Python from the traffic tables. Approximately 36 000 simulation runs were conducted to obtain the results below.
+ All runs use an appropriate warm-up and are averaged over 3 to 30 seeds, with offered load swept by a scalar multiplier $k$ on all injection rates, where $k=1$ is a per-workload reference scale rather than a nominal operating point. Unless stated otherwise, comparisons are made inside the knee window, defined as the load range in which mean BL delay stays below an empirically set multiple ($30\times$) of its low-load delay, the delay at the lightest load level simulated. Because mappings differ in their saturation loads, capacity is measured per mapping as $\kstar$: the injection scale at which a mapping's delay reaches twice its \emph{own} low-load delay. The mapping search and the computation of design-time metrics (PF, PL, CC, ES)  are  done in Python from the traffic tables. Approximately 36 600 simulation runs were conducted to obtain the results below.
 
-
-\begin{table}[t]
+ \begin{table}[t]
   \caption{Workloads, assuming $128{\times}128$ crossbars (CB). The three
   blocks span a residual CNN (ResNet-50), a plain CNN (VGG-16) and a transformer encoder (DeiT-S).}
   \label{tab:workloads}
@@ -70,150 +46,93 @@ Workloads are ResNet-50 \cite{heDeepResidualLearning2016}, VGG-16 \cite{simonyan
   \end{tabular}
 \end{table}
 
-
--- HERE--
-
-
 \subsection{Design Flow and Search Procedure}
 \label{sec:search}
-The flow evaluated below selects the orientation that minimizes $\PF$, places
-at minimum communication cost, refines by maximizing $\mathrm{ES}$ subject to
-$\mathrm{CC}\le\mathrm{CC}_{\min}$ and $\PL\le\PL(\mathrm{CC}_{\min})$, and
-applies adaptive selection; $\PL$ is held below the floor throughout, since
-Sec.~\ref{sec:r2} shows it controls delay only above it.
-Placements are searched by a guarded hill-climb from a random permutation,
-300 steps of 50 candidate moves (a transposition, or with probability $0.3$ a
-relocation to an idle node), the constraint applied in the move filter and the
-best strictly improving move accepted. All searches are seeded and
-reproducible.
-
+To evaluate the proposed design flow, the orientation that minimizes $\PF$ at a
+given packing density $c$ is selected and placed with minimum communication
+cost ($\mathrm{CC}$) mappings. The placement is refined
+by maximizing $\mathrm{ES}$ subject to $\mathrm{CC}\le\mathrm{CC}_{\min}$ and
+$\PL\le\PL(\mathrm{CC}_{\min})$, and adaptive selection is applied; $\PL$ is
+normally below the floor but the mapping and selection experiments deliberately
+cross it to expose that regime. Mappings are found by a seeded guarded hill-climb with 300 steps of 50 candidates each. Moves violating the constraints are rejected.
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{f_po_ladder_norm.pdf}
-  \caption{Load response of the min-$\PF$ (dotted) and min-traffic (dashed)
-  orientations on the three workloads under BL: load relative to the
-  min-traffic arm's $\kstar$, delay relative to the measured zero-load delay,
-  ladders shown to about three times the min-traffic knee; bars span three
-  placements, ticks mark the min-$\PF$ arm's $\kstar$.}
+  \caption{Min-$\PF$ (dotted) vs.\ min-traffic (dashed) orientation under
+  BL, to $3\times$ the min-traffic knee; load relative to that arm's $\kstar$,
+  delay relative to zero-load delay; bars span three placements, ticks mark
+  the min-$\PF$ arm's $\kstar$.}
   \label{fig:ladder}
 \end{figure}
 
+The baseline at each layer is the objective previous work optimizes: minimum
+traffic volume for packing, minimum communication cost $\mathrm{CC}$ for mapping~\cite{liTTNNMThermalTrafficAware2024}, and local
+buffer-level selection for routing. Each layer is then evaluated against its baseline
+with the upper layers at their best.
+
 \subsection{Packing Impact}
 \label{sec:r1}
-
-The packing layer acts before any placement exists, so we first ask what it
-alone decides. For each workload we enumerate every feasible $(c,r,s)$ --- 34
-points in all --- and evaluate $\PF$ offline from the traffic graph. Within
-each density $c$ we identify the orientation minimising total NoC traffic, the
-classical pre-network objective, and the one minimising $\PF$.
-
-Table~\ref{tab:packing} reports both. The two objectives coincide in four of
-the nine $(\text{workload}, c)$ cells and select different orientations in the
-remaining five. Where they differ, ranking on $\PF$ lowers the floor by
-$1.27$--$3.15\times$ at a cost of $1.07$--$1.67\times$ in traffic; since the
-inference period is fixed per workload, that is also the ratio of average NoC
-bandwidth. Across ResNet-50's eleven feasible points $\PF$ spans
-$0.258$--$1.494$ flits/cycle, a factor of $5.8$. Orientation therefore fixes
-the floor, and no later decision can lower it.
+The packing layer decides $(c,r,s)$ for a given workload. It acts before any placement exists and determines, $\PF$, the number of tiles required, and the total inter-tile bandwidth. All can be computed offline from the traffic graph. Three density values are evaluated; 8, 16, and 32 CBs/tile. Within each density $c$ we identify the orientation, $(r,s)$, minimizing total NoC
+traffic, the classical pre-network objective, and the one minimizing $\PF$. Table~\ref{tab:packing} reports both. The two objectives coincide in four of
+the nine $(\text{workload}, c)$ cells. In the
+remaining five, ranking on $\PF$ lowers the floor by
+$1.27$--$3.15\times$ at a cost of $1.07$--$1.67\times$ in traffic.
 
 \begin{table}[b]
-  \caption{Min-$\PF$ vs.\ min-traffic orientation per density; last column:
-  floor gained / traffic cost of selecting on $\PF$ (``---'': same
-  orientation). $\PF$ in flits/cycle.}
+  \caption{Min-$\PF$ vs.\ min-traffic orientation per density, with the floor
+  gained / traffic cost of selecting on $\PF$ (``---'': same). $\PF$ in flits/cycle.}
   \label{tab:packing}
   \centering
   \footnotesize
   \setlength{\tabcolsep}{3pt}
-  \begin{tabular}{@{}llcclcc@{}}
+  \begin{tabular}{@{}llccclccc@{}}
     \toprule
-    & & \multicolumn{2}{c}{min-$\PF$} & \multicolumn{2}{c}{min-traffic} & \\
-    \cmidrule(lr){3-4}\cmidrule(lr){5-6}
-    workload & $c$ & $(r,s)$ & $\PF$ & $(r,s)$ & $\PF$ & floor / traffic \\
+    & & \multicolumn{3}{c}{min-$\PF$} & \multicolumn{3}{c}{min-traffic} & \\
+    \cmidrule(lr){3-5}\cmidrule(lr){6-8}
+    workload & $c$ & $(r,s)$ & tiles & $\PF$ & $(r,s)$ & tiles & $\PF$ & floor / traffic \\
     \midrule
-    \multirow{3}{*}{ResNet-50} &  8 & (2,4)  & 0.392 & (2,4)  & 0.392 & --- \\
-                               & 16 & (2,8)  & 0.258 & (4,4)  & 0.717 & 2.78$\times$ / 1.08$\times$ \\
-                               & 32 & (4,8)  & 0.327 & (4,8)  & 0.327 & --- \\
+    \multirow{3}{*}{ResNet-50} &  8 & (2,4)  &  92 & 0.392 & (2,4)  &  92 & 0.392 & --- \\
+                               & 16 & (2,8)  &  46 & 0.258 & (4,4)  &  56 & 0.717 & 2.78$\times$ / 1.08$\times$ \\
+                               & 32 & (4,8)  &  28 & 0.327 & (4,8)  &  28 & 0.327 & --- \\
     \midrule
-    \multirow{3}{*}{DeiT-S}    &  8 & (1,8)  & 0.678 & (1,8)  & 0.678 & --- \\
-                               & 16 & (1,16) & 0.905 & (4,4)  & 2.849 & 3.15$\times$ / 1.62$\times$ \\
-                               & 32 & (2,16) & 0.773 & (4,8)  & 1.384 & 1.79$\times$ / 1.67$\times$ \\
+    \multirow{3}{*}{DeiT-S}    &  8 & (1,8)  & 108 & 0.678 & (1,8)  & 108 & 0.678 & --- \\
+                               & 16 & (1,16) &  66 & 0.905 & (4,4)  &  66 & 2.849 & 3.15$\times$ / 1.62$\times$ \\
+                               & 32 & (2,16) &  40 & 0.773 & (4,8)  &  33 & 1.384 & 1.79$\times$ / 1.67$\times$ \\
     \midrule
-    \multirow{3}{*}{VGG-16}    &  8 & (4,2)  & 0.958 & (4,2)  & 0.958 & --- \\
-                               & 16 & (4,4)  & 0.943 & (8,2)  & 1.194 & 1.27$\times$ / 1.25$\times$ \\
-                               & 32 & (8,4)  & 0.760 & (16,2) & 1.953 & 2.57$\times$ / 1.07$\times$ \\
+    \multirow{3}{*}{VGG-16}    &  8 & (4,2)  & 104 & 0.958 & (4,2)  & 104 & 0.958 & --- \\
+                               & 16 & (4,4)  &  52 & 0.943 & (8,2)  &  64 & 1.194 & 1.27$\times$ / 1.25$\times$ \\
+                               & 32 & (8,4)  &  32 & 0.760 & (16,2) &  40 & 1.953 & 2.57$\times$ / 1.07$\times$ \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-Whether a lower floor is worth its traffic overhead cannot be settled offline,
-so we simulate each workload's widest disagreement in
-Table~\ref{tab:packing}, the cell with the largest floor ratio. To keep the
+To determine whether a lower floor justifies its traffic overhead,
+so we simulate each workload's largest floor-ratio pair (min-$\PF$ and min-traffic) from
+Table~\ref{tab:packing}. To exclude the impact of mapping  and keep the 
 comparison at the packing layer, both arms receive
-minimum-communication-cost placements and are swept over the same load
-ladder, three placements per arm at three seeds per rung, under local
+min $\mathrm{CC}$ placements and run under the same load
+levels ($k$) with three placements per arm and three
+seeds per level, under buffer-level
 selection (BL).
 
-Fig.~\ref{fig:ladder} overlays the three ladders, with load relative to the
-min-traffic arm's $\kstar$ and delay relative to the measured zero-load delay.
-The three min-traffic arms fall on one band and the three min-$\PF$ arms on
-another: $\kstar$ is $1.75$--$2.10\times$ higher on the min-$\PF$
-orientation, and two rungs past the min-traffic knee (ResNet-50 at
-$k = 1.0$, DeiT-S and VGG-16 at $k = 0.4$) the gap is $12\times$, $25\times$
+Fig.~\ref{fig:ladder} plots the three sweeps mean delay and p99 (relative to the measured zero-load delay) against load (relative to the
+min-traffic arm's $\kstar$). It can be seen that all three min-traffic arms fall on one band and the three min-$\PF$ arms on a lower one. In terms of capacity, $\kstar$ is $1.75$--$2.10\times$ higher on the min-$\PF$
+arm, and two load levels past the min-traffic knee. In terms of delay gain, the gap is $12\times$, $25\times$
 and $64\times$ in mean delay and $19\times$, $30\times$ and $107\times$ in
-p99. All arms stay below their own floor ($\PL/\PF \le 0.91$), so the gap is
-not a placement artefact, and the same holds under DP.
+p99. All mappings stay under their floor ($\PL/\PF \le 0.91$), so the gap is
+not a placement artifact. The same holds under DP.
 
-The floor is therefore worth its bandwidth overhead on all three workloads,
-and the classical minimum-traffic objective is the wrong one to rank
-orientations by: packing sets the operating point that every downstream layer
-inherits.
+The min-$\PF$ traffic overhead is therefore justified on all three workloads and \emph{packing sets the operating point that every downstream layer inherits}.
 
-% ---------------------------------------------------------------------
-% NOTE (rewrite guide):
-%   FIGURE: hill_pl_hinge.png predates the E1 grid and has NOT been checked
-%   against the current hinge numbers (the \todo below is still open).
-%   figs/f5_two_regime.pdf is drawn, current and unreferenced -- consider it.
-%
-%   Numbers that must survive the rewrite:
-%     r(BIND, delay) = +0.857 at k=1.80 BL; hinge R^2 0.735 BL / 0.559 DP
-%     below-floor slope t=-0.16; above-floor +655 (t=+5.13); 2,880 runs
-%     slope ratio 64-72x across k
-%     C1: +15% CC -> +3.7 to +6.7% free-flow delay (three arms); adding CC
-%         to a BIND model changes adjusted R^2 by <=0.01
-%     C2b: placement spread is KNEE-BANDED -- 1.34x at light load, 13.62x at
-%         the knee, 1.28x saturated (same 8 placements, BL; 7.6x at the knee
-%         under DP).  §33 RETRACTS the unqualified "mapping is inert below
-%         the floor"; the prose below still uses "inert" -- switch to the
-%         banded form.
-%     C2c: min-CC already captures nearly all of it (<=1.14x delay,
-%         <=1.34x p99; 1.00x on ResNet (8,2,4) free-flow to 106x ff).
-%     C3: above the floor, spreads 4.6-31.8x on all three workloads, and
-%         r(PL/PF, delay) is positive in 5 of 5 populations after E7.
-%   The "R^2 = 0.37 ... moderate capacity predictor, no more" line is now
-%   UNDERSTATED: PL has since been spot-validated by DPTRACE (7 links,
-%   measured/model 0.88-1.01 under BL, rank order rho = +0.89).
-% ---------------------------------------------------------------------
 \subsection{Mapping Exploration}
 \label{sec:r2}
+With $\PF$ fixed by packing, the mapping layer controls $\PL$, and we ask whether moving it moves delay. For ResNet-50 at its $c{=}8$ minimum-$\PF$ packing $(2,4)$, $\PF = 0.392$, 24 placements are generated using the hill-climb, spanning $\PL = 0.127$--$0.490$ ($3.9\times$), seven of them above the floor, i.e.\ link-bound. Each placement is simulated at $k =1.80$, with 30 seeds each, under local selection (BL).
 
-With the packing fixed, the mapping layer controls one quantity, $\PL$, and
-we ask whether moving it moves delay. The population is ResNet-50 at its
-$c{=}8$ minimum-$\PF$ packing $(2,4)$, $\PF = 0.392$: 24 placements produced
-by the guarded search, spanning $\PL = 0.127$--$0.490$ ($3.9\times$) with path
-variety pinned so that $\PL$ is the only predictor that varies, seven of them
-above the floor. Each placement is simulated at two loads, $k = 1.60$ and
-$1.80$, with 30 seeds each, under local selection (BL).
-
-Fig.~\ref{fig:hinge} plots mean delay and p99 against $\PL$ at $k = 1.80$.
-Delay does not respond to $\PL$ until $\PL$ crosses $\PF$ and responds
-sharply afterwards: a regression with a hinge at the floor reaches $R^2 =
-0.735$ against $0.404$ for a straight line, with a below-floor slope
-indistinguishable from zero ($t = -0.16$) and an above-floor slope of $+655$
-cycles per unit load ($t = +5.13$, $p < 10^{-4}$). The pattern replicates at
-$k = 1.60$ ($R^2 = 0.705$), with the above-floor slope $64$--$72\times$ the
-below-floor one at both loads. Delay therefore tracks $\BIND = \max(\PF,\PL)$ ($r = +0.86$), and which of its
-two terms is active is decided by whether the placement has crossed the
-floor.
+Fig.~\ref{fig:hinge} plots mean delay against $\PL$ for those placements.
+Delay shows no significant response to $\PL$ until $\PL$ crosses $\PF$ and responds
+sharply afterward. This is confirmed by a regression with a hinge at the floor, which reaches $R^2 =
+0.735$ against $0.404$ for a straight line: the below-floor slope is
+near zero and the above-floor slope is $+655$ cycles per unit $\PL$. These results show that delay tracks $\BIND = \max(\PF,\PL)$, and which of its two terms is active depends on whether the placement has crossed the floor.
 
 \begin{figure}[t]
   \centering
@@ -223,91 +142,51 @@ floor.
   \label{fig:hinge}
 \end{figure}
 
-Hop count acts separately but weakly: on three arms of the same packing at
-identical $\BIND$ below the floor, $15\%$ more communication cost adds
-$3.7$--$6.7\%$ to low-load delay, while adding $\mathrm{CC}$ to a $\BIND$
-model moves its adjusted $R^2$ by at most $0.01$ --- communication cost sets
-where the delay curve starts, $\BIND$ where it bends.
+Hop count acts separately but weakly. For the same  $\BIND$ below the floor,
+$15\%$ more communication cost causes only a $3.7$--$6.7\%$ increase in low-load delay.
 
-Below the floor placement still matters in a band around the knee --- eight
-placements of ResNet-50 $(8,1,8)$ spread $1.34\times$, $13.62\times$ and
-$1.28\times$ in mean delay at light load, the knee and saturation --- but
-searching past minimum-communication-cost placements returns at best
-$1.14\times$ ($1.34\times$ in p99) on about six pairs, so minimum
-communication cost already captures nearly all of it.
-
-Above the floor the picture inverts. Across five above-floor populations on
-the three workloads, $n = 8$ to $24$ placements each at three seeds and read
-in the knee window, delay spreads $4.6$--$31.8\times$ between the best and
-worst placement, and $\PL/\PF$ orders that spread with a positive correlation
-in every population. Above the floor, placement determines delay and $\PL$ is
-what to search on.
-
-Finally, five causes that could push a placement across the floor without
-intent (min-CC mapping, thermal spreading, link faults, TSV clustering,
-multi-tenancy) all leave $\PL/\PF \le 1.000$ when screened offline: the
-above-floor regime is entered by provisioning, not by accident.
-
-The mapping layer's task below the floor is therefore to reach minimum
-communication cost and stay clear of the knee band. What a placement can still
-do for free once it is there is the subject of the next section.
+Placement below the floor still significantly impacts delay near the knee
+($13.6\times$ across eight placements of ResNet-50 $(8,1,8)$ (see Fig.~\ref{fig:spread}), against
+$1.3\times$ at light load or saturation). The min $\mathrm{CC}$ placement, however, is shown to capture most of it. Searching beyond min $\mathrm{CC}$ returns at most
+$1.14\times$. The picture flips above the floor. Across five populations on
+the three workloads ($n = 8$--$24$ each), delay spreads widely ($4.6$--$31.8\times$) between
+best and worst placement. That spread is  ordered by $\PL/\PF$  in every population. The VGG-16 and DeiT-S workloads show the same trend: delay is nearly flat in $\PL$ below the floor and rises with it above.
 
 \subsection{Mapping Refinement}
 \label{sec:refine}
+For the below-floor mapping layer at its min-$\mathrm{CC}$ outcome, we investigate whether there is a room for further refinement through maximizing the proposed metric $\mathrm{ES}$ with $\mathrm{CC}$ and $\PL$ held constant. Escape room varies with $\PL$ and communication cost, so we tested it by 
+intervention. The packing and the seed are fixed and search start from the
+min-$\mathrm{CC}$ placement, and run two guarded climbs from it, one
+minimizing and one maximizing $\mathrm{ES} = \Esc_{20} - \Esc_{5}$, both constrained to
+$\mathrm{CC} \le \mathrm{CC}_{\min}$ and $\PL \le \PL(\mathrm{CC}_{\min})$. The $5{\to}20$ span is the best of 18
+endpoint pairs screened against measured gain on nine packings.
+This is done on three arms, eight seeds each (Fig.~\ref{fig:es}).
 
-Below the floor the previous section leaves the mapping layer at minimum
-communication cost, and we ask whether anything is still free once
-communication cost and $\PL$ are held. Escapable load $\Esc$ does not predict
-capacity ($\kstar$ correlates with $\PL$ at $-0.54$ to $-0.84$ in five
-populations while $\Esc$'s sign varies), so escape room is tested for its
-effect on delay by intervention, since it co-varies with $\PL$ and
-communication cost in any sampled population. We therefore fix the packing and
-the seed, start from the minimum-communication-cost placement, and run two
-guarded climbs from it: one minimising and one maximising the escape slope
-$\mathrm{ES} = \Esc_{20} - \Esc_{5}$, both constrained to
-$\mathrm{CC} \le \mathrm{CC}_{\min}$ and $\PL \le \PL(\mathrm{CC}_{\min})$.
-The two arms then differ only in how escape room is distributed across the
-congested links. This is done on DeiT-S $(16,1,16)$, VGG-16 $(8,4,2)$ and
-ResNet-50 $(8,2,4)$, eight seeds each, under both selection policies, read at
-each arm's knee rung.
+Fig.~\ref{fig:es} shows the result. It can be seen that maximizing $\mathrm{ES}$ lowers
+mean delay by up to $1.25\times$ ($20\%$) and p99 by up to $1.43\times$
+($30\%$) at the arm level, and by up to $1.85\times$ and $2.99\times$ ($46\%$ and $67\%$) on
+the best placement with no $\mathrm{CC}$ or $\PL$ overheads. The gain appears under BL on two arms and under DP on the third, which confirms it is a property of the placement, not of the selection.
 
-Table~\ref{tab:es} reports the paired result. Maximising $\mathrm{ES}$ lowers
-mean delay by $1.13$--$1.25\times$ and p99 by $1.26$--$1.43\times$ at the arm
-level, and by up to $1.85\times$ and $2.99\times$ on the best individual
-placement --- $46\%$ of mean delay and $67\%$ of p99 --- at no cost in
-communication or peak link load. Combining the three arms gives
-$p = 0.025$ on mean delay and $p = 0.016$ on p99 under BL, and $p = 0.046$ on
-mean delay under DP. The effect is confined to the knee (it is gone one rung
-past it) and it is not a property of the selection unit: which policy collects
-it varies by arm.
-
-\begin{table}[t]
-  \caption{maxES over minES at matched $\mathrm{CC}$ and $\PL$, read at each
-  arm's knee rung ($n = 8$ seeds): arm mean and best placement.}
-  \label{tab:es}
+\begin{figure}[t]
   \centering
-  \footnotesize
-  \setlength{\tabcolsep}{3pt}
-  \begin{tabular}{@{}llcccc@{}}
-    \toprule
-    & & \multicolumn{2}{c}{mean delay} & \multicolumn{2}{c}{p99} \\
-    \cmidrule(lr){3-4}\cmidrule(lr){5-6}
-    arm & rung & arm & best & arm & best \\
-    \midrule
-    DeiT-S $(16,1,16)$   & $k\,0.55$, BL & $1.25\times$ & $1.85\times$ & $1.43\times$ & $2.99\times$ \\
-    VGG-16 $(8,4,2)$     & $k\,0.55$, BL & $1.14\times$ & $1.64\times$ & $1.28\times$ & $2.25\times$ \\
-    ResNet-50 $(8,2,4)$  & $k\,1.15$, DP & $1.13\times$ & $1.32\times$ & $1.26\times$ & $1.69\times$ \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+  \includegraphics[width=\linewidth]{f_es_one_paper.pdf}
+  \caption{maxES vs.\ minES from the same min-CC start at matched
+  $\mathrm{CC}$ and $\PL$; eight seeds per arm at the knee load and policy
+  shown ($p = 0.016$ on p99, three arms combined). Bars: $1/$mean paired
+  ratio; labels: the ratio.}
+  \label{fig:es}
+\end{figure}
 
-The lever has a boundary that is visible in advance: on VGG-16 $(32,4,8)$,
-where one pair carries $92\%$ of the peak link, the intervention returns
-nothing, and whether a guarded climb can move $\mathrm{ES}$ at all --- an
-offline check costing minutes --- called the outcome in all four cases, with
-all nine minimum-$\PF$ orientations on the responding side. Escape shape is
-therefore a zero-cost design objective for the mapping layer; what remains is
-decided at run time.
+This lever has no effect on dominant-flow traffic, as expected. For example, on VGG-16 $(32,4,8)$, where one pair carries $92\%$ of the peak link, max$\mathrm{ES}$ returns nothing. This can be predicted by whether the climb can move $\mathrm{ES}$.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{f5_two_regime_paper.pdf}
+  \caption{Delay across placements under BL and DP: 12 equal-$\PL$ placements
+  of ResNet-50 $(16,2,8)$ above the floor (top), 8 of $(8,1,8)$ at the knee below (bottom).}
+  \label{fig:spread}
+\end{figure}
+--HERE-
 
 \subsection{Routing and Selection}
 \label{sec:r3}
@@ -318,99 +197,58 @@ local buffer-level policy (BL) used so far against the distributed cost-to-go
 policy (DP) on identical placements and seeds, so that the policy is the only
 difference between paired runs.
 
-On 71 above-floor placements from the populations of Sec.~\ref{sec:r2}, read
-in the knee window, DP is faster than BL on 65, by $1.15\times$ in mean delay
-and $1.36\times$ in p99 on average and up to $1.64\times$ and $2.35\times$ on
-a single placement. Below the floor the same test gives a smaller gain that
-peaks at each packing's own knee ($1.10$--$1.35\times$ mean across three
-sets). The regimes differ in magnitude, not in sign.
-
-DP's second effect is on the \emph{spread} of delay across placements, which
-Sec.~\ref{sec:r2} showed to be the mapping layer's main risk. We take every
-population in which BL exhibits such a spread --- eight in all, spanning the
-three workloads, three densities, eight orientations and both regimes,
-$n = 7$ to $24$ placements at three seeds --- and read the ratio of the
-slowest to the fastest placement under each policy inside that population's
-knee window. Fig.~\ref{fig:spread} shows one population in each regime.
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\linewidth]{f5_two_regime_paper.pdf}
-  \caption{Delay across placements, BL vs.\ DP: 12 equal-$\PL$ placements of
-  ResNet-50 $(16,2,8)$ above the floor (top) and 8 placements of $(8,1,8)$
-  at the knee below it (bottom).}
-  \label{fig:spread}
-\end{figure}
-
-DP narrows the spread in all eight populations, by $1.09\times$ to
-$7.50\times$. In Fig.~\ref{fig:spread} the equal-$\PL$ population above the
-floor moves from $64.3\times$ to $8.6\times$ in mean delay, and the knee
-population below it from $13.6\times$ to $7.6\times$ ($22.6\times$ to
-$14.0\times$ in p99). The mechanism is
-rescue of the worst placements rather than acceleration of the best: on the
-fastest placement of each population BL matches or beats DP, while on the
-slowest DP improves delay by up to $7.6\times$ ($5\,566$ to $732$ cycles).
-What DP cannot compress is variation that $\PL$ itself causes, since that is
-$\BIND$: where the spread comes from a $\PL$ range the ratio is unchanged.
-
-The compression window is the knee window of Sec.~\ref{sec:r2}: adaptive
-selection is a throughput lever above the floor and a robustness lever
-wherever placements differ, and both live at the knee.
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\linewidth]{f_stack_layers_paper.pdf}
-  \caption{Measured gain by layer per workload, each at its own operating
-  point (Fig.~\ref{fig:ladder} rung; Table~\ref{tab:es} arm and rung);
-  ResNet-50 and VGG-16 packing at $c{=}16$/$32$, other layers at $c{=}8$.}
-  \label{fig:layers}
-\end{figure}
+DP's effect is on the \emph{spread} of delay across placements, the
+mapping layer's main risk. DP narrows the spread in all eight populations in
+which BL exhibits one --- three workloads, both regimes, $n = 7$--$24$
+placements at three seeds, read inside each policy's knee window --- by
+$1.09\times$ to $7.50\times$; Fig.~\ref{fig:spread} shows one per regime.
+The mechanism is rescue of the worst placements rather than acceleration of
+the best: on the fastest placement of each population BL matches or beats
+DP, while on the slowest DP improves delay by up to $7.6\times$ ($5\,566$ to
+$732$ cycles).
 
 \subsection{Policy Choice and Its Limit}
 \label{sec:r4}
-
 We ask which fixed policy is better over everything measured, and how much a
 policy that could switch per operating point would add. Every knee-window
-placement $\times$ load cell from the populations above is used --- $701$
+placement $\times$ load cell from the mapping and routing populations of
+Secs.~\ref{sec:r2}--\ref{sec:r3} is used --- $701$
 above the floor, $128$ below, three seeds each --- and three policies are
 compared on identical cells: always-BL, always-DP, and a per-cell oracle
 taking the better of the two.
 
-DP is ahead of BL in both regimes and in $61$ of the $62$ load bands
-measured: by $1.85\times$ in mean delay and $2.39\times$ in p99 above the
-floor, and by $1.15\times$ and $1.23\times$ below it. The oracle adds $1.1\%$
+DP is ahead of BL in both regimes, on $65$ of $71$ above-floor placements
+and in $61$ of the $62$ load bands measured: pooled over cells, by
+$1.85\times$ in mean delay and $2.39\times$ in p99 above the floor, and by
+$1.15\times$ and $1.23\times$ below it (the blue dotted lines in the routing
+panel of Fig.~\ref{fig:layers_p99}). The same
+panel resolves this per workload: $1.62$--$3.10\times$
+above the floor on all three, $1.15$--$1.26\times$ below it on ResNet-50 and
+VGG-16, and level ($1.01\times$) on DeiT-S below the floor --- the arm that
+Fig.~\ref{fig:es} accordingly reads under BL. The oracle (the grey lines of
+the same panel) adds $1.1\%$
 and $2.5\%$ above the floor but $3.8\%$ and $7.7\%$ below it: of the
 improvement available between always-BL and the oracle, always-DP captures
-$98\%$ and $96\%$ above the floor but only $78\%$ and $71\%$ below it.
+$99\%$ and $98\%$ above the floor but only $81\%$ and $76\%$ below it.
 
 The remaining $4$--$8\%$ below the floor is the only headroom left, so we ask
-whether the cells DP loses can be identified at design time. About thirty
-offline quantities correlate with DP's per-cell gain at $|r| \le 0.4$, none
-surviving a held-out packing, and a pre-registered learned model over $15$
-offline features of $56$ placements from seven packings reaches
-$R^2 = -0.03$ on DP's delay and p99 gain when a packing is held out, against
-a registered ceiling of $0.10$.
+whether the cells DP loses can be identified at design time: no offline
+quantity survives a held-out packing, and a pre-registered model over $15$
+features of $56$ placements reaches $R^2 = -0.03$ on DP's gain when a packing
+is held out, against a registered ceiling of $0.10$.
 
-Adaptive selection is therefore the right fixed policy in both regimes, and
-what it leaves below the floor is not a design-time quantity.
+Taken together in Fig.~\ref{fig:layers_p99}, each layer read against its own
+baseline at its own operating point, packing carries the gain
+($18.6$--$107\times$), mapping adds $1.26$--$1.43\times$, and selection adds
+what the regime allows. Mean delay gives the same picture at smaller
+magnitudes: the layer ordering is unchanged, and the oracle sits $1.1\%$ from
+DP above the floor and $3.8\%$ below it.
 
-Fig.~\ref{fig:layers} stacks each layer's measured gain per workload at its
-own operating point: the orientation gap at the rung of
-Fig.~\ref{fig:ladder}, the refinement of Table~\ref{tab:es}, and the better
-policy on the refined placement at that rung. Packing carries the gain;
-mapping adds $1.13$--$1.25\times$ and selection $1.03$--$1.11\times$ in mean
-delay, selection least at the min-$\PF$ packing's own knee, where DP's
-below-floor gain is smallest.
-
-
-\label{sec:r5}
-\emph{Scope.} $\PL$, $\PL_f$ and $\Esc$ are offline path-enumeration models under an
-even-spreading assumption that BL, in particular, does not meet. $\PL$ has
-been checked against the simulator on one placement (seven links spanning
-ranks 1--50: measured/model $0.88$--$1.01$ under BL, rank order
-$\rho = +0.89$); per-flow path counts have not, and none is quoted. All
-results use one $6{\times}6{\times}3$ mesh and one buffer depth, neither
-swept. Partial sums are carried at INT32, which overstates the reduction
-traffic the flow exploits; placement rankings survive at 16-bit on ResNet-50
-and VGG-16. Spread and best-case ratios are max/min statistics over
-$7$--$24$ placements at three seeds.
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=\linewidth]{f_layer_bars_paper.pdf}
+  \caption{p99 gain at each layer against its own baseline (grey), per
+  workload; routing by regime, with the pooled DP gain and the per-cell
+  BL/DP oracle over each regime's population dotted.}
+  \label{fig:layers_p99}
+\end{figure}

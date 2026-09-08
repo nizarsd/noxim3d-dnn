@@ -12,7 +12,10 @@
       "Bash(pkill -9 -f run_ls022_n30)",
       "Bash(echo \"exit=$?\")",
       "Bash(kill -9 25484)",
-      "Bash(ps -eo pid,cmd)"
+      "Bash(ps -eo pid,cmd)",
+      "Bash(cp /home/nizar/noxim3d-dnn/paper/main.tex /tmp/claude-1000/-home-nizar-noxim3d-dnn/7044b07d-709c-4e72-b3e0-c0459354c1d2/scratchpad/pk/)",
+      "Bash(pdflatex -interaction=nonstopmode main.tex)",
+      "Bash(pdftotext -f 1 -l 1 -layout main.pdf -)"
     ]
   }
 }
