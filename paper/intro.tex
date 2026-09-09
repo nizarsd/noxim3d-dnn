@@ -15,10 +15,11 @@ The consequence is that IMC does not eliminate communication; it relocates it. W
 This paper presents a cross-layer design space exploration spanning three main layers---packing, mapping and routing---in which the design choices available at each layer are evaluated both for their performance impact within that layer and for their impact on the layers downstream. A delay- and inference-time-aware design flow is proposed, and is shown to significantly reduce both average and tail delays, the latter measured as the p99 latency that governs inference time. The contributions are:
 \begin{itemize}
 \item an attribution of communication delay to the layer that controls
-      it: an invariant port floor fixed by the packing orientation and a
-      peak link load fixed by the placement, with the binding term
-      determining which layer holds control;
-\item identifying the conditional couplings between adjacent layers: what a layer
+      it: an invariant port floor (peak load on any tile
+      port) fixed by the packing orientation (how a layer's rows and columns
+      are grouped within a tile) and a peak link load fixed by the placement,
+      with the binding term determining which layer holds control;
+\item identifying the conditional couplings between adjacent design layers: what a design layer
 can move or gain is set by the regime fixed by the layer above it;
 \item a design flow that follows from the attribution, together with a
       mapping-layer design-time objective that improves delay at the knee

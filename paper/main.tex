@@ -55,10 +55,15 @@ DNN Accelerators on 3D NoCs}
 
 \begin{abstract}
 In-memory computing with fixed weight location shapes the traffic of NoC-based DNN accelerators: hundreds of crossbar tiles reduce
-partial sums through a few accumulator ports. Design becomes communication-centric, and communication is then set by
-three design layers ---  crossbar-to-tile packing, tile-to-node mapping, and packet routing --- previous work optimizes one with the others held fixed. This paper explores the three as one design space on a 3D NoC across various DNN workloads. Results show that the layers couple through a metric fixed by packing, the port floor: choosing the packing for that floor
-rather than for traffic volume lowers mean delay by up to $64\times$ and p99
-by up to $107\times$. Below the floor, a zero-cost mapping refinement, guided by a proposed design-time metric, recovers up to
+partial sums through a few accumulator ports. Design becomes communication-centric, and communication is set by three
+dependent design layers: packing (how crossbars are grouped into tiles),
+mapping (how those tiles are placed on the mesh), and routing (how packets
+traverse the network). Previous work optimizes one layer with the others held
+fixed. This paper explores the three as one design space on a 3D NoC across
+DNN workloads. Results show that the layers couple through a metric fixed by
+packing, the port floor: choosing the packing for that floor rather than for
+traffic volume lowers mean delay by up to $64\times$ and 99th-percentile
+(p99) delay by up to $107\times$. Below the floor, a zero-cost mapping refinement, guided by a proposed design-time metric, recovers up to
 $46\%$ of delay and $67\%$ of p99. Adaptive selection wins in both regimes
 ($1.85\times$/$2.39\times$ above, $1.15\times$/$1.23\times$ below), yet leaves
 a residue below the floor that no offline metric predicts. Thus, packing fixes the operating point that mapping can only reach and routing can only defend. The residue routing leaves is shown to be temporal, which motivates selection that adapts in both time and space.
@@ -74,7 +79,7 @@ a residue below the floor that no offline metric predicts. Thus, packing fixes t
 \input{results}
 
 \section{Conclusion and Future Work}
-This paper presents a cross-layer design flow for IMC DNN accelerators on a 3D NoC. Prior studies design for a single layer, which limits design freedom and forgoes the gains shown here. The layers are coupled and build on each other's gains (Fig.~\ref{fig:layers_p99}): packing sets the port floor and dominates the achieved gain  (up to $107\times$ in p99); below the floor, a proposed metric (escape slope) lowers p99 by up to $1.43\times$ at no communication cost; and DP is the better fixed selection policy in both regimes ($2.39\times$ above the floor). Always-DP is shown to capture $98$–$99\%$ of the improvement an oracle policy switching per placement and load would achieve above the floor, and $76$–$81\%$ below it. No offline quantity predicts which cells it loses, because the residue is temporal: operating below the floor produces transient congestion clustered at phase boundaries, on a timescale a spatially adaptive policy cannot track. Closing this residue with a temporally as well as spatially adaptive selection policy is future work, as is investigating the gains of applying the same flow to other objectives, such as thermal mitigation and load balancing.
+This paper presents a cross-layer design flow for IMC DNN accelerators on a 3D NoC. Prior studies design for a single layer, which limits design freedom and forgoes the gains shown here. The layers are coupled and build on each other's gains (Fig.~\ref{fig:layers_p99}): packing sets the port floor and dominates the achieved gain  (up to $107\times$ in p99); below the floor, a proposed metric (escape slope) lowers p99 by up to $1.43\times$ at no communication cost; and DP is the better fixed selection policy in both regimes ($2.39\times$ above the floor). Always-DP is shown to capture $98$–$99\%$ of the improvement an oracle policy switching per placement and load would achieve above the floor, and $76$–$81\%$ below it. No offline quantity predicts which cells it loses, because the residue is temporal: operating below the floor produces transient congestion clustered at phase boundaries, on a timescale a spatially adaptive policy cannot track. Closing this residue with a temporally as well as spatially adaptive selection policy is future work, as is investigating the gains of applying the same flow to other objectives, such as thermal mitigation and load balancing, and extending the packing layer to autoregressive decoder LLMs.
 \newpage
 \bibliographystyle{IEEEtran}
 \bibliography{refs3}
