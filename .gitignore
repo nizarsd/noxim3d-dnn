@@ -62,3 +62,4 @@ paper/*.fdb_latexmk
 /main.log
 /main.fls
 /main.fdb_latexmk
+paper/main.pdf
