@@ -143,7 +143,7 @@ Hop count acts separately but weakly. For the same  $\BIND$ below the floor,
 $15\%$ more communication cost causes only a $3.7$--$6.7\%$ increase in low-load delay.
 
 Placement below the floor still significantly impacts delay near the knee
-($13.6\times$ across eight placements of ResNet-50 $(8,1,8)$ (see Fig.~\ref{fig:spread}), against
+($13.6\times$ across eight placements of ResNet-50 $(8,1,8)$ (Sec.~\ref{sec:r3}), against
 $1.3\times$ at light load or saturation). The min $\mathrm{CC}$ placement, however, is shown to capture most of it. Searching beyond min $\mathrm{CC}$ returns at most
 $1.14\times$. The picture flips above the floor. Across five populations on
 the three workloads ($n = 8$--$24$ each), delay spreads widely ($4.6$--$31.8\times$) between
@@ -173,7 +173,14 @@ the best placement with no $\mathrm{CC}$ or $\PL$ overheads. The gain appears un
 
 This lever has no effect on dominant-flow traffic, as expected. For example, on VGG-16 $(32,4,8)$, where one pair carries $92\%$ of the peak link, max$\mathrm{ES}$ returns nothing. This can be predicted by whether the climb can move $\mathrm{ES}$.
 
-\begin{figure}[tb]
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{f_layer_bars_paper.pdf}
+  \caption{p99 gain at each layer against its own baseline, per workload; bars: delay relative to the baseline, labels: the gain; routing by regime, with the pooled DP gain and the per-cell BL/DP oracle dotted.}
+  \label{fig:layers_p99}
+\end{figure}
+
+\begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{f5_two_regime_paper.pdf}
   \caption{BL vs.\ DP across placements: 12 equal-$\PL$ placements of ResNet-50 $(16,2,8)$ above the floor (top), 8 of $(8,1,8)$ at the knee below (bottom).}
@@ -187,17 +194,6 @@ decides which of the admissible outputs a packet is forwarded to. In this sectio
 policy (DP). Evaluations are  done under matched placements and seeds ensuring that the policy is the only
 variable between paired runs.
 
-\emph{Spread} of delay across placements is the
-mapping layer's main risk. DP is shown to narrow it in all eight populations
-compared to BL across all three workloads and both regimes, with $7$--$24$
-placements and  three seeds, read inside each policy's knee window. Fig.~\ref{fig:spread} shows one per regime.
-DP can be considered a rescue of the bad placements more than an improvement of
-the good. DP matches or loses
-to BL on the fastest placements, while it reduces delay by up to $7.6\times$ ($5\,566$ to
-$732$ cycles),  on the slowest.
-
-\subsection{Policy Choice and Its Limit}
-\label{sec:r4}
 We ask which fixed policy is better over everything measured, and how much a
 policy that could switch per operating point would add. Every knee-window
 placement $\times$ load cell from the mapping and routing populations of
@@ -206,19 +202,21 @@ above the floor, $128$ below, three seeds each --- and three policies are
 compared on identical cells: always-BL, always-DP, and a per-cell oracle
 taking the better of the two.
 
-DP is ahead of BL in both regimes, on $65$ of $71$ above-floor placements
-and in $61$ of the $62$ load bands measured: pooled over cells, by
-$1.85\times$ in mean delay and $2.39\times$ in p99 above the floor, and by
-$1.15\times$ and $1.23\times$ below it (the blue dotted lines in the routing
-panel of Fig.~\ref{fig:layers_p99}). The same
-panel resolves this per workload: $1.62$--$3.10\times$
-above the floor on all three, $1.15$--$1.26\times$ below it on ResNet-50 and
-VGG-16, and level ($1.01\times$) on DeiT-S below the floor --- the arm that
-Fig.~\ref{fig:es} accordingly reads under BL. The oracle (the grey lines of
-the same panel) adds $1.1\%$
-and $2.5\%$ above the floor but $3.8\%$ and $7.7\%$ below it: of the
-improvement available between always-BL and the oracle, always-DP captures
-$99\%$ and $98\%$ above the floor but only $81\%$ and $76\%$ below it.
+Routing and selection results are shown in the routing panel of
+Fig.~\ref{fig:layers_p99}, which also shows the other layers, each against its
+own baseline at its own operating point: packing carries the gain
+($18.6$--$107\times$) and mapping adds $1.26$--$1.43\times$, with the same
+ordering in mean delay at smaller magnitudes. For routing, DP is ahead of BL
+in both regimes, on $65$ of $71$ above-floor placements and in $61$ of the
+$62$ load bands measured: pooled over cells, by $1.85\times$ in mean delay and
+$2.39\times$ in p99 above the floor, and by $1.15\times$ and $1.23\times$
+below it (the DP dotted lines). The same panel resolves this per workload:
+$1.62$--$3.10\times$ above the floor on all three, $1.15$--$1.26\times$ below
+it on ResNet-50 and VGG-16, and level ($1.01\times$) on DeiT-S below the floor
+--- the arm that Fig.~\ref{fig:es} accordingly reads under BL. The oracle (the  dotted lines marked oracle) adds $1.1\%$ and $2.5\%$ above the floor but
+$3.8\%$ and $7.7\%$ below it: of the improvement available between always-BL
+and the oracle, always-DP captures $99\%$ and $98\%$ above the floor but only
+$81\%$ and $76\%$ below it.
 
 The remaining $4$--$8\%$ below the floor is the only headroom left, so we ask
 whether the cells DP loses can be identified at design time: no offline
@@ -226,16 +224,11 @@ quantity survives a held-out packing, and a pre-registered model over $15$
 features of $56$ placements reaches $R^2 = -0.03$ on DP's gain when a packing
 is held out, against a registered ceiling of $0.10$.
 
-Taken together in Fig.~\ref{fig:layers_p99}, each layer read against its own
-baseline at its own operating point, packing carries the gain
-($18.6$--$107\times$), mapping adds $1.26$--$1.43\times$, and selection adds
-what the regime allows. Mean delay gives the same picture at smaller
-magnitudes: the layer ordering is unchanged, and the oracle sits $1.1\%$ from
-DP above the floor and $3.8\%$ below it.
-
-\begin{figure}[tb]
-  \centering
-  \includegraphics[width=\linewidth]{f_layer_bars_paper.pdf}
-  \caption{p99 gain at each layer against its own baseline, per workload; routing by regime, with the pooled DP gain and the per-cell BL/DP oracle dotted.}
-  \label{fig:layers_p99}
-\end{figure}
+\emph{Spread} of delay across placements is the
+mapping layer's main risk. DP is shown to narrow it in all eight populations
+compared to BL across all three workloads and both regimes, with $7$--$24$
+placements and  three seeds, read inside each policy's knee window. Fig.~\ref{fig:spread} shows one per regime.
+DP can be considered a rescue of the bad placements more than an improvement of
+the good. DP matches or loses
+to BL on the fastest placements, while it reduces delay by up to $7.6\times$ ($5\,566$ to
+$732$ cycles),  on the slowest.
