@@ -13,7 +13,7 @@ Classical NoC traffic differs dramatically from DNN traffic on a tiled IMC
 substrate. Most of a block's NoC traffic is partial-sum reduction, sunk by a few
 accumulator nodes, so that a handful of ejection ports become the hotspots of
 the whole network. This makes \emph{DNN traffic a funnel, not a permutation}.
-Thus the binding bottleneck is a port and not a link, and it is unaffected by
+Thus, the binding bottleneck is a port and not a link, and it is unaffected by
 mapping and routing unless mapping or routing creates a hotspot link whose load
 exceeds the port bottleneck --- an extreme case, as this study shows and
 intuition supports (a hot accumulator has one ejection port but up to six
@@ -22,14 +22,14 @@ incoming links).
 Based on the above, the \emph{traffic graph itself becomes a design variable,
 not an input}. Packing determines how much of the reduction is internalized on-tile and how much reaches the NoC, before any mapping or routing exists. Temporally, the traffic is non-stationary and bursty ---
 layer-sequential execution gives each flow a disjoint activity window inside one
-inference period, so peak and average load diverge: the average decides whether a packing is feasible, while the peak decides the delay it will incur. Congestion is therefore transient and clustered at phase boundaries, on the timescale an adaptive policy's cost field need track if it is to work.
+inference period, so peak and average load diverge: the average decides whether a packing is feasible, while the peak decides the delay it will incur. Congestion is therefore transient and clustered at phase boundaries, on the timescale an adaptive policy's cost field needs to track if it is to work.
 Finally, the endpoint that matters is the tail rather than the mean, because
 reduction is a barrier in which the accumulator waits for the slowest arriving
-partial sum -- the arrival that determines the inference time. 
+partial sum --- the arrival that determines the inference time. 
 
 \subsection{The Three Design Layers}
 \label{sec:layers}
-This work proposes a cross-layer design flow decomposed into three layers (Fig.~\ref{fig:flow}). Every layer is  evaluated not only for its own performance but also for its downstream effect.
+This work proposes a cross-layer design flow decomposed into three layers (Fig.~\ref{fig:flow}). Every layer is evaluated not only for its own performance but also for its downstream effect.
 
 The top layer is \emph{architecture and packing}. For a given hardware design it fixes how many crossbars share a tile (packing density, PD), and it decides the \emph{layer-to-tile} mapping, i.e.\ how a DNN layer's rows (reduce, $r$) and columns (scatter, $s$) are grouped across those crossbars (packing orientation, PO). Together, PD and PO fix how much of a layer's traffic has to pass through a single tile port --- a floor on delay that no later decision can lower. The second layer is \emph{tile-to-node} placement, or \emph{mapping}, which assigns NoC mesh nodes to those tiles and sets the peak single-link load across the NoC (PL). The third is the \emph{routing and selection} policy, which decides, at run time, how much of that load can be steered off that link.
 
@@ -40,8 +40,8 @@ are logical tiles and arcs are inter-tile data flows. Flow $f$ is characterized 
 flits/cycle from tile $u_f$ to tile $v_f$ and is active over the window
 $[t^{\mathrm{on}}_f, t^{\mathrm{off}}_f)$ of the inference period $T$. 
 
-A tile's injection (outbound) and ejection (inbound) channels are different which causes tile's two port rates bind separately. The elementary intervals $\mathcal{I}$ are the
-maximal windows on which the active flow set is constant. Following the above formulation Peak injection (PIL) and
+A tile's injection (outbound) and ejection (inbound) are separate channels, so the tile's two port rates bind separately. The elementary intervals $\mathcal{I}$ are the
+maximal windows on which the active flow set is constant. Following the above formulation, peak injection (PIL) and
 ejection (PEL) loads and the \emph{port floor} (PF) are
 
 \begin{align}
@@ -59,7 +59,7 @@ where $I$ ranges over $\mathcal{I}$ and $n$ over the tiles of the traffic graph 
 
 These metrics are mapping-independent because equations~\eqref{eq:pil}--\eqref{eq:pf} involve no placement variable, so $\mathrm{PIL}$, $\mathrm{PEL}$ and hence
 $\PF$ are \emph{placement-invariant}: remapping determines which NoC node is
-hot, but not how hot it is.  $\PF$ is the quantity that the packing layer controls. The upper bound on the load the system can sustain  in a burst is $1/\PF$.
+hot, but not how hot it is. $\PF$ is the quantity that the packing layer controls. The upper bound on the load the system can sustain in a burst is $1/\PF$.
 
 \subsection{Mapping: Peak Link Load}
 \label{sec:mapping} 
@@ -73,35 +73,35 @@ again maximized over $\mathcal{I}$. The mapping layer is then characterized by p
   \mathrm{CC} &= \sum_f \lambda_f\, h\!\left(\pi(u_f),\pi(v_f)\right).
   \label{eq:cc}
 \end{align}
-with $h$ the Manhattan hop distance. $\PL$ and $\mathrm{CC}$ are determined by $\pi$; $\PF$ is fixed at the upstream packing layer. The link attaining PL is denoted  $\ell^{*}$.
+with $h$ the Manhattan hop distance. $\PL$ and $\mathrm{CC}$ are determined by $\pi$; $\PF$ is fixed at the upstream packing layer. The link attaining PL is denoted $\ell^{*}$.
 
 The packing and mapping layers meet at the \emph{binding load}
 \begin{equation}
   \BIND = \max(\PF, \PL),
   \label{eq:bind}
 \end{equation}
-which is a design objective optimized by the  proposed flow.
+which is a design objective optimized by the proposed flow.
 
 \subsection{Routing and Selection}
 \label{sec:routing}
-The third layer is \emph{routing and selection}.  Routing computes the set of allowed paths  $\mathcal{R}$, which binds to the mapping layer through $\varphi_f(\ell,\pi)$. More permissive paths for a flow $f$ help to spread it over more links, lowering $\PL$ for the same $\pi$.
+The third layer is \emph{routing and selection}. Routing computes the set of allowed paths $\mathcal{R}$, which binds to the mapping layer through $\varphi_f(\ell,\pi)$. More permissive paths for a flow $f$ help to spread it over more links, lowering $\PL$ for the same $\pi$.
 
-Selection then determines which  output, among the admissible ones, a packet is forwarded to. It is the only decision 
+Selection then determines which output, among the admissible ones, a packet is forwarded to. It is the only decision 
 that can respond to congestion (or any run-time optimization metric) rather than predict it. However, it is bounded by what the upstream layers have left: load can be moved off $\ell^{*}$ only insofar as the flows sharing it have alternatives. Thus, mapping has an impact on what selection can achieve, provided a proper offline metric captures the escapable load. This is the key idea behind the metrics proposed in this work and described below. 
 
 
 \subsection{Proposed Metrics: Escapable Load Fraction and Slope}
 \label{sec:metrics}
-The proposed metrics stem from the fact that \emph{selection can only divert load that has somewhere to go}. A flow whose  fraction on link $\ell$ is 1 ($\varphi_f(\ell)=1$) is \emph{forced} through $\ell$. We define the \emph{escapable fraction} for link $\ell$ as the share of its load carried by flows with an alternative path
+The proposed metrics stem from the fact that \emph{selection can only divert load that has somewhere to go}. A flow whose fraction on link $\ell$ is 1 ($\varphi_f(\ell)=1$) is \emph{forced} through $\ell$. We define the \emph{escapable fraction} for link $\ell$ as the share of its load carried by flows with an alternative path
 \begin{equation}
 E(\ell) = 1 - \frac{1}{\Lambda_\ell}
 \sum_{f\,:\,\varphi_f(\ell)=1} \lambda_f ,
 \label{eq:e}
 \end{equation}
 
-i.e. it is the complement of the \emph{forced} load. We write escapable fraction of the link with peak load (PL) $E = E(\ell^{*})$.
+i.e., it is the complement of the \emph{forced} load. We write the escapable fraction of the peak-load link as $E = E(\ell^{*})$.
 
-The hottest link escape, however, does not fully account for how the escape room is distributed across the congested links. 
+The escape of the hottest link alone, however, does not account for how the escape room is distributed across the congested links. 
 
 Let $\mathcal{L}_q$ be the
 top-$q$ fraction of links ordered by $\Lambda_\ell$, and let
@@ -115,4 +115,4 @@ be the load-weighted escapable fraction of that tier. We propose the \emph{escap
 the change in escape room between the top $q_1$ and the top $q_2$ of links ($q_2 > q_1$; the values used are set in Sec.~\ref{sec:refine}).
 $\mathrm{ES}$ is computed offline from the logical traffic graph and the mapping. 
 
-$\mathrm{ES}$ stems from  the observation that hot links are typically created by forced traffic, whose load cannot move, while the load queued on the links feeding them can. Thus, high $\mathrm{ES}$ means high escape room just below the peak, allowing backed-up load to drain sideways before it reaches the forced high-load core (the top $q_1$). Conversely, low $\mathrm{ES}$ means the shoulder is as rigid as the core and nothing drains. To improve the performance of the selection policy, $\mathrm{ES}$ is therefore maximized.
+$\mathrm{ES}$ stems from the observation that hot links are typically created by forced traffic, whose load cannot move, while the load queued on the links feeding them can. Thus, high $\mathrm{ES}$ means high escape room just below the peak, allowing backed-up load to drain sideways before it reaches the forced high-load core (the top $q_1$). Conversely, low $\mathrm{ES}$ means the shoulder is as rigid as the core and nothing drains. To improve the performance of the selection policy, $\mathrm{ES}$ is therefore maximized.

@@ -6,35 +6,30 @@
   \label{fig:flow}
 \end{figure*}
 
-\section{Background and Related Work}
+\section{Related Work}
 \label{sec:related}
-Communication is a recognized bottleneck of DNN accelerators. Dataflow
-accelerators schedule data reuse so that fewer bytes
-move~\cite{chenEyerissSpatialArchitecture2016,szeEfficientProcessingDeep2017};
-IMC accelerators keep weights stationary in crossbar
-tiles~\cite{shafieeISAACConvolutionalNeural2016,chiPRIMENovelProcessinginMemory2016,longFerroelectricFETBasedProcessinginMemory2019},
-which relocates the remaining traffic onto the on-chip
-network~\cite{nabavinejadOverviewEfficientInterconnection2020}.
-
-The closest precedent is Krishnan et
-al.~\cite{krishnanImpactOnchipInterconnect2022}, who map DNN layers to tiles
-on a mesh and drive the NoC with per-pair injection rates, the traffic model
-adopted here, and conclude that the network is uncongested at average rates
---- a conclusion about the mean that Sec.~\ref{sec:method} and
-Fig.~\ref{fig:ladder} qualify. The same
-group models IMC and its NoC end to
+The major bottleneck of DNN accelerators is communication. Dataflow
+accelerators schedule data reuse to reduce traffic~\cite{chenEyerissSpatialArchitecture2016,szeEfficientProcessingDeep2017}.
+In IMC accelerators, weights are fixed in crossbar
+tiles~\cite{shafieeISAACConvolutionalNeural2016,chiPRIMENovelProcessinginMemory2016,longFerroelectricFETBasedProcessinginMemory2019} which places the remaining traffic (activations and partial sums) on the on-chip
+network~\cite{nabavinejadOverviewEfficientInterconnection2020}. Krishnan et
+al.~\cite{krishnanImpactOnchipInterconnect2022} explore NoC-mesh and
+NoC-tree topologies across DNNs, motivated by the inability of a
+point-to-point interconnect to carry IMC traffic, and drive the NoC with
+steady per-pair injection rates and no phase structure, the traffic model
+this work adopts and extends with phase windows. Full layers are mapped to tiles, so the NoC sees no partial-sum traffic, and placement is fixed. The same group models IMC and its NoC end to
 end~\cite{krishnanSIAMChipletbasedScalable2021} and synthesizes a NoC per
 DNN~\cite{mandalLatencyOptimizedReconfigurableNoC2020}, taking topology as
-the variable where this work keeps a regular 3D mesh and varies routing and
-selection. On 3D NoCs, TTNNM~\cite{liTTNNMThermalTrafficAware2024} and
-TEFLON~\cite{narangTEFLONThermallyEfficient2024} optimize placement or fabric
-with the packing given; adaptive routing and
-selection~\cite{dahirHighlyAdaptiveDeadlockFree2013,makDPnetworkOptimalDynamic2009,choiOnChipCommunicationNetwork2018}
-have been developed largely on synthetic traffic.
+the variable, fixing routing and selection. 
+On 3D NoCs, TTNNM~\cite{liTTNNMThermalTrafficAware2024} and
+TEFLON~\cite{narangTEFLONThermallyEfficient2024} fix the packing and optimize
+mapping or fabric. Adaptive routing and selection were developed largely on
+synthetic
+traffic~\cite{dahirHighlyAdaptiveDeadlockFree2013,makDPnetworkOptimalDynamic2009}.
 
-Each of these works optimizes one layer with the others held fixed: packing
-for utilization or traffic volume, placement for hops or heat, routing for a
-given placement. None asks how a choice at one layer changes what the next can
-achieve. The results below show that this is where the largest effects lie:
-the minimum-traffic packing is the wrong one, placement matters only in a
+These works focus on optimizing one layer with the others held fixed: packing
+for utilization or traffic volume, mapping for hops or heat, routing for a
+given placement. None studies how a choice at one layer changes what the next can
+achieve, which this work shows to have a major effect:
+the minimum-traffic packing is the wrong one for delay, mapping matters only in a
 regime that packing decides, and what selection yields depends on both.
