@@ -31,7 +31,7 @@ partial sum --- the arrival that determines the inference time.
 \label{sec:layers}
 This work proposes a cross-layer design flow decomposed into three layers (Fig.~\ref{fig:flow}). Every layer is evaluated not only for its own performance but also for its downstream effect.
 
-The top layer is \emph{architecture and packing}. For a given hardware design it fixes how many crossbars share a tile (packing density, PD), and it decides the \emph{layer-to-tile} mapping, i.e.\ how a DNN layer's rows (reduce, $r$) and columns (scatter, $s$) are grouped across those crossbars (packing orientation, PO). Together, PD and PO fix how much of a layer's traffic has to pass through a single tile port --- a floor on delay that no later decision can lower. The second layer is \emph{tile-to-node} placement, or \emph{mapping}, which assigns NoC mesh nodes to those tiles and sets the peak single-link load across the NoC (PL). The third is the \emph{routing and selection} policy, which decides, at run time, how much of that load can be steered off that link.
+The top layer is \emph{architecture and packing}. It fixes how many crossbars share a tile (packing density, PD), and decides the \emph{layer-to-tile} mapping, i.e.\ how a DNN layer's rows (reduce, $r$) and columns (scatter, $s$) are grouped across those crossbars (packing orientation, PO). Together, PD and PO fix the traffic through a single tile port: a floor on delay that no later decision can lower. The second layer is \emph{tile-to-node} placement, or \emph{mapping}, which assigns NoC mesh nodes to those tiles and sets the peak single-link load across the NoC (PL). The third is the \emph{routing and selection} policy, which decides, at run time, how much of that load can be steered off that link.
 
 \subsection{Packing Density, Orientation and Port Floor}
 \label{sec:packing}
@@ -63,7 +63,7 @@ hot, but not how hot it is. $\PF$ is the quantity that the packing layer control
 
 \subsection{Mapping: Peak Link Load}
 \label{sec:mapping} 
-A mapping is an injective map $\pi$ that assigns tiles to mesh nodes. Once $\pi$ is fixed, the inter-tile flows are carried on NoC links through the routing function $\mathcal{R}$. Let $\varphi_f(\ell,\pi)\in[0,1]$ be the
+A mapping is an injective function $\pi$ that assigns tiles to mesh nodes. Once $\pi$ is fixed, the inter-tile flows are carried on NoC links through the routing function $\mathcal{R}$. Let $\varphi_f(\ell,\pi)\in[0,1]$ be the
 fraction of flow $f$'s minimal $\mathcal{R}$-admissible paths that traverse
 directed link $\ell$. An even spread over admissible paths gives the offered link load $\Lambda_\ell = \sum_f \lambda_f\,\varphi_f(\ell,\pi)$,
 again maximized over $\mathcal{I}$. The mapping layer is then characterized by peak link load (PL) and communication cost (CC) --- a hop-count energy proxy

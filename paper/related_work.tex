@@ -12,10 +12,10 @@ The major bottleneck of DNN accelerators is communication. Dataflow
 accelerators schedule data reuse to reduce traffic~\cite{chenEyerissSpatialArchitecture2016,szeEfficientProcessingDeep2017}.
 In IMC accelerators, weights are fixed in crossbar
 tiles~\cite{shafieeISAACConvolutionalNeural2016,chiPRIMENovelProcessinginMemory2016,longFerroelectricFETBasedProcessinginMemory2019} which places the remaining traffic (activations and partial sums) on the on-chip
-network~\cite{nabavinejadOverviewEfficientInterconnection2020}. Krishnan et
+network~\cite{nabavinejadOverviewEfficientInterconnection2020}. Motivated by the inability of a
+point-to-point interconnect to carry IMC traffic, Krishnan et
 al.~\cite{krishnanImpactOnchipInterconnect2022} explore NoC-mesh and
-NoC-tree topologies across DNNs, motivated by the inability of a
-point-to-point interconnect to carry IMC traffic, and drive the NoC with
+NoC-tree topologies across DNNs; they drive the NoC with
 steady per-pair injection rates and no phase structure, the traffic model
 this work adopts and extends with phase windows. Full layers are mapped to tiles, so the NoC sees no partial-sum traffic, and placement is fixed. The same group models IMC and its NoC end to
 end~\cite{krishnanSIAMChipletbasedScalable2021} and synthesizes a NoC per

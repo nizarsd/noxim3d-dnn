@@ -166,7 +166,7 @@ the best placement with no $\mathrm{CC}$ or $\PL$ overheads. The gain appears un
   \label{fig:es}
 \end{figure}
 
-\begin{figure}[tb]
+\begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{f_layer_bars_paper.pdf}
  \caption{p99 gain per layer and workload, each against its own baseline at
@@ -174,7 +174,7 @@ its own operating point; dotted lines are pooled over cells.}
   \label{fig:layers_p99}
 \end{figure}
 
-\begin{figure}[tb]
+\begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{f5_two_regime_paper.pdf}
   \caption{BL vs.\ DP across placements: 12 equal-$\PL$ placements of ResNet-50 $(16,2,8)$ above the floor (top), 8 of $(8,1,8)$ at the knee below (bottom).}
@@ -184,7 +184,7 @@ its own operating point; dotted lines are pooled over cells.}
 \subsection{Routing and Selection}
 \label{sec:r3}
 The last layer acts at run time. With upstream layers (packing and mapping) fixed at their best design, selection
-decides which of the admissible outputs a packet is forwarded to. In this section, we evaluate both BL, used so far, and the distributed cost-to-go
+decides which of the admissible outputs a packet is forwarded to. In this section, we evaluate both BL, used as the baseline so far, and the distributed cost-to-go
 policy (DP). Evaluations use matched placements and seeds, so that the policy is the only
 variable between paired runs.
 
