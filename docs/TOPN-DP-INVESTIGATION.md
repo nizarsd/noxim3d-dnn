@@ -459,10 +459,12 @@ minCC — iso-performance in every regime, at N@90/108 = 21-23% of the sweep.
   these packings (0.988 pooled). No below-floor arm does: all six sit at
   0.94-1.03. The paper's below-floor DP wins do not transfer to the c16
   min-PF plane.
-- **P3 not replicated here.** No metric arm is a materially better absolute
-  mapping than minCC at matched depth (BL means within ~+/-8%, inside noise;
-  VGG's minCC rung sat deeper, 5.5x vs ~5.0x). The earlier maxES refinement
-  (other packings, Fisher p=0.016) neither contradicted nor confirmed.
+- **P3 direction-consistent but marginal.** On the paper's own instrument
+  (paired p99, minCC start vs its maxES climb, 23 pairs) the refinement is
+  1.10/1.08/1.11x per workload, mean 1.098x, wins 14/23 — log-t 1.97
+  (p~0.06), sign test ns. Same direction as the paper's 1.26-1.43x at
+  smaller magnitude; the c16 plane neither overturns nor independently
+  confirms the refinement claim.
 - **P4 effectively NULL.** The level-form causal test: direction-consistent on
   ResNet (+1.5%) and DeiT (+3.5%), absent on VGG — noise-grade magnitudes.
   The strong observational screen (E40 r = -0.46 pooled, ResNet -0.87;
@@ -532,3 +534,41 @@ bind; DPN collects whatever exists at ~1/4 the activity; and below the floor
 the only thing left is zero-mean run-level noise that would require runtime
 adaptivity to touch — the quantified, and small, remaining opening for the
 learned stage.
+
+### The CC-matched control (2026-09-18) — the regime law isolated
+
+The matrix's above-floor arm differed from min-CC on three axes at once: load
+(PL/PF 0.5 -> 1.1), communication budget (CCx 1.0 -> 1.43-1.50) and escape
+room (E 0.008/0.063/0.144 -> 0.107/0.574/0.455). The gain could therefore have
+belonged to any of them. The control separates them: from the same eight
+min-CC starts per packing, climb E under CC <= 1.45x start and PL <= 0.90xPF —
+maximal escape room, comparable budget, still below the floor. The climb
+reaches **E = 1.000 on all 24 placements at CCx 1.16-1.33**, i.e. MORE escape
+room than the above-floor arm for LESS communication cost.
+
+| workload | arm | E | CCx | PL/PF | BL/DP | p99 | wins |
+|---|---|---|---|---|---|---|---|
+| ResNet | min-CC | 0.01 | 1.00 | 0.50 | 0.987 | 0.965 | 4/8 |
+| | max-E below floor | 1.00 | 1.33 | 0.56 | 1.002 | 0.986 | 3/8 |
+| | above floor | 0.11 | 1.56 | 1.09 | **1.053** | 1.073 | 4/6 |
+| VGG | min-CC | 0.06 | 1.00 | 0.52 | 1.007 | 1.026 | 4/8 |
+| | max-E below floor | 1.00 | 1.22 | 0.59 | 1.039 | 1.042 | 6/8 |
+| | above floor | 0.57 | 1.49 | 1.10 | **1.121** | 1.241 | 7/8 |
+| DeiT | min-CC | 0.14 | 1.00 | 0.45 | 0.947 | 1.045 | 1/8 |
+| | max-E below floor | 1.00 | 1.16 | 0.48 | 0.969 | 1.125 | 2/6 |
+| | above floor | 0.46 | 1.32 | 1.10 | **1.352** | 1.760 | 4/6 |
+
+Maximal escape room below the floor is worth **+1.5% / +3.2% / +2.2%** over
+min-CC; crossing the floor is worth **+5.3% / +12.1% / +35.2%** with less
+escape room in two of three workloads. So the regime is the operative
+variable, not escape room and not the communication budget — the port floor is
+not a proxy for path diversity, it is the condition that makes any of it
+matter. Escape room contributes a consistent but second-order benefit below
+the floor (positive in all three workloads, largest on VGG, 6/8 placements),
+worth a sentence and not a claim.
+
+This also retires the earlier worry that the six-arm null was specific to
+min-CC-rooted mappings: the CC-budgeted, maximal-E arm fails to create policy
+value too. Runs: `results_ext/topn/matrix/{arms3_*.csv,res_bE.txt,
+run_spec_bE.txt}`, 24 placements x BL/DP/DPN x 8 seeds, per-placement knee rung
+(4.3-5.5x own free-flow), 3 cells out of band and excluded.
