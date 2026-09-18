@@ -1,0 +1,19 @@
+=== A: VGG(32,8,4) knee probe (96 x 1-seed BL)  Wed Sep 16 19:42:20 +03 2026
+=== B: VGG(32,8,4) ladder BL/DP/hyb-b (+a knee spot), N=13 ci78  Wed Sep 16 19:44:27 +03 2026
+=== B done: 624 rows, 0 NA  Wed Sep 16 20:21:22 +03 2026
+=== C: bf N-ladder  Wed Sep 16 20:21:22 +03 2026
+=== C done: 336 rows, 0 NA  Wed Sep 16 20:30:17 +03 2026
+=== D: bf cinterval ladder (N=15, k0950)  Wed Sep 16 20:30:17 +03 2026
+=== D done  Wed Sep 16 20:33:25 +03 2026
+=== E: cc12 hyb-b x10 seeds (N=17 ci102)  Wed Sep 16 20:33:25 +03 2026
+=== E done  Wed Sep 16 20:36:19 +03 2026
+=== F: VGG(8,4,2) above-floor guard (N=42 ci252)  Wed Sep 16 20:36:19 +03 2026
+=== F done  Wed Sep 16 20:51:20 +03 2026
+=== G: bf headline seeds 4-10 (BL/DP/hyb-b, k0750+k0950)  Wed Sep 16 20:51:20 +03 2026
+=== G done  Wed Sep 16 20:58:00 +03 2026
+=== H: DeiT f3 (N27 ci162) + f4 (N16 ci96) hyb-b  Wed Sep 16 20:58:00 +03 2026
+=== H done  Wed Sep 16 21:35:15 +03 2026
+=== I: N=all equivalence n=27 (bf_0.90 k0750)  Wed Sep 16 21:35:15 +03 2026
+=== I done -- CAMPAIGN COMPLETE  Wed Sep 16 21:36:50 +03 2026
+=== retests start Wed Sep 16 22:15:11 +03 2026
+=== retests done Wed Sep 16 22:32:16 +03 2026

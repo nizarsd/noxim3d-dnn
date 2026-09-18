@@ -7,6 +7,7 @@ void DPNode::dpProcess()
 {
 	// Gating for other selection methods
 	if (TGlobalParams::selection_strategy != SEL_DP)  return;
+	if (TGlobalParams::dp_topn == 0)  return;    // empty sink list: DP idle, all-BL fallback
 	
 
 
@@ -21,7 +22,7 @@ void DPNode::dpProcess()
 	
 	if (phase >= dp_pass()) return;              // SETTLE: DP idle
 	
-		dst_id = (phase / dp_dwell()) % dp_no_dst(); // converge-phase destination
+		dst_id = dp_sweep_dst((phase / dp_dwell()) % dp_sweep_size()); // converge-phase destination
 	
 
 

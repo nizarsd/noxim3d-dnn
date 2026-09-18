@@ -1,0 +1,13 @@
+REGISTERED 2026-09-17, before any choice-max simulation.
+
+Experiment: maximize byte-weighted path-choice share (fraction of bytes whose
+flow has >1 admissible minimal path) on the c=16 min-PF plane, subject to
+CC <= 1.05x the interior-pinned parent's CC, top-16 interior pinning KEPT.
+Then three policies at re-probed 4-6x rungs, n=10.
+
+Predictions (from the funnel study: path choice helps BL ~2x more than DP):
+1. Choice share rises substantially at ~fixed CC (diagonalization is cheap).
+2. The three policies converge further or tip toward BL; neither DP nor the
+   hybrid gains a nominal-load edge from added choice.
+3. If instead the hybrid/DP gains > a few %, choice is a free mapping knob the
+   chain should adopt — revises the two-regime conclusion.

@@ -1,0 +1,39 @@
+%  Using the following configuration: 
+%- verbose_mode = 0
+%- trace_mode = 0
+%- mesh_dim_x = 6
+%- mesh_dim_y = 6
+%- mesh_dim_z = 3
+%- buffer_depth = 16
+%- max_packet_size = 16
+%- min_packet_size = 16
+%- routing_algorithm = 15
+%- selection_strategy = 3
+%- packet_injection_rate = 0.01
+%- probability_of_retransmission = 0.01
+%- traffic_distribution = 4
+%- simulation_time = 38536
+%- stats_warm_up_time = 1944
+%- rnd_generator_seed = 1
+%- no. of samples to apply for the thermal model = 1
+%- lower temerature limit C = 59
+%- upper temerature limit C = 60
+%- thermal management mode (0-3) = 0
+%- traffic counter update interval = 648
+%- bandwidth threshold = 1000
+% Reset... done! Now running for 38536 cycles...
+
+% Noxim3D simulation completed ( 39536 cycles executed).
+% Total received packets: 2545
+% Total received flits: 40736
+% Global average delay (cycles): 28.6892
+% Global average throughput (flits/cycle): 0.0963746
+% Throughput (flits/cycle/IP): 0.0166157
+% Max delay (cycles): 383
+% Delay p50 (cycles): 14
+% Delay p90 (cycles): 68
+% Delay p95 (cycles): 104
+% Delay p99 (cycles): 189
+% Delay p99.9 (cycles): 302
+% Delay samples: 2545
+% Total energy (J): 0.000243335

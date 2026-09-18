@@ -1,0 +1,12 @@
+m1 topna s1 82.9297 761 
+m1 topna s2 108.418 1859 
+m1 topna s3 74.7081 967 
+m1 topnb s1 83.0226 749 
+m1 topnb s2 109.029 1859 
+m1 topnb s3 70.8637 791 
+m2 topna s1 126.358 1512 
+m2 topna s2 125.845 1362 
+m2 topna s3 83.3767 635 
+m2 topnb s1 127.099 1551 
+m2 topnb s2 118.035 1211 
+m2 topnb s3 84.829 745 

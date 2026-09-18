@@ -211,6 +211,9 @@ struct TGlobalParams
   static int   tcu_interval;
   static int   traffic_bin;       // traffic binning for traffic information per router
   static int   dp_settle_mult;   // settle window = dp_settle_mult * dp_pass (CLI: -dpsettle)
+  static int   dp_topn;          // top-N-sinks hybrid (CLI: -dptopn N file); -1 = off (pure DP),
+                                 // 0 = empty list (all-BL fallback), N>0 = DP for listed sinks only
+  static char  dp_sinkfile[128]; // sink id list, descending byte volume (tools/rank_sinks.py)
   static int   dp_cost_metric;   // what DP's per-channel cost measures (CLI: -dpcost)
   static int   bw_threshold;
   
@@ -250,8 +253,15 @@ inline int dp_diameter()
 // latch at dwell-1); the divisor is the dp_clock multiple, since each NoC cycle now
 // carries that many relaxation steps = that many cost hops.
 #define DP_CLOCK_MULT 4
+// ---- top-N-sinks hybrid (-dptopn): the sweep list ---------------------------
+// dp_topn < 0 reproduces today's arithmetic exactly (sweep index == node id).
+extern int  dp_sink_list[DPSIZE];   // ids swept, descending byte volume
+extern bool dp_is_sink[DPSIZE];     // membership for the per-packet policy switch
+inline int dp_sweep_size() { return TGlobalParams::dp_topn < 0 ? dp_no_dst()
+                                                               : TGlobalParams::dp_topn; }
+inline int dp_sweep_dst(int i) { return TGlobalParams::dp_topn < 0 ? i : dp_sink_list[i]; }
 inline int dp_dwell()   { return (dp_diameter() + DP_CLOCK_MULT - 1) / DP_CLOCK_MULT + 3; }
-inline int dp_pass()    { return dp_dwell() * dp_no_dst(); }      // full converge sweep
+inline int dp_pass()    { return dp_dwell() * dp_sweep_size(); }  // full converge sweep
 inline int dp_settle()  { return TGlobalParams::dp_settle_mult * dp_pass(); }  // hold window (CLI -dpsettle, default 1)
 inline int dp_cycle()   { return dp_pass() + dp_settle(); }       // full reconfiguration period
 

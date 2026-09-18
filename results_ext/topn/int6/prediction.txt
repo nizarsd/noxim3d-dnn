@@ -1,0 +1,17 @@
+REGISTERED 2026-09-16, before reading results_ext/topn/int6/res_int6.txt
+(runs in flight; probe outcomes not yet read either).
+
+Offline facts: interior pinning is CC-free (x0.955-1.031 of same-budget
+unconstrained min-CC) and lowers PL on r1628/v1644/esxd/v3284. Regional check:
+r1628 int keeps tier 4 (centre absorbs sinks, ingress cut 0.038/link);
+v1644 int WIDENS tier 9 -> 13-17 (warm central region, DeiT signature).
+
+Predictions at the ~5x onset cells:
+1. r1628: interior arm neutral-to-mildly-positive vs base for all three
+   policies (lower PL, unchanged tier); hybrid ~ DP (onset caps it).
+2. v1644: interior arm neutral at best, plausibly NEGATIVE (manufactured warm
+   region); hybrid gains nothing; if the int arm is clearly worse, the
+   "interiority is free" rule must carry a region-load qualifier.
+3. esxd/v3284 int arms: no policy gain unlocked (DeiT's null is not a
+   placement problem; VGG onset parity stands).
+4. Cross-cutting: no cell shows hybrid > DP beyond noise at onset depth.

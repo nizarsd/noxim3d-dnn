@@ -361,6 +361,7 @@ void TRouter::bufferMonitor()
 void TRouter::routing_directionsUpdater()
 {
 	if (TGlobalParams::selection_strategy != SEL_DP) return;
+	if (TGlobalParams::dp_topn == 0) return;     // empty sink list: nothing to latch
 
 	int no_dst = TGlobalParams::mesh_dim_x*TGlobalParams::mesh_dim_y*TGlobalParams::mesh_dim_z;
 
@@ -376,7 +377,7 @@ void TRouter::routing_directionsUpdater()
 	int phase = stime % dp_cycle();
 	if (phase >= dp_pass()) return;              	    // don't latch during settle
 	if (phase % dp_dwell() != dp_dwell() - 1) return;   // latch at end of each dwell window
-	int dst_id = (phase / dp_dwell()) % dp_no_dst();
+	int dst_id = dp_sweep_dst((phase / dp_dwell()) % dp_sweep_size());
 	// DPSYNC=<node> -- pairs with the PUB line in DPNode::dpProcess.
 	static const char* sy = getenv("DPSYNC");
 	if (sy && local_id == atoi(sy))
@@ -577,6 +578,10 @@ int TRouter::selectionNoP(const vector<int>& directions, const TRouteData& route
 int TRouter::selectionDP(const vector<int>& directions, const TRouteData& route_data)
 {
   int dst = route_data.dst_id;
+  // top-N-sinks hybrid: unlisted destinations select by buffer level (same
+  // admissible set, same turn model -- selection never adds a turn).
+  if (TGlobalParams::dp_topn >= 0 && !dp_is_sink[dst])
+      return selectionBufferLevel(directions);
   int best_available = NOT_VALID;
 
   // walk DP rank order (j=0 is best); pick the best-ranked candidate that is free,

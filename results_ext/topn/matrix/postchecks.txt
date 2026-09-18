@@ -1,0 +1,28 @@
+POST-CAMPAIGN CHECKS (2026-09-18) — numbers behind the metric scorecard.
+(Scripts inline in session; inputs: res_matrix(.patch).txt, int6/res_c16knee.txt,
+arms(2)_*.csv, e1 kstar_c8r1s8.csv.)
+
+1) E vs ES vs measured BL/DP delay gain, all 162 in-band matrix cells
+   (within-packing z):        E +0.197   ES -0.164   (nominal p~0.01 for E)
+   Regime split:  below-floor only (n=142)  E -0.035 (r1628 -0.02 / v1644 -0.11 / esxd +0.03)
+                  aboveF only    (n=20)     E -0.291
+   => the pooled +0.20 is a Simpson artifact (aboveF cells have higher E AND
+   higher gain); within regime E is null for delay gain. ES null everywhere.
+
+2) Conditioning check on E's CAPACITY claim (E1 grid, ResNet (8,1,8), n=24,
+   gain = kstar_DP/kstar_BL, E engineered 0.05-0.74 at fixed PL bands):
+   pooled +0.620;  within-band: PL/PF 1.10 +0.526, 1.33 +0.622, 1.56 +0.935;
+   within-band pooled +0.695. Conditioning STRENGTHENS it; dose-response in
+   every band (E .05 -> ~1.00, E .74 -> 1.25-1.30). E's capacity claim stands.
+
+3) PL-argmax link share of tier load (96 engineered placements/packing):
+   r1628 E50 30% E40 21% E5 23% E20 10%;  v1644 10/6/13/5%;  esxd 12/9/12/4%.
+   E and the tier metrics are substantially disjoint measurements.
+
+4) Split-half seed reliability of per-placement below-floor BL/DP gain
+   (seeds 1-4 vs 5-8, in-band non-aboveF cells):
+   r1628 +0.092  v1644 -0.048  esxd +0.134  pooled +0.058 (n=142).
+   Placement-level sd 0.026-0.090 vs per-seed sd 0.067-0.233.
+   => below-floor gain variation is RUN-level (temporal, seed interleaving),
+   not a placement trait; offline prediction of it is ill-posed. Explains the
+   screen mirage (E40 r=-0.87 on n=8 unreliable estimates).

@@ -375,6 +375,23 @@ void parseCmdLine(int arg_num, char *arg_vet[])
 	TGlobalParams::tcu_interval = atoi(arg_vet[++i]);
 	  else if (!strcmp(arg_vet[i], "-dpsettle"))   // settle window = N * dp_pass (default 1)
 	TGlobalParams::dp_settle_mult = atoi(arg_vet[++i]);
+	  else if (!strcmp(arg_vet[i], "-dptopn"))     // top-N-sinks hybrid: N sinkfile
+	{
+	  TGlobalParams::dp_topn = atoi(arg_vet[++i]);
+	  strncpy(TGlobalParams::dp_sinkfile, arg_vet[++i], 127);
+	  int n = 0, id;
+	  FILE* sf = fopen(TGlobalParams::dp_sinkfile, "r");
+	  if (!sf) { cout << "Error: cannot open sinkfile " << TGlobalParams::dp_sinkfile << endl; exit(1); }
+	  while (n < TGlobalParams::dp_topn && fscanf(sf, "%d", &id) == 1)
+	    {
+	      if (id < 0 || id >= DPSIZE) { cout << "Error: sink id " << id << " out of range" << endl; exit(1); }
+	      dp_sink_list[n++] = id;
+	      dp_is_sink[id] = true;
+	    }
+	  fclose(sf);
+	  if (n < TGlobalParams::dp_topn)
+	    { cout << "Error: sinkfile has " << n << " ids, -dptopn asked " << TGlobalParams::dp_topn << endl; exit(1); }
+	}
 	  else if (!strcmp(arg_vet[i], "-dpcost"))     // DP local cost metric (default occupancy)
 	{
 	  char* m = arg_vet[++i];

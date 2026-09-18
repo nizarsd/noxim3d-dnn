@@ -1,0 +1,8 @@
+esxd_chx0 0560 5.4
+esxd_chx1 0600 5.9
+esxd_chx2 0600 5.5
+esxd_chx3 0600 4.2
+esxd_chx4 0595 5.2
+esxd_chx5 0560 4.4
+esxd_chx6 0600 4.1
+esxd_chx7 0595 4.8

@@ -16,7 +16,7 @@ period; congestion below the floor clusters at their boundaries.
 |---|---|---|---|---|
 | 1 | phase-gated oracle | yes | ~1 day | DONE 2026-09-16 — gap +0.2–0.5%: boundary switching buys nothing |
 | 2 | runtime attribution of the below-floor loss | yes, with 1 | ~2 days | hot-link arm DONE 2026-09-16 — body-dominated (head 0–31%); relief links pending |
-| 3 | sink-list hybrid (DP for top-volume sinks, BL fallback); k-truncation demoted to arm 2 | yes | ~1 day | REDEFINED 2026-09-16 — NEEDS IMPLEMENTATION + RUNS |
+| 3 | sink-list hybrid (DP for top-volume sinks, BL fallback); k-truncation demoted to arm 2 | yes | ~1 day | BUILT + GATED 2026-09-16 (`-dptopn`, see TOPN-DP-INVESTIGATION.md) — N sweep pending |
 | 4 | packing panel completeness (Pathway 5) | completeness | half day | NEEDS RUNS (~200) |
 | 5 | full-width routing figure (Pathway 1) | presentation | hours | DONE 2026-09-16 |
 | 6 | second mesh 7×7×3 (Pathway 2) | only if reviews ask | ≥1 week | CONDITIONAL |
@@ -333,6 +333,28 @@ that stage is reached.
 Mak, Cheung, Luk, Lam, CODES+ISSS 2009: `G:\Research\NoC_for_DNN\Resources\DP_MAK_2009.pdf`.
 FPGA overhead (Table 4, Virtex-4, 4-port router): DP +28.5% slices over XY at buffer 16,
 KSLA k = 4 +21.5%; at buffer 32, +11.4% and +9.9%.
+
+### Task 3 capstone — the c16 coherent matrix (2026-09-17, DONE)
+
+The structural version of the hybrid claim, replacing pooled-across-unlike-
+populations evidence: 3 workloads at their c=16 min-PF packings, 7 engineered
+placement arms x 8, per-placement knee rung (4–6x own free-flow), 8 seeds,
+BL/DP/DPN, registered predictions, ~3,400 runs. Full section at the end of
+TOPN-DP-INVESTIGATION.md; auto-analysis in `results_ext/topn/matrix/ANALYSIS.txt`.
+Outcome: (1) below the floor NO arm — minCC, maxES, or any E-level climb —
+creates DP-over-BL value (all 0.94–1.03; registered P2 FAILED, P4 null: the
+escape-metric family is not causal for DP gain — a designed null); (2) above
+the floor (PL=1.10xPF arm) DP pays 1.05/1.12/1.35x mean (p99 to 1.76) and DPN
+captures it fully (DP/HYB 0.998) at 21–23% activity; N@95 escalation fixes the
+single coverage-starved deep cell. Sharpened law: crossing the port floor is
+the only lever that creates routing-policy value at these packings, and DPN
+collects ~100% of it at ~1/4 the activity. Post-checks (2026-09-18,
+`results_ext/topn/matrix/postchecks.txt`): E's capacity claim survives
+within-PL-band conditioning on the E1 grid (+0.53/+0.62/+0.94, dose-response)
+while its matrix delay correlation is a Simpson artifact; and below-floor
+per-placement gain has ~zero split-half seed reliability (pooled +0.06) — the
+variation is run-level (temporal interleaving), so offline prediction below
+the floor is ill-posed, not just unsolved.
 
 ---
 

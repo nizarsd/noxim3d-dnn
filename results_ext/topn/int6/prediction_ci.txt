@@ -1,0 +1,9 @@
+REGISTERED 2026-09-17, before the ci sweep on bf_0.90_0.80 (k0.75, ~4.6x own ff,
+n=10, rotation fixed: full DP 648, hybrid N=24 -> 144).
+1. Sub-cycle ci (user's rule): ci below the configuration's rotation buys
+   nothing or hurts (controls: DP ci 162/324; hybrid ci 72).
+2. Hybrid optimum lies AT or ABOVE its 144-cycle period, not below.
+3. Full DP at ci 648 (the convention) is not obviously optimal — the EWMA study
+   hinted shorter ci helps the body at the cost of tail; direction re-tested here.
+4. If both optima land near the measured coherence time (~100-160 cycles):
+   "sample at the coherence time regardless of policy" becomes the rule.

@@ -1,0 +1,23 @@
+minCC_4000: PL 0.506 PL/PF 0.67 tier 8 top5 0.24
+fairE_4000: PL 0.506 PL/PF 0.67 tier 8 top5 0.24
+minCC_4001: PL 0.680 PL/PF 0.90 tier 8 top5 0.28
+fairE_4001: PL 0.607 PL/PF 0.80 tier 8 top5 0.25
+minCC_4002: PL 0.588 PL/PF 0.77 tier 5 top5 0.28
+fairE_4002: PL 0.443 PL/PF 0.58 tier 8 top5 0.23
+minCC_4003: PL 0.494 PL/PF 0.65 tier 7 top5 0.28
+fairE_4003: PL 0.478 PL/PF 0.63 tier 8 top5 0.24
+minCC_4004: PL 0.465 PL/PF 0.61 tier 12 top5 0.25
+fairE_4004: PL 0.452 PL/PF 0.60 tier 12 top5 0.25
+minCC_4005: PL 0.597 PL/PF 0.79 tier 5 top5 0.29
+fairE_4005: PL 0.575 PL/PF 0.76 tier 7 top5 0.27
+minCC_4006: PL 0.441 PL/PF 0.58 tier 10 top5 0.26
+fairE_4006: PL 0.441 PL/PF 0.58 tier 10 top5 0.26
+minCC_4007: PL 0.515 PL/PF 0.68 tier 9 top5 0.26
+fairE_4007: PL 0.515 PL/PF 0.68 tier 9 top5 0.26
+READING (registered before sims): tier widths 5-12, median 8 — intermediate between
+bf (2-6, hybrid wins 1.2-1.33x) and DeiT (median 13, null). Prediction: a modest
+pooled hybrid gain over DP, weaker than bf's, and placement-dependent — the
+narrow-tier placements (minCC_4002, minCC_4005, tier 5) should gain most, the
+tier>=10 ones (4004, 4006) should be null. A pooled null would falsify the
+tier-width discriminator's midpoint; a bf-sized win would say the threshold sits
+higher than 8.
