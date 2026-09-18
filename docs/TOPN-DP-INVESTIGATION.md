@@ -572,3 +572,46 @@ min-CC-rooted mappings: the CC-budgeted, maximal-E arm fails to create policy
 value too. Runs: `results_ext/topn/matrix/{arms3_*.csv,res_bE.txt,
 run_spec_bE.txt}`, 24 placements x BL/DP/DPN x 8 seeds, per-placement knee rung
 (4.3-5.5x own free-flow), 3 cells out of band and excluded.
+
+### Matched-CC min-E / max-E contrast (2026-09-19) — inconclusive on E, null holds
+
+Four further arms complete the 2x2 at equal communication spend per workload
+(target CCx = the above-floor arm's achieved mean, 1.52-1.56): min-E and max-E,
+below the floor (PL <= 0.90xPF) and above it (PL in 1.08-1.12xPF). 48
+placements, BL/DP/DPN, 8 seeds, own-knee rungs; 1,152 runs, 0 failures.
+
+Achieved contrast: below floor E = 0.000 vs 1.000 (full range); above floor
+E = 0.10/0.39/0.00 vs 0.21/0.59/0.36 (holding PL in band fights escape room, so
+the contrast is ~2x, not full range).
+
+E effect (max-E minus min-E, mean BL/DP at matched CC):
+
+| workload | binds | below floor | above floor |
+|---|---|---|---|
+| ResNet (16,2,8) | inject | +0.010 | +0.078 (n = 4 vs 6) |
+| VGG (16,4,4) | eject | +0.012 | **-0.049** (n = 6 vs 5) |
+| DeiT (16,1,16) | eject | +0.080 | +0.359 (**n = 1 vs 1**) |
+
+**Verdict: inconclusive, and not supporting the ejection-bound hypothesis** —
+the sign is negative on one ejection-bound workload, positive on the
+injection-bound one, and DeiT's above-floor "effect" rests on a single
+placement per arm. Two reasons the instrument cannot decide effects this size:
+the climbs shift each placement's knee, so cells drift out of the 4-6x band
+(DeiT above floor kept 1 of 8, ResNet max-E above kept 4 of 8); and with
+below-floor per-cell reliability r = 0.06, 6-8 placements cannot separate
+0.01-0.08 from seed noise. The E1-grid contrast that did resolve an effect used
+24 placements and the capacity outcome, which integrates a ladder rather than
+one rung.
+
+**What these arms do confirm:** the below-floor null survives two further
+manipulations. At matched CC (1.52-1.56) and with escape room driven to its
+extremes (E = 0.000 and E = 1.000), all three workloads remain at 0.93-1.05.
+Combined with the six metric arms and the cheap max-E arm, no placement
+property tested - slope, level, single-link escapable fraction, in either
+direction, at min or matched communication cost - creates selection-policy
+value below the port floor.
+
+**To settle inject-vs-eject** the outcome must change, not the sample: run the
+same 48 placements as ladders and score capacity gain (k*_DP/k*_BL), which also
+puts them on the k*_DP convention. ~1,200 runs. Data:
+`results_ext/topn/matrix/{arms5_*,arms6_*}.csv`, `res_b2.txt`, `res_minE.txt`.
