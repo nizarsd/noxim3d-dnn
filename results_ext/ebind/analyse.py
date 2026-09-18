@@ -12,7 +12,8 @@ import collections, csv, math, os, statistics as st
 H = '/home/nizar/noxim3d-dnn/results_stage3/mapping_pilot/pool1000/hill'
 K = '/home/nizar/noxim3d-dnn/results_ext/ebind'
 
-NEW = [('d1616', 'DeiT (16,1,16)', 'eject'), ('r824', 'ResNet (8,2,4)', 'inject')]
+NEW = [('d1616', 'DeiT (16,1,16)', 'eject'), ('r824', 'ResNet (8,2,4)', 'inject'),
+       ('d1628', 'DeiT (16,2,8)', 'inject')]
 OLD = [('kstar_c8r1s8.csv', 'ladder_c8r1s8.csv', 'ResNet (8,1,8)', 'eject'),
        ('e3_kstar_vgg824.csv', 'e3_ladder_vgg824.csv', 'VGG (8,2,4)', 'eject'),
        ('e3_kstar_vgg842.csv', 'e3_ladder_vgg842.csv', 'VGG (8,4,2)', 'inject'),

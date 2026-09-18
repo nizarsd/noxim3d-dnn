@@ -643,13 +643,33 @@ reported; 7-rung ladders under BL and DP, 3 seeds; 714 runs, 0 failures.
 | DeiT (16,1,16) *new* | eject | 9 | 1.038 -> 1.159 (+0.121) | **+0.38** |
 | ResNet (8,2,4) *new* | inject | 6 | 0.925 -> 0.993 (+0.069) | +0.35 |
 | VGG (8,4,2) | inject | 8 | 1.092 -> 1.211 (+0.119) | +0.26 |
+| DeiT (16,2,8) *new* | inject | 15 | 1.062 -> 1.066 (+0.004) | +0.05 |
 | VGG (32,8,4) | inject | 22 | 1.070 -> 1.054 (-0.016) | +0.01 |
-| DeiT (8,1,8) | inject | 7 | 1.055 -> 1.025 (-0.030) | -0.03 |
+| DeiT (8,1,8) *defective grid* | inject | 7 | 1.055 -> 1.025 (-0.030) | -0.03 |
 
 **Every ejection-bound population ranks above every injection-bound one**
-(min eject +0.38 > max inject +0.35): exact permutation p = 0.029 on the
-capacity outcome, p = 0.057 on delay at k*_DP (eject 0.62/0.57/0.34 vs inject
-0.35/0.26/0.15/-0.08). Class means: eject r = +0.54, inject r = +0.15.
+(min eject +0.38 > max inject +0.35): exact permutation p = **0.018** over the
+eight populations, p = 0.029 excluding the defective DeiT (8,1,8) grid (which
+has a single low-E cell, in one PL band only, so its E contrast is confounded
+with PL — it is reported but carries no weight). Class means: eject r = +0.54,
+inject r = +0.13.
+
+**Three matched pairs.** Each pair is one workload at one density, differing
+only in which port binds:
+
+| pair | ejection-bound | injection-bound |
+|---|---|---|
+| ResNet c=8 (92 tiles each) | (8,1,8) **+0.62** | (8,2,4) +0.35 |
+| VGG c=8 | (8,2,4) **+0.61** | (8,4,2) +0.26 |
+| DeiT c=16 (66 tiles each, PF 0.905 vs 0.909) | (16,1,16) **+0.38** | (16,2,8) **+0.05** |
+
+Three of three in the predicted direction. The DeiT pair is the tightest
+control available — same workload, same density, same tile count, floors 0.4%
+apart — and it is also the best-conditioned population in the set: DeiT (16,2,8)
+carries n = 15 cells with E moved 0.06 -> 0.55 at matched PL and **CC within
+0.5%** between the low- and high-E groups, so E is varied with load and
+communication cost both held. It shows no response (+0.004 capacity, r = +0.05)
+while its ejection-bound twin shows +0.121 at r = +0.38.
 
 **Mechanism.** When PF is set by injection, packets queue at their own source
 port before entering the network, so escape room on the hot link cannot help;
@@ -660,7 +680,7 @@ while ejection-bound VGG (16,4,4) and DeiT (16,1,16) gain 1.12x and 1.35x. One
 population makes the point sharply: ResNet (8,2,4), injection-bound, is the only
 one where DP *loses* capacity (0.93-0.99).
 
-**Scope and caveats.** The comparison is between populations (n = 7), not within
+**Scope and caveats.** The comparison is between populations (n = 8), not within
 — the unit of the claim is the packing. Per-population n is 6-24, and CC was not
 held fixed inside the grids (spread +8 to +36% between low- and high-E groups),
 so E and communication cost co-vary; a CC-pinned version is the obvious
@@ -674,4 +694,5 @@ DP recovers when the design is above the port floor AND the packing is
 ejection-bound; it predicts nothing below the floor, and nothing on
 injection-bound packings. That is a conditional, mechanism-bearing rule rather
 than the unconditional predictor the paper's escape-slope framing implied.
-Data: `results_ext/ebind/` (grid_*.csv, res_ebind.txt, ANALYSIS.txt).
+Runs: 1,344 ladder runs across the three new grids, 0 failures. Data:
+`results_ext/ebind/` (grid_*.csv, res_ebind.txt, ANALYSIS.txt).

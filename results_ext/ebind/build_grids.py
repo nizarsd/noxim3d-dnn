@@ -20,15 +20,14 @@ sys.path.insert(0, H)
 os.makedirs(f'{OUT}/tables', exist_ok=True)
 
 POPS = [
-    # order: DeiT ejection-bound first, then ResNet injection-bound
-    ('d1616', 'vitsmall_encoder1_xb128_6x6x3_c16r1s16',    0.905396, 'eject',
-     [1.10, 1.33], [0.05, 0.74], [150, 250, 350, 450, 550, 650, 760]),
-    ('r824',  'resnet50_bottleneck3_xb128_6x6x3_c8r2s4',   0.392248, 'inject',
-     [1.10, 1.33], [0.05, 0.74], [100, 200, 350, 500, 700, 950, 1300]),
+    # DeiT (16,2,8): injection-bound twin of d1616 — same c, same 66 tiles,
+    # PF 0.909 vs 0.905 (0.4% apart). The tightest matched pair in the design.
+    ('d1628', 'vitsmall_encoder1_xb128_6x6x3_c16r2s8',     0.909019, 'inject',
+     [1.10, 1.25], [0.05, 0.55], [150, 250, 350, 450, 550, 650, 760]),
 ]
-REPS = 3
-PL_TOL, E_TOL = 0.03, 0.08
-STEPS, KN, TRIES = 200, 35, 3
+REPS = 4
+PL_TOL, E_TOL = 0.03, 0.12
+STEPS, KN, TRIES = 300, 40, 5
 M = None; EA = None; PF = None
 
 
@@ -73,18 +72,27 @@ def climb(seed, score, ok, start, steps=STEPS):
 def job(a):
     pl_t, e_t, rep = a
     tgt = pl_t * PF
+    inband = lambda q: abs(stats_pl(q) - tgt) <= PL_TOL * tgt
+    best = None
     for attempt in range(TRIES):
         rng = random.Random(hash((pl_t, e_t, rep, attempt)) & 0xffff)
         p = dict(zip(M.USED, rng.sample(range(108), len(M.USED))))
         p = climb(hash((pl_t, rep, attempt, 'A')) & 0xffff,
                   lambda q: abs(stats_pl(q) - tgt), lambda q: True, p)
-        if abs(stats_pl(p) - tgt) <= PL_TOL * tgt:
-            break
-    inband = lambda q: abs(stats_pl(q) - tgt) <= PL_TOL * tgt
-    hit_pl = inband(p)
-    if hit_pl:
-        p = climb(hash((pl_t, e_t, rep, 'B')) & 0xffff,
+        if not inband(p):
+            continue
+        p = climb(hash((pl_t, e_t, rep, attempt, 'B')) & 0xffff,
                   lambda q: abs(EA.local(q)[1] - e_t), inband, p)
+        err = abs(EA.local(p)[1] - e_t)
+        if best is None or err < best[0]:
+            best = (err, dict(p))
+        if err <= E_TOL:
+            break
+    if best is None:
+        p = dict(zip(M.USED, random.Random(rep).sample(range(108), len(M.USED))))
+    else:
+        p = best[1]
+    hit_pl = inband(p)
     pl = stats_pl(p); E = EA.local(p)[1]
     return dict(pl_t=pl_t, e_t=e_t, rep=rep, PL=round(pl, 6),
                 PL_PF=round(pl / PF, 4), E=round(E, 4),
