@@ -1,0 +1,2 @@
+population       bind   maxPL/PF | regime PL/PF E_min E_max  span  verdict
+ResNet (8,1,8)   eject      1.00 |

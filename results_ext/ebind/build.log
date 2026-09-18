@@ -1,0 +1,9 @@
+d1616 (eject): 9/12 cells hit both targets
+   E_target 0.05: n=3  E 0.06  PL/PF 1.19  CC 604,819
+   E_target 0.74: n=6  E 0.72  PL/PF 1.24  CC 627,197
+   wrote 63 tables
+r824 (inject): 6/12 cells hit both targets
+   E_target 0.05: n=3  E 0.05  PL/PF 1.19  CC 176,994
+   E_target 0.74: n=3  E 0.70  PL/PF 1.25  CC 198,536
+   wrote 42 tables
+GRIDS DONE

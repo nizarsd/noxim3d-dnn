@@ -615,3 +615,63 @@ value below the port floor.
 same 48 placements as ladders and score capacity gain (k*_DP/k*_BL), which also
 puts them on the k*_DP convention. ~1,200 runs. Data:
 `results_ext/topn/matrix/{arms5_*,arms6_*}.csv`, `res_b2.txt`, `res_minE.txt`.
+
+### E predicts DP gain only on ejection-bound packings (2026-09-19)
+
+**Terms.** A packing is *ejection-bound* when its port floor PF = max(PIL, PEL)
+is set by the ejection term (PEL), *injection-bound* when set by injection
+(PIL). E is the escapable fraction at the PL-argmax link.
+
+The earlier replication check found E predicting capacity gain on two of five
+engineered-E populations and failing on three. The two that worked were both
+ejection-bound, but "injection-bound" was confounded with "VGG" (two of the
+three injection-bound populations were VGG, and the DeiT one had a defective
+grid with a single low-E cell). Two new grids break the confound, giving each
+binding class all three workloads:
+
+- **DeiT (16,1,16)**, ejection-bound, 9 of 12 cells hit both targets
+- **ResNet (8,2,4)**, injection-bound, 6 of 12 cells hit both targets
+
+Protocol as in E1/E3: PL targets 1.10 and 1.33 x PF crossed with E targets 0.05
+and 0.74, 3 reps, phase-A PL climb then phase-B E climb, hits and misses
+reported; 7-rung ladders under BL and DP, 3 seeds; 714 runs, 0 failures.
+
+| population | binds | n | capacity low-E -> high-E | r(E, capacity gain) |
+|---|---|---|---|---|
+| ResNet (8,1,8) | eject | 24 | 1.063 -> 1.185 (+0.123) | **+0.62** |
+| VGG (8,2,4) | eject | 10 | 1.049 -> 1.106 (+0.057) | **+0.61** |
+| DeiT (16,1,16) *new* | eject | 9 | 1.038 -> 1.159 (+0.121) | **+0.38** |
+| ResNet (8,2,4) *new* | inject | 6 | 0.925 -> 0.993 (+0.069) | +0.35 |
+| VGG (8,4,2) | inject | 8 | 1.092 -> 1.211 (+0.119) | +0.26 |
+| VGG (32,8,4) | inject | 22 | 1.070 -> 1.054 (-0.016) | +0.01 |
+| DeiT (8,1,8) | inject | 7 | 1.055 -> 1.025 (-0.030) | -0.03 |
+
+**Every ejection-bound population ranks above every injection-bound one**
+(min eject +0.38 > max inject +0.35): exact permutation p = 0.029 on the
+capacity outcome, p = 0.057 on delay at k*_DP (eject 0.62/0.57/0.34 vs inject
+0.35/0.26/0.15/-0.08). Class means: eject r = +0.54, inject r = +0.15.
+
+**Mechanism.** When PF is set by injection, packets queue at their own source
+port before entering the network, so escape room on the hot link cannot help;
+when PF is set by ejection, the congestion lives on links converging on hot
+sinks, which is exactly where alternative paths exist and what E measures. The
+c16 above-floor arm agrees: injection-bound ResNet (16,2,8) gains least (1.05x)
+while ejection-bound VGG (16,4,4) and DeiT (16,1,16) gain 1.12x and 1.35x. One
+population makes the point sharply: ResNet (8,2,4), injection-bound, is the only
+one where DP *loses* capacity (0.93-0.99).
+
+**Scope and caveats.** The comparison is between populations (n = 7), not within
+— the unit of the claim is the packing. Per-population n is 6-24, and CC was not
+held fixed inside the grids (spread +8 to +36% between low- and high-E groups),
+so E and communication cost co-vary; a CC-pinned version is the obvious
+follow-up. Below the floor the question does not arise: E is null there in both
+binding classes (inject: ResNet (16,2,8) +0.010, ResNet (8,2,4) fairE capacity
+1.017 -> 1.000; eject: VGG (16,4,4) +0.012, DeiT (16,1,16) +0.080), tested at a
+full E = 0 -> 1 contrast at matched CC.
+
+**The predictor statement the extension can make:** E predicts how much capacity
+DP recovers when the design is above the port floor AND the packing is
+ejection-bound; it predicts nothing below the floor, and nothing on
+injection-bound packings. That is a conditional, mechanism-bearing rule rather
+than the unconditional predictor the paper's escape-slope framing implied.
+Data: `results_ext/ebind/` (grid_*.csv, res_ebind.txt, ANALYSIS.txt).

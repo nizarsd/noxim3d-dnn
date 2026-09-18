@@ -1,0 +1,14 @@
+E vs DP gain, per population — above the floor
+
+population       bind     n | E span / CC spread     | capacity low-E -> high-E                 | delay@k*DP | delay@5x
+DeiT (16,1,16) NEW eject    9 | E 0.05-0.74 CC±  26% | cap 1.038->1.159 (+0.121) r=+0.38 rho=+0.55 | d@k*DP r=+0.34 | d@5x r=+0.50
+ResNet (8,2,4) NEW inject   6 | E 0.05-0.71 CC±  22% | cap 0.925->0.993 (+0.069) r=+0.35 rho=+0.26 | d@k*DP r=+0.20 | d@5x r=+nan
+ResNet (8,1,8)   eject   24 | E 0.05-0.74 CC±  36% | cap 1.063->1.185 (+0.123) r=+0.62 rho=+0.55 | d@k*DP r=+0.62 | d@5x r=+0.70
+VGG (8,2,4)      eject   10 | E 0.04-0.79 CC±  26% | cap 1.049->1.106 (+0.057) r=+0.61 rho=+0.60 | d@k*DP r=+0.57 | d@5x r=+0.52
+VGG (8,4,2)      inject   8 | E 0.05-0.79 CC±  13% | cap 1.092->1.211 (+0.119) r=+0.26 rho=-0.24 | d@k*DP r=+0.35 | d@5x r=+0.35
+VGG (32,8,4)     inject  22 | E 0.05-0.78 CC±  33% | cap 1.070->1.054 (-0.016) r=+0.01 rho=+0.03 | d@k*DP r=-0.08 | d@5x r=+0.31
+DeiT (8,1,8)     inject   7 | E 0.05-0.75 CC±   8% | cap 1.055->1.025 (-0.030) r=-0.03 rho=+0.11 | d@k*DP r=+0.15 | d@5x r=+0.27
+
+BY BINDING CLASS (capacity contrast, low-E -> high-E):
+  eject  n_pop=3  mean delta +0.100  mean r +0.537   [DeiT+0.12, ResNet+0.12, VGG+0.06]
+  inject n_pop=4  mean delta +0.035  mean r +0.146   [ResNet+0.07, VGG+0.12, VGG-0.02, DeiT-0.03]
