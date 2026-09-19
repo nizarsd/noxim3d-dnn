@@ -717,7 +717,9 @@ slope, a 0.51 span would have returned +0.072 capacity; it returned +0.004).
 — the unit of the claim is the packing. Per-population n is 6-24, and CC was not
 held fixed inside the grids (spread +8 to +36% between low- and high-E groups),
 so E and communication cost co-vary; a CC-pinned version is the obvious
-follow-up. Below the floor the question does not arise: E is null there in both
+follow-up. [SUPERSEDED 2026-09-19 — the CC caveat is retracted; see "The CC
+caveat on E is retracted" at the end of this file. E survives partialling CC
+out, and no CC-pinned grid is needed.] Below the floor the question does not arise: E is null there in both
 binding classes (inject: ResNet (16,2,8) +0.010, ResNet (8,2,4) fairE capacity
 1.017 -> 1.000; eject: VGG (16,4,4) +0.012, DeiT (16,1,16) +0.080), tested at a
 full E = 0 -> 1 contrast at matched CC.
@@ -894,7 +896,7 @@ Earlier entries flagged that E co-varies with communication cost inside the
 grids (+8 to +36% spread between the low-E and high-E groups) and listed a
 CC-pinned grid as the experiment needed to close it. Tested directly instead:
 
-| packing | binds | n | CC spread | r(E,cap) | r(CC,cap) | r(E,CC) | r(E,cap | CC) |
+| packing | binds | n | CC spread | r(E,cap) | r(CC,cap) | r(E,CC) | r(E,cap given CC) |
 |---|---|---|---|---|---|---|---|
 | ResNet (8,1,8) | eject | 24 | 36% | +0.62 | +0.33 | +0.57 | **+0.56** |
 | VGG (8,2,4) | eject | 10 | 26% | +0.61 | -0.06 | +0.26 | **+0.65** |
