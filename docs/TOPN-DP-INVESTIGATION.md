@@ -757,7 +757,17 @@ it is the cheapest coverage at which no cell is known to starve, not because
 larger N is harmful.
 
 **Pooled DPN position, all cells (T1 rebuilt):** below floor DP/DPN 0.998 /
-0.994 / 1.022; above floor 0.990 / 1.018 / 0.979, capture 90% / 117% / 78%.
+0.994 / 1.022; above floor 0.990 / 1.018 / 0.979, gain retained 90% / 117% / 78%.
 DPN tracks DP within 3% in every workload and regime; the direction of the
 residual varies with the sample, so "DPN exceeds DP" should be stated as
 "matches DP within a few percent".
+
+**Terminology note (2026-09-19).** The DPN-vs-DP share is named **gain retained**
+= (BL/DPN - 1)/(BL/DP - 1), the project's phrasing from TOPN-DP-PROMPT ("fraction
+of full-DP gain retained"). It is NOT the paper's *capture*, which is DP's share
+of the BL->oracle delay reduction; the two must not share a name. Gain retained
+exceeds 100% where DPN beats full DP, which happens because its rotation is
+4.3-4.7x fresher for the sinks it tracks. Being a ratio of small numbers it
+amplifies: VGG's 1.8% delay difference reads as 25 points. Quote DP/DPN
+(0.968-1.018 across all cells) for how close the policies are, and gain retained
+for how much of the available benefit survives the restriction.

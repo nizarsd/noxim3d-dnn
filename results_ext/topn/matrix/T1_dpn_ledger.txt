@@ -1,27 +1,18 @@
-T1 — DPN design ledger.  6x6x3, 108 destinations, DP rotation 648 cycles.
-Cells: c16 min-PF packings, all placement arms pooled per regime, own knee rung, 8 seeds.
+T1 — DPN above the port floor: cost and performance at two coverages.
+Paired entries read  value@N90 / value@N95.   Full DP = 108 dests, 648c, 100%.
 
-A. cost
-workload              N@90  rows  rotation  activity |  N@95  rotation  activity
-ResNet-50 (16,2,8)      23    23      138c       21% |    27      162c       25%
-VGG-16 (16,4,4)         25    25      150c       23% |    38      228c       35%
-DeiT-S (16,1,16)        25    25      150c       23% |    45      270c       42%
-full DP                108   108      648c      100% |
+workload             cells |       N    rotation  activity |  BL/DP        BL/DPN        DP/DPN  gain retained
+ResNet-50 (16,2,8)      23 |  23/27   138/162 c  21/25% |  1.136  1.123/1.177   0.990/0.968     90%/130%  
+VGG-16 (16,4,4)         19 |  25/38   150/228 c  23/35% |  1.111  1.130/1.138   1.018/1.016    117%/125%  
+DeiT-S (16,1,16)         8 |  25/45   150/270 c  23/41% |  1.301  1.236/1.338   0.979/0.999     78%/112%  
 
-B. performance (mean delay ratio over BL; DP/DPN > 1 means DPN faster)
-workload             regime   n  BL/DP  BL/DPN  DP/DPN  capture
-ResNet-50 (16,2,8)   below   31  1.005   1.000   0.998      n/a
-                     above   23  1.136   1.123   0.990      90%
-VGG-16 (16,4,4)      below   32  1.031   1.025   0.994      n/a
-                     above   19  1.111   1.130   1.018     117%
-DeiT-S (16,1,16)     below   27  0.964   0.983   1.022      n/a
-                     above    8  1.301   1.236   0.979      78%
-   capture = (BL/DPN-1)/(BL/DP-1); undefined below the floor, where BL/DP ~ 1
+DP/DPN > 1 means DPN is faster.
+gain retained = (BL/DPN - 1)/(BL/DP - 1): the share of full DP's benefit that DPN keeps.
+  >100% means DPN beat full DP (its rotation is 4.3-4.7x fresher for the sinks it tracks).
+  It is a ratio of small numbers, so read DP/DPN for how close the policies are:
+  a 1.8% delay difference on VGG becomes a 25-point difference here.
+  NOTE: distinct from 'capture' in the paper, which is DP's share of the BL->oracle reduction.
 
-C. coverage: N@90 vs N@95 on the same above-floor cells
-workload               n  DP/DPN@90  DP/DPN@95  paired diff         activity
-ResNet-50 (16,2,8)    13      0.976      0.968   +0.008 p=0.66     21% ->   25%
-VGG-16 (16,4,4)        8      1.013      1.016   -0.003 p=0.50     23% ->   35%
-DeiT-S (16,1,16)       6      0.975      0.999   -0.024 p=0.46     23% ->   42%
-   ResNet: flat in N from 23 to 27 to 108 (p=0.66) — the earlier N@95 penalty was noise.
-   DeiT: N@95 recovers its one coverage-starved cell (esxd_af3, 0.761 -> 0.944).
+N@95 changes nothing on any workload (paired p = 0.66 / 0.50 / 0.46): gain is flat in N
+from 23 to 108.  One cell is the exception — DeiT's deepest placement (5.9x free-flow)
+starves at N@90, DP/DPN 0.761, and recovers to 0.944 at N@95.
