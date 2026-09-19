@@ -3,7 +3,7 @@
 Per workload: below floor (DP, DPN@90) and above floor (DP, DPN@90, DPN@95),
 with a cost panel underneath giving destinations swept per rotation
 (108 / N@90 / N@95).  Above-floor bars use the cells that have both coverages
-(6/8/6) so the three bars in that group are the same placements.
+(13/8/6 after the ResNet ladder patch) so the three bars are the same placements.
 """
 import collections, statistics as st
 import matplotlib
@@ -14,7 +14,8 @@ K = '/home/nizar/noxim3d-dnn/results_ext/topn/matrix'
 I6 = '/home/nizar/noxim3d-dnn/results_ext/topn/int6'
 spec = {}
 for fn in ('run_spec.txt', 'run_spec_patch.txt', 'run_spec_bE.txt',
-           'run_spec_aE.txt', 'run_spec_b2.txt', 'run_spec_minE.txt'):
+           'run_spec_aE.txt', 'run_spec_b2.txt', 'run_spec_minE.txt',
+           'run_spec_extra_af.txt'):
     try:
         for ln in open(f'{K}/{fn}'):
             t, k, dep, flag = ln.split(); spec[t] = flag
@@ -42,7 +43,7 @@ def load(fn, skip=set()):
 
 load(f'{K}/res_matrix.txt', patched)
 load(f'{K}/res_matrix_patch.txt')
-for _f in ('res_bE.txt', 'res_aE.txt', 'res_b2.txt', 'res_minE.txt', 'res_af_n95.txt'):
+for _f in ('res_bE.txt', 'res_aE.txt', 'res_b2.txt', 'res_minE.txt', 'res_extra_af.txt', 'res_af_n95.txt'):
     load(f'{K}/{_f}')
 load(f'{I6}/res_c16knee.txt')
 
@@ -66,7 +67,7 @@ for pk, name, n90, n95 in WL:
             gd.append(b / d); gh.append(b / h)
     DATA[(name, 'below')] = (gd, gh, None)
     tags = sorted({t for t, p in runs if p == 'hyb95' and spec.get(t) == 'OK'
-                   and t.startswith(f'{pk}_af')})
+                   and (t.startswith(f'{pk}_af') or t.startswith(f'{pk}x'))})
     gd, gh, g9 = [], [], []
     for t in tags:
         b, d, h, h9 = cm(t, 'bl'), cm(t, 'dp'), cm(t, 'hyb'), cm(t, 'hyb95')

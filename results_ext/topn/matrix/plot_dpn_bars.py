@@ -10,7 +10,9 @@ import matplotlib.pyplot as plt
 K = '/home/nizar/noxim3d-dnn/results_ext/topn/matrix'
 I6 = '/home/nizar/noxim3d-dnn/results_ext/topn/int6'
 spec = {}
-for fn in (f'{K}/run_spec.txt', f'{K}/run_spec_patch.txt'):
+for fn in (f'{K}/run_spec.txt', f'{K}/run_spec_patch.txt', f'{K}/run_spec_bE.txt',
+           f'{K}/run_spec_aE.txt', f'{K}/run_spec_b2.txt', f'{K}/run_spec_minE.txt',
+           f'{K}/run_spec_extra_af.txt'):
     for ln in open(fn):
         t, k, dep, flag = ln.split(); spec[t] = flag
 for ln in open(f'{I6}/run_spec_c16.txt'):
@@ -31,6 +33,8 @@ def load(fn, skip=set()):
 
 load(f'{K}/res_matrix.txt', patched)
 load(f'{K}/res_matrix_patch.txt')
+for _f in ('res_bE.txt', 'res_aE.txt', 'res_b2.txt', 'res_minE.txt', 'res_extra_af.txt'):
+    load(f'{K}/{_f}')
 load(f'{I6}/res_c16knee.txt')
 
 
@@ -42,9 +46,10 @@ def cm(t, pol):
 WL = [('r1628', 'ResNet-50', 23), ('v1644', 'VGG-16', 25), ('esxd', 'DeiT-S', 25)]
 DATA = {}
 for pk, name, N in WL:
-    for sub, code in (('below', 'int'), ('above', 'af')):
-        tags = sorted({t for t, p in runs if p == 'hyb'
-                       and t.startswith(f'{pk}_{code}') and spec.get(t) == 'OK'})
+    for sub, codes in (('below', ('int', 'bE', 'b2', 'bN')),
+                       ('above', ('af', 'aE', 'aN', 'x'))):
+        tags = sorted({t for t, p in runs if p == 'hyb' and spec.get(t) == 'OK'
+                       and any(t.startswith(f'{pk}_{c}') for c in codes)})
         gd, gh = [], []
         for t in tags:
             b, d, h = cm(t, 'bl'), cm(t, 'dp'), cm(t, 'hyb')

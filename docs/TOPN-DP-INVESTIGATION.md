@@ -729,3 +729,35 @@ injection-bound packings. That is a conditional, mechanism-bearing rule rather
 than the unconditional predictor the paper's escape-slope framing implied.
 Runs: 1,344 ladder runs across the three new grids, 0 failures. Data:
 `results_ext/ebind/` (grid_*.csv, res_ebind.txt, ANALYSIS.txt).
+
+### Correction and enlargement of the ResNet above-floor sample (2026-09-19)
+
+The first ResNet (16,2,8) above-floor arm had six in-band cells and gave BL/DP
+1.053, which I read as support for the binding rule ("injection-bound packings
+gain least"). Eight further placements were built at the same band
+(PL/PF 1.06-1.10, min-CC in band) and, after a ladder patch (their knees sit
+between k=1.8 and k=2.1, 3.0x -> 8-11x), seven landed in band. Two corrections
+follow.
+
+**ResNet's above-floor gain is larger and far more variable than six cells
+showed.** Pooled over 13 cells: BL/DP **1.201, range 0.91-2.84** (the new cells
+alone give 1.328). So the earlier 1.05 was a small-sample artifact of unusually
+mild placements, not a consequence of injection binding. The binding result
+itself is unaffected — it rests on the eight engineered-E grids and the capacity
+outcome, not on these cells — but the anecdote should not be repeated.
+
+**The N@95 "regression" on ResNet was noise.** With 13 cells the paired
+difference between DP/DPN at N@90 and at N@95 is +0.008 (t = 0.44, p = 0.66);
+VGG -0.003 (p = 0.50) and DeiT -0.024 (p = 0.46) are likewise indistinguishable.
+The honest statement is that **gain is flat in N from 23 to 27 to 108
+destinations**, with one exception that is a cell rather than a workload:
+DeiT's deepest placement (esxd_af3, 5.9x free-flow) starves at N@90
+(DP/DPN 0.761) and recovers at N@95 (0.944). N@90 remains the default because
+it is the cheapest coverage at which no cell is known to starve, not because
+larger N is harmful.
+
+**Pooled DPN position, all cells (T1 rebuilt):** below floor DP/DPN 0.998 /
+0.994 / 1.022; above floor 0.990 / 1.018 / 0.979, capture 90% / 117% / 78%.
+DPN tracks DP within 3% in every workload and regime; the direction of the
+residual varies with the sample, so "DPN exceeds DP" should be stated as
+"matches DP within a few percent".
