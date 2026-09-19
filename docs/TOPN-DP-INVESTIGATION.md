@@ -948,12 +948,14 @@ delay) — the paper predicts NEGATIVE:
     VGG     mean +0.18  p99 +0.20   | partialling PL: +0.03 / +0.03
     DeiT    mean +0.05  p99 +0.09   | partialling PL: -0.01 / -0.02
 
-**Reading.** The direction replicates on p99 (17/24, p = 0.064) at roughly a
-third of the submitted magnitude, and is null on mean delay and null in the
-pooled cross-placement correlation. The paper's numbers are "up to" maxima at
-the arm and best-placement level, so nothing in it is falsified; what is not
-supported is an unconditional reading of the lever. For the extension, report
-ES as a weak, packing-dependent delay lever, not as a general mapping objective.
+**Reading (corrected 2026-09-19 — see the arm identification below).** The
+direction replicates on p99 (17/24, p = 0.064) and is null on mean delay and in
+the pooled cross-placement correlation. Against the submitted paper's "up to
+1.25x / 1.43x" this looks like a third of the effect, but those are maxima at
+the arm and best-placement level. Against the design-rule magnitude the metric
+programme actually recorded — "~5-12% delay at the knee, either policy" — the
+pooled c16 result (4.9% mean, 9.0% p99) is INSIDE the band. This is a
+replication at the documented magnitude, not a generality gap.
 
 **Caveats.** (1) The c16 min-PF packings are a different family from the paper's
 three ES arms, so this is generalisation evidence, not a replication. (2) The
@@ -967,4 +969,22 @@ inconsistently in sign (ResNet 1.002 -> 1.018, VGG 0.998 -> 0.995, DeiT 0.982 ->
 0.951). This is what the submitted methodology's "improve the performance of the
 selection policy" phrasing would have implied; the author has since cut that
 clause to "To lower delay, ES is therefore maximized", which the data support.
+
+**Which arms the paper used.** The submitted ES experiment ran on ResNet
+(8,2,4), DeiT (16,1,16) and VGG (8,4,2) (`esx_search.log`, `esxd_search.log`,
+`esxv_search.log`; note `esx_search.py`'s PACK line was overwritten by a later
+reuse and no longer names its own arm — read the logged ES values instead).
+The c16 matrix packings are ResNet (16,2,8), VGG (16,4,4) and DeiT (16,1,16),
+so exactly one packing overlaps — and it is the one that carries the effect
+here: DeiT (16,1,16) gives 1.128 mean / 1.205 p99 against minE50 and 1.060 /
+1.069 against minE40, from fresh min-CC starts independent of the paper's
+placements. The two weak packings are ones the paper never claimed ES for.
+
+This is consistent with the recorded scope boundary (ES works where the min-CC
+level set has free ES headroom and congestion is an ensemble of medium flows;
+absent under a single dominant flow) and does not contradict it.
+
+**Decision (user, 2026-09-19): paper 1 stays as is.** No hedge to the intro
+bullet's ES phrasing and no change to the "whether the climb can move ES
+predicts it" sentence. The c16 scope evidence is extension-only material.
 
