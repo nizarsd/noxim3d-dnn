@@ -559,3 +559,67 @@ only 6×6×3 configs (`tools/stage2_dnn_traffic.py:97-131`), and replicating C5/
 workload is ~1.5–2k sims. Parity caveat: 7×7 is odd×odd, 6×6 even×even, and Stage 1
 found parity governs past-knee behaviour; the paper reads only the knee window, which is
 the argument for the second mesh being optional. Do only if the reviews ask.
+
+---
+
+## Future work — CiN (compute-in-network): choose the binding term, not just the floor
+
+**Terms.** *Scatter (S)* = a source injects one copy and the network replicates it at a
+branch point, instead of the source injecting one copy per consumer. *Reduction (D)* =
+partial sums destined for the same accumulator are combined en route instead of all
+arriving. PIL/PEL are the peak injection/ejection port loads; PF = max(PIL, PEL) and is
+placement-invariant, so neither mapping nor placement can move it — only the dataflow can.
+
+The extension's results make CiN a cross-layer question rather than a throughput one.
+Policy value exists only above the port floor, and only where the packing is
+**ejection-bound** (E predicts capacity gain at p = 0.018 across 8 populations; at the
+same PL/PF band ResNet (8,1,8) eject gives 1.55x where (16,2,8) inject gives 1.05x).
+So the binding term decides whether the routing layer has anything to do — and S and D
+move the two terms independently.
+
+**Measured headroom, offline from the traffic tables (no simulation).** Per source and
+per phase window, 24-57% of injected bytes are replicated copies (mean fanout 1.7-3.4, up
+to 23 consumers); per destination, 25-68% of arriving bytes are combinable partial sums
+(mean fan-in 1.25-2.70). Applying the ideal of each:
+
+| min-PF pick | binds | PF | PF after S | S gain | regime after S | PEL_D | floor S+D |
+|---|---|---|---|---|---|---|---|
+| ResNet (16,2,8) | inject | 0.258 | 0.226 | 1.14x | **eject** | 0.119 | 0.167 |
+| ResNet (8,2,4) | inject | 0.392 | 0.183 | 2.15x | inject | 0.068 | 0.183 |
+| ResNet (32,4,8) | inject | 0.327 | 0.141 | 2.32x | inject | 0.087 | 0.141 |
+| VGG (8,4,2) | inject | 0.958 | 0.584 | 1.64x | inject | 0.164 | 0.584 |
+| VGG (32,8,4) | inject | 0.760 | 0.543 | 1.40x | **eject** | 0.296 | 0.488 |
+| VGG (16,4,4) | eject | 0.943 | 0.943 | none | eject | 0.338 | 0.489 |
+| DeiT (8,1,8) | inject | 0.678 | 0.604 | 1.12x | **eject** | 0.329 | 0.465 |
+| DeiT (16,1,16) | eject | 0.905 | 0.905 | none | eject | 0.416 | 0.474 |
+| DeiT (32,2,16) | inject | 0.773 | 0.531 | 1.46x | inject | 0.312 | 0.531 |
+
+Three readings. (1) **S is a pure win on every injection-bound pick** — seven of seven
+gain floor (1.12-2.32x), and three flip to ejection-bound; the ones that flip gain least
+in floor and the ones that do not gain most, so neither outcome disappoints. (2) S does
+nothing for the two picks that are already ejection-bound, because their floor is PEL.
+(3) **Full CiN (S+D) lowers the floor 1.46-2.32x on all nine but drives every one of them
+injection-bound**, including the two that are ejection-bound today — because the ejection
+side is the more reducible one (46-68% vs 31-57%). Applying every reduction available
+would therefore put the design into the regime where this extension shows selection
+policy and escape room are both inert.
+
+> **Design rule: apply scatter always; apply reduction only when a lower floor is worth
+> more than a routable bottleneck, and never past the point where PEL_D falls below
+> PIL_S.** At that point the floor is the lowest available while the bottleneck still
+> sits on the links, where DP and DPN can act on it.
+
+The binding term can also be flipped the other way, by concentrating accumulation (fewer
+tiles absorbing more partial sums) until PEL exceeds PIL_S. Pairwise merging of the
+hottest accumulation groups overshoots — it beats today's floor on ResNet (0.254 vs
+0.392, 0.226 vs 0.327) but ends worse on VGG and DeiT — so only selective merging is
+viable. That knob is finer than (c,r,s) and sits in the dataflow converter, so it belongs
+to the CiN work rather than here.
+
+**What the CiN work has to establish**, given the above is all offline and idealised:
+whether a branch point exists on the shared path for the replicated flows (S) and whether
+reduction can be done in the router's timing budget (D); what fraction of the ideal
+headroom survives those constraints; and the prediction this extension makes — that
+flipping a packing to ejection-bound raises DP's gain toward the ejection-bound level
+measured here. Scatter is simulatable without router multicast today, as a traffic-table
+transformation with proxy tiles re-injecting near the consumer cluster.
