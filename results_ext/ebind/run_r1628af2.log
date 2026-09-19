@@ -1,0 +1,10 @@
+=== r1628 af2 start Sat Sep 19 08:14:57 +03 2026
+=== probe done Sat Sep 19 08:15:24 +03 2026
+r1628x0      k1.40 depth 3.9x OOB
+r1628x1      k1.80 depth 2.8x OOB
+r1628x4      k1.40 depth 5.6x OK
+r1628x5      k1.80 depth 3.1x OOB
+r1628x6      k1.80 depth 3.7x OOB
+r1628x7      k1.80 depth 3.0x OOB
+r1628x8      k1.80 depth 3.1x OOB
+r1628x9      k1.80 depth 3.6x OOB

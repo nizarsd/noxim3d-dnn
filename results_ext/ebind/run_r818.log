@@ -1,0 +1,43 @@
+=== r818 below start Sat Sep 19 07:41:55 +03 2026
+=== r818 probe done Sat Sep 19 07:43:58 +03 2026
+r818bN0      k0.95 depth 7.3x OOB
+r818bN1      k0.70 depth 2.0x OOB
+r818bN2      k0.95 depth 5.4x OK
+r818bN3      k0.95 depth 6.0x OK
+r818bN4      k0.70 depth 2.3x OOB
+r818bN5      k0.95 depth 6.1x OOB
+r818bN6      k0.95 depth 7.0x OOB
+r818bN7      k0.95 depth 4.8x OK
+r818bX0      k0.95 depth 4.2x OK
+r818bX1      k0.95 depth 7.5x OOB
+r818bX2      k0.95 depth 6.6x OOB
+r818bX3      k0.70 depth 2.2x OOB
+r818bX4      k0.95 depth 7.2x OOB
+r818bX5      k0.95 depth 5.5x OK
+r818bX6      k0.95 depth 5.4x OK
+r818bX7      k0.95 depth 7.3x OOB
+=== r818 runs done Sat Sep 19 07:54:31 +03 2026
+384 results_ext/ebind/res_r818.txt
+0
+R818 DONE Sat Sep 19 07:54:31 +03 2026
+=== r818 patch start Sat Sep 19 07:56:06 +03 2026
+=== r818 patch probe done Sat Sep 19 07:56:34 +03 2026
+r818bN0      k0.91 depth 5.0x OK
+r818bN1      k0.88 depth 4.4x OK
+r818bN2      k0.95 depth 5.4x OK
+r818bN3      k0.95 depth 6.0x OK
+r818bN4      k0.80 depth 3.4x OOB
+r818bN5      k0.88 depth 4.1x OK
+r818bN6      k0.91 depth 4.9x OK
+r818bN7      k0.95 depth 4.8x OK
+r818bX0      k0.95 depth 4.2x OK
+r818bX1      k0.80 depth 3.7x OOB
+r818bX2      k0.88 depth 4.3x OK
+r818bX3      k0.91 depth 6.4x OOB
+r818bX4      k0.88 depth 3.7x OOB
+r818bX5      k0.95 depth 5.5x OK
+r818bX6      k0.95 depth 5.4x OK
+r818bX7      k0.88 depth 4.5x OK
+=== r818 patch runs done Sat Sep 19 08:05:59 +03 2026
+384 results_ext/ebind/res_r818.txt
+R818 PATCH DONE Sat Sep 19 08:05:59 +03 2026

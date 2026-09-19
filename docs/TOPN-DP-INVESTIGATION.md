@@ -515,10 +515,20 @@ any validated claim. (The PL-argmax link is only ~5-30% of the tier metrics'
 integrated load, so this is a family-wide null across genuinely different
 windowings, not one number re-measured.)
 
-**Below-floor DP-gain variation is run-level, not mapping-level.** Split-half
-seed reliability of per-placement below-floor gain (seeds 1-4 vs 5-8): +0.09 /
--0.05 / +0.13 per packing, pooled +0.06 (n=142); per-seed sd (0.07-0.23)
-dwarfs placement-level sd (0.03-0.09). The apparent 0.84-1.21 spread across
+**Below-floor DP-gain variation is run-level, not mapping-level — and this is a
+property of the regime.** Split-half seed reliability of per-placement gain
+(seeds 1-4 vs 5-8), recomputed 2026-09-19 over every arm built since:
+
+| population | n | split-half r | implied 8-seed reliability |
+|---|---|---|---|
+| c16 below floor (all arms) | 208 | **+0.172** | 0.294 |
+| c16 **above** floor | 32 | **+0.940** | 0.969 |
+| ResNet (8,1,8) below floor (independent packing) | 12 | +0.087 | 0.161 |
+
+Same protocol, same seeds, same metric in both regimes: above the floor
+placements differ systematically and the measurement is highly reliable; below
+it they do not. (The earlier figure, +0.06 on n=142, is superseded by +0.172 on
+n=208; the conclusion is unchanged and now has an internal control.) The apparent 0.84-1.21 spread across
 placements is seed-noise sampled 8 times. So offline prediction below the
 floor is not merely hard, it is ill-posed: the gain belongs to the individual
 run (packet interleaving against the phase structure), and no static
