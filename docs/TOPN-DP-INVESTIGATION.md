@@ -771,3 +771,28 @@ exceeds 100% where DPN beats full DP, which happens because its rotation is
 amplifies: VGG's 1.8% delay difference reads as 25 points. Quote DP/DPN
 (0.968-1.018 across all cells) for how close the policies are, and gain retained
 for how much of the available benefit survives the restriction.
+
+### T1 as it stands (2026-09-19)
+
+Final shape after stripping everything F1 already shows and everything derived:
+
+| workload | N | rotation | activity | BL/DP | BL/DPN | DP/DPN |
+|---|---|---|---|---|---|---|
+| ResNet-50 (16,2,8) | 23/27 | 138/162c | 21/25% | 1.201 | 1.178 / 1.177 | 0.976 / 0.968 |
+| VGG-16 (16,4,4) | 25/38 | 150/228c | 23/35% | 1.121 | 1.134 / 1.138 | 1.013 / 1.016 |
+| DeiT-S (16,1,16) | 25/45 | 150/270c | 23/41% | 1.352 | 1.267 / 1.338 | 0.975 / 0.999 |
+| full DP | 108 | 648c | 100% | 1.000 | — | — |
+
+Paired entries read value@N90 / value@N95. DPN sweeps N of 108 destinations, so
+rotation and table size shrink in proportion; DP/DPN > 1 means DPN is faster.
+Above-floor placements only (13/8/6 per workload — those with both coverages, so
+every column rests on the same cells), each at its own knee rung, 8 seeds.
+
+**Two corrections made while building it.** (1) An earlier version divided N@95
+gains measured on 13/8/6 cells by DP's gain measured on 23/19/8 — different
+populations, which inflated ResNet's apparent retention from 88% to 130%. Every
+column is now matched. (2) The column named "capture" was renamed **gain
+retained** and then dropped from the table altogether: it is a ratio of small
+numbers (VGG's 1.8% delay difference reads as 25 points) and it collided with
+the paper's own *capture*, which is DP's share of the BL->oracle reduction.
+DP/DPN is the honest closeness measure and is what the table now carries.

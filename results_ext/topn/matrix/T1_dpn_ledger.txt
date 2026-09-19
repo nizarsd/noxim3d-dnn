@@ -1,18 +1,16 @@
-T1 — DPN above the port floor: cost and performance at two coverages.
-Paired entries read  value@N90 / value@N95.   Full DP = 108 dests, 648c, 100%.
+T1 — DPN above the port floor.  Paired entries read  value@N90 / value@N95.
 
-workload             cells |       N    rotation  activity |  BL/DP        BL/DPN        DP/DPN  gain retained
-ResNet-50 (16,2,8)      23 |  23/27   138/162 c  21/25% |  1.136  1.123/1.177   0.990/0.968     90%/130%  
-VGG-16 (16,4,4)         19 |  25/38   150/228 c  23/35% |  1.111  1.130/1.138   1.018/1.016    117%/125%  
-DeiT-S (16,1,16)         8 |  25/45   150/270 c  23/41% |  1.301  1.236/1.338   0.979/0.999     78%/112%  
+workload             |       N    rotation  activity |  BL/DP        BL/DPN        DP/DPN
+ResNet-50 (16,2,8)   |  23/27   138/162 c  21/25% |  1.201  1.178/1.177   0.976/0.968 
+VGG-16 (16,4,4)      |  25/38   150/228 c  23/35% |  1.121  1.134/1.138   1.013/1.016 
+DeiT-S (16,1,16)     |  25/45   150/270 c  23/41% |  1.352  1.267/1.338   0.975/0.999 
+full DP              | 108      648      100%    |  1.000
 
-DP/DPN > 1 means DPN is faster.
-gain retained = (BL/DPN - 1)/(BL/DP - 1): the share of full DP's benefit that DPN keeps.
-  >100% means DPN beat full DP (its rotation is 4.3-4.7x fresher for the sinks it tracks).
-  It is a ratio of small numbers, so read DP/DPN for how close the policies are:
-  a 1.8% delay difference on VGG becomes a 25-point difference here.
-  NOTE: distinct from 'capture' in the paper, which is DP's share of the BL->oracle reduction.
-
-N@95 changes nothing on any workload (paired p = 0.66 / 0.50 / 0.46): gain is flat in N
-from 23 to 108.  One cell is the exception — DeiT's deepest placement (5.9x free-flow)
-starves at N@90, DP/DPN 0.761, and recovers to 0.944 at N@95.
+Caption — DPN sweeps N of 108 destinations, so its rotation and table shrink in
+proportion; DP/DPN > 1 means DPN is faster.  Above-floor placements only
+(13/8/6 per workload, those with both coverages), each at its own knee rung
+(4-6x its free-flow delay), 8 seeds.  Below the floor there is nothing to compare:
+BL, DP and DPN land within 2% on all three workloads (n = 31/32/27; see F1).
+N@95 changes nothing (paired p = 0.66 / 0.50 / 0.46) — the one exception is a cell
+rather than a workload, DeiT's deepest placement (5.9x free-flow) starving at N@90
+(DP/DPN 0.761) and recovering at N@95 (0.944).
