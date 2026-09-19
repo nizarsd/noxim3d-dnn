@@ -917,3 +917,54 @@ flagged elsewhere.
 Residual wording for the paper: state that the effect is robust to controlling
 for communication cost, and note that statistical control is not the same as
 designed balance — one sentence, not an experiment.
+
+### ES vs BL delay at c16 — the paper's mapping-refinement lever, re-tested (2026-09-19)
+
+Everything the campaign had recorded about ES was against DP *gain* (P2/P4, the
+designed null). The submitted paper's actual ES claim is different and was never
+re-tested here: maxES lowers **delay under a fixed policy**, at matched CC and PL
+below the floor (Fig. 5, p = 0.016 on p99, three arms). The c16 matrix can test
+it on three new packings, because the arms are CC-pinned (CCx 0.995-1.000) and
+PL-matched, and the achieved ES spread is wide:
+
+| packing | maxES ES | min-E ES | maxES PL/PF | min-E PL/PF |
+|---|---|---|---|---|
+| ResNet (16,2,8) | 0.295 | 0.138 / 0.195 | 0.497 | 0.496 / 0.497 |
+| VGG (16,4,4) | 0.177 | 0.043 / 0.034 | 0.479 | 0.518 / 0.515 |
+| DeiT (16,1,16) | 0.278 | 0.126 / 0.150 | 0.381 | 0.435 / 0.438 |
+
+maxES sits at *lower* PL on VGG and DeiT, so the test is if anything generous.
+
+**Paired, seed-matched, the paper's own design** (ratio > 1 = maxES faster),
+pooled over 24 placement pairs:
+
+    mean delay  1.049   maxES faster on 14/24   sign p = 0.541
+    p99         1.090   maxES faster on 17/24   sign p = 0.064
+
+**Observational, across all in-band below-floor cells** (n = 40/40/38), r(ES, BL
+delay) — the paper predicts NEGATIVE:
+
+    ResNet  mean +0.13  p99 +0.03   | partialling PL: +0.08 / -0.04
+    VGG     mean +0.18  p99 +0.20   | partialling PL: +0.03 / +0.03
+    DeiT    mean +0.05  p99 +0.09   | partialling PL: -0.01 / -0.02
+
+**Reading.** The direction replicates on p99 (17/24, p = 0.064) at roughly a
+third of the submitted magnitude, and is null on mean delay and null in the
+pooled cross-placement correlation. The paper's numbers are "up to" maxima at
+the arm and best-placement level, so nothing in it is falsified; what is not
+supported is an unconditional reading of the lever. For the extension, report
+ES as a weak, packing-dependent delay lever, not as a general mapping objective.
+
+**Caveats.** (1) The c16 min-PF packings are a different family from the paper's
+three ES arms, so this is generalisation evidence, not a replication. (2) The
+matrix has no minES arm; maxES is paired against minE40/minE50, which minimise
+the level forms, so the ES contrast is +0.10 to +0.16 rather than the full span
+a dedicated minES climb would reach.
+
+Separately: ES does **not** move the BL/DP ratio. Achieved ES doubles to
+quadruples between the min-E and maxES arms while BL/DP moves <= 0.03 and
+inconsistently in sign (ResNet 1.002 -> 1.018, VGG 0.998 -> 0.995, DeiT 0.982 ->
+0.951). This is what the submitted methodology's "improve the performance of the
+selection policy" phrasing would have implied; the author has since cut that
+clause to "To lower delay, ES is therefore maximized", which the data support.
+
