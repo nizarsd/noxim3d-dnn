@@ -348,7 +348,11 @@ the floor (PL=1.10xPF arm) DP pays 1.05/1.12/1.35x mean (p99 to 1.76) and DPN
 captures it fully (DP/HYB 0.998) at 21–23% activity; N@95 escalation fixes the
 single coverage-starved deep cell. Sharpened law: crossing the port floor is
 the only lever that creates routing-policy value at these packings, and DPN
-collects ~100% of it at ~1/4 the activity. Post-checks (2026-09-18,
+collects ~100% of it at ~1/4 the activity. Predictor claim (final wording): **no design-time predictor of policy gain exists
+unconditionally** — below the floor none works, above it only E does and only on
+ejection-bound packings (p = 0.018, 8 populations). ES and the level forms E50/E40
+are retired to a single results sentence; the extension's methodology defines E
+alone, plus the PIL/PEL binding classification that scopes it. Post-checks (2026-09-18,
 `results_ext/topn/matrix/postchecks.txt`): E's capacity claim survives
 within-PL-band conditioning on the E1 grid (+0.53/+0.62/+0.94, dose-response)
 while its matrix delay correlation is a Simpson artifact; and below-floor

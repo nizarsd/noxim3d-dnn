@@ -814,3 +814,36 @@ Not added, and why: the ResNet (8,1,8) below-floor arms (an all-ejection-bound
 variant would mix protocols, since that packing's above-floor data is the E1
 grid, and its 12 cells span 0.65-1.17); the N@95 runs (a DPN property, so T1/F1);
 the E-binding grids (F3's material).
+
+### Extension methodology: E only, ES retired (decided 2026-09-19)
+
+**Claim as it should be stated.** *No design-time predictor of selection-policy
+gain exists unconditionally.* Below the floor none works — engineered contrasts
+in both directions, on three workloads, leave DP at BL. Above the floor the
+single-link escapable fraction **E** works, and only on ejection-bound packings
+(8 populations, perfect rank separation, p = 0.018, 3/3 matched pairs,
+slope-robust).
+
+**What changes in the extension's methodology section.**
+
+1. **E is the only design-time metric defined there**: E = 1 - PLf/PL at the
+   PL-argmax link, presented with its two scope conditions (PL above PF, and PF
+   set by the ejection term) rather than as a general predictor.
+2. **The binding classification is promoted into methodology**, because it is now
+   part of the predictor's definition of validity: a packing is ejection-bound
+   when PF = PEL, injection-bound when PF = PIL; both are placement-invariant
+   properties of the packing.
+3. **ES is removed from methodology.** The escape slope is not proposed, defined
+   as a contribution, or motivated there. It appears only in the results, as a
+   prior-work metric (the conference paper's) that was engineered in both
+   directions and moved nothing — alongside the level forms E50 and E40, in a
+   single sentence, not a subsection.
+4. **The DATE paper is unaffected**: its ES usage is a mapping refinement claim
+   (maxES vs minES, paired, p = 0.016) that this campaign neither reproduces nor
+   contradicts at c16 (1.10x, p ~ 0.06). The extension cites it as prior work and
+   states the scope narrowing rather than a retraction.
+
+One sentence for the results: *the escape slope and the level forms E50 and E40
+were engineered in both directions across three workloads and moved nothing; only
+the single-link escapable fraction survives, and only above the floor on
+ejection-bound packings.*
