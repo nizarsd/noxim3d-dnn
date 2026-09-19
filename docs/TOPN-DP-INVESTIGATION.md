@@ -680,6 +680,29 @@ while ejection-bound VGG (16,4,4) and DeiT (16,1,16) gain 1.12x and 1.35x. One
 population makes the point sharply: ResNet (8,2,4), injection-bound, is the only
 one where DP *loses* capacity (0.93-0.99).
 
+**Robustness: the injection null is not a failed manipulation.** E was moved
+across essentially the same range in both classes — spans 0.66-0.75 in four of
+five injection-bound populations (the fifth, DeiT (16,2,8), spans 0.51 after its
+high target was lowered to a reachable 0.55). Normalising the response by that
+span separates the classes just as cleanly:
+
+| population | binds | E span | dCapacity/dE |
+|---|---|---|---|
+| ResNet (8,1,8) | eject | 0.69 | **0.265** |
+| DeiT (16,1,16) | eject | 0.69 | **0.142** |
+| VGG (8,2,4) | eject | 0.75 | **0.101** |
+| ResNet (8,2,4) | inject | 0.66 | 0.075 |
+| VGG (8,4,2) | inject | 0.74 | 0.074 |
+| DeiT (16,2,8) | inject | 0.51 | 0.022 |
+| VGG (32,8,4) | inject | 0.73 | 0.001 |
+| DeiT (8,1,8) | inject | 0.70 | -0.008 |
+
+Min eject 0.101 > max inject 0.075: perfect separation on slope too, class means
+0.169 vs 0.033 — a five-fold difference in response per unit of escape room. The
+DeiT pair is again the sharpest: the injection-bound twin's slope is 0.022
+against 0.142, so its narrower span accounts for none of the gap (at the twin's
+slope, a 0.51 span would have returned +0.072 capacity; it returned +0.004).
+
 **Scope and caveats.** The comparison is between populations (n = 8), not within
 — the unit of the claim is the packing. Per-population n is 6-24, and CC was not
 held fixed inside the grids (spread +8 to +36% between low- and high-E groups),
