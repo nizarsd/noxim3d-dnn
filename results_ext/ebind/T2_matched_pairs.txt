@@ -1,0 +1,22 @@
+T2 — Does escape room predict DP's capacity gain?  Matched pairs above the floor.
+Each pair is one workload at one density; only the binding term differs.
+
+pair            packing              PF tiles  binds   n |     E span |   r(E)    rho  beta_E
+ResNet-50, c=8  ResNet (8,1,8)    0.480    92  eject  24 | 0.05-0.74 |  +0.62  +0.55   +0.60
+                ResNet (8,2,4)    0.392    92 inject   6 | 0.05-0.71 |  +0.35  +0.26   +0.55
+VGG-16, c=8     VGG (8,2,4)       1.782    92  eject  10 | 0.04-0.79 |  +0.61  +0.60   +0.63
+                VGG (8,4,2)       0.958   104 inject   8 | 0.05-0.79 |  +0.26  -0.24   +0.09
+DeiT-S, c=16    DeiT (16,1,16)    0.905    66  eject   9 | 0.05-0.74 |  +0.38  +0.55   +0.36
+                DeiT (16,2,8)     0.909    66 inject  15 | 0.05-0.56 |  +0.05  +0.17   +0.06
+
+  ResNet-50, c=8  eject > inject:  raw +0.62 > +0.35 YES   depth-controlled +0.60 > +0.55 YES
+  VGG-16, c=8     eject > inject:  raw +0.61 > +0.26 YES   depth-controlled +0.63 > +0.09 YES
+  DeiT-S, c=16    eject > inject:  raw +0.38 > +0.05 YES   depth-controlled +0.36 > +0.06 YES
+
+Caption — capacity gain = k*_DP / k*_BL; E = escapable fraction at the peak link;
+beta_E = E's standardised coefficient with PL/PF in the model, so depth above the
+floor is controlled.  Cells are engineered on a PL x E grid, 7-rung ladders under
+both policies, 3 seeds.  All three pairs favour the ejection-bound member on both
+measures (3/3; sign test p = 0.125 one-sided, the floor for three pairs).  Pooling
+the five unmatched populations instead gives perfect rank separation on raw r
+(p = 0.018) at the cost of confounding workload and density.

@@ -847,3 +847,43 @@ One sentence for the results: *the escape slope and the level forms E50 and E40
 were engineered in both directions across three workloads and moved nothing; only
 the single-link escapable fraction survives, and only above the floor on
 ejection-bound packings.*
+
+### The E claim, restated on matched pairs (2026-09-19, supersedes the 8-population wording)
+
+The eight-population permutation test (p = 0.018 raw, 0.036 depth-controlled)
+pools packings that differ in workload and density, so "every ejection-bound
+population ranks above every injection-bound one" was resting partly on those
+differences. Restricting to **matched pairs** — one workload at one density, only
+the binding term differing — is the clean design:
+
+| pair | packing | PF | tiles | binds | n | r(E, capacity) | beta_E |
+|---|---|---|---|---|---|---|---|
+| ResNet-50 c=8 | (8,1,8) | 0.480 | 92 | eject | 24 | **+0.62** | **+0.60** |
+| | (8,2,4) | 0.392 | 92 | inject | 6 | +0.35 | +0.55 |
+| VGG-16 c=8 | (8,2,4) | 1.782 | 92 | eject | 10 | **+0.61** | **+0.63** |
+| | (8,4,2) | 0.958 | 104 | inject | 8 | +0.26 | +0.09 |
+| DeiT-S c=16 | (16,1,16) | 0.905 | 66 | eject | 9 | **+0.38** | **+0.36** |
+| | (16,2,8) | 0.909 | 66 | inject | 15 | +0.05 | +0.06 |
+
+**3 of 3 pairs favour the ejection-bound member, on the raw correlation and with
+PL/PF partialled out.** Sign test p = 0.125 one-sided — the floor for three pairs,
+so the design is clean but underpowered; the pooled test is significant but
+confounded. Report both, primary on the pairs.
+
+**Two corrections this analysis forced.** (1) Cross-pair comparisons of beta_E are
+not meaningful: ResNet (8,2,4)'s +0.55 exceeds DeiT (16,1,16)'s +0.36, which
+looked like a broken separation until the comparison was made within pairs.
+(2) Half-split (low-E vs high-E) deltas are unreliable in these grids because PL
+bands are unbalanced across the E groups — VGG (8,4,2) shows +0.119, the largest
+of any population, entirely from one cell at PL/PF 1.52 (capacity 1.371). Its
+rank correlation is -0.24. Quote correlations, never half-splits.
+
+**Gain levels for the same pairs** (capacity k*_DP/k*_BL, pooled): ejection-bound
+1.094 (n = 43), injection-bound 1.056 (n = 29) — so the binding claim is about
+*whether E predicts*, not about which class gains more; the level difference is
+small and reverses on delay at k*_DP. ResNet (8,2,4) is the one population where
+DP loses capacity outright (0.948).
+
+**p99 adds nothing here**: r(mean gain, p99 gain) = +0.99 over 72 cells (rho 0.97,
+7% discordant pairs), with p99 amplifying by a median 1.8-2.6x. Quote mean and
+state the amplification once.
