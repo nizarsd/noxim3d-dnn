@@ -352,7 +352,10 @@ collects ~100% of it at ~1/4 the activity. Predictor claim (final wording): **no
 unconditionally** — below the floor none works, above it only E does and only on
 ejection-bound packings (p = 0.018, 8 populations). ES and the level forms E50/E40
 are retired to a single results sentence; the extension's methodology defines E
-alone, plus the PIL/PEL binding classification that scopes it. Post-checks (2026-09-18,
+alone, plus the PIL/PEL binding classification that scopes it. The CC-covariation
+caveat is RETRACTED (2026-09-19): partialling communication cost out leaves E's
+correlation unchanged on every ejection-bound population (+0.62->+0.56,
++0.61->+0.65, +0.38->+0.34), so no CC-pinned grid is required. Post-checks (2026-09-18,
 `results_ext/topn/matrix/postchecks.txt`): E's capacity claim survives
 within-PL-band conditioning on the E1 grid (+0.53/+0.62/+0.94, dose-response)
 while its matrix delay correlation is a Simpson artifact; and below-floor

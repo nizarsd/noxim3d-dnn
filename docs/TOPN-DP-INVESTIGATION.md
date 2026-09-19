@@ -887,3 +887,31 @@ DP loses capacity outright (0.948).
 **p99 adds nothing here**: r(mean gain, p99 gain) = +0.99 over 72 cells (rho 0.97,
 7% discordant pairs), with p99 amplifying by a median 1.8-2.6x. Quote mean and
 state the amplification once.
+
+### The CC caveat on E is retracted (2026-09-19)
+
+Earlier entries flagged that E co-varies with communication cost inside the
+grids (+8 to +36% spread between the low-E and high-E groups) and listed a
+CC-pinned grid as the experiment needed to close it. Tested directly instead:
+
+| packing | binds | n | CC spread | r(E,cap) | r(CC,cap) | r(E,CC) | r(E,cap | CC) |
+|---|---|---|---|---|---|---|---|
+| ResNet (8,1,8) | eject | 24 | 36% | +0.62 | +0.33 | +0.57 | **+0.56** |
+| VGG (8,2,4) | eject | 10 | 26% | +0.61 | -0.06 | +0.26 | **+0.65** |
+| DeiT (16,1,16) | eject | 9 | 26% | +0.38 | +0.44 | +0.20 | **+0.34** |
+| ResNet (8,2,4) | inject | 6 | 22% | +0.35 | +0.06 | +0.86 | +0.59 |
+| VGG (8,4,2) | inject | 8 | 13% | +0.26 | +0.16 | +0.42 | +0.21 |
+| DeiT (16,2,8) | inject | 15 | 10% | +0.05 | -0.29 | -0.11 | +0.02 |
+
+CC is a weak, sign-inconsistent predictor on its own (+0.44 to -0.29), and
+partialling it out leaves E unchanged on every ejection-bound population
+(+0.62 -> +0.56, +0.61 -> +0.65, +0.38 -> +0.34). **E is not standing in for
+communication cost, and the CC-pinned grid is not needed.** The matched-pair
+ordering survives on two of three pairs after the control; the exception is
+ResNet (8,2,4), whose injection-bound coefficient rises on 6 cells with
+r(E,CC) = 0.86 — the most collinear and least stable fit in the set, already
+flagged elsewhere.
+
+Residual wording for the paper: state that the effect is robust to controlling
+for communication cost, and note that statistical control is not the same as
+designed balance — one sentence, not an experiment.
