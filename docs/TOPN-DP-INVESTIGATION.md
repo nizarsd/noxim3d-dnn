@@ -796,3 +796,21 @@ retained** and then dropped from the table altogether: it is a ratio of small
 numbers (VGG's 1.8% delay difference reads as 25 points) and it collided with
 the paper's own *capture*, which is DP's share of the BL->oracle reduction.
 DP/DPN is the honest closeness measure and is what the table now carries.
+
+### F2 rebuilt on the enlarged ResNet sample (2026-09-19)
+
+The regime figure now reads 1.20 / 1.12 / 1.35 above the floor against 1.01 /
+1.03 / 0.93 (E = 0) and 1.02 / 1.05 / 1.01 (E = 1) below it, all arms at the same
+communication budget (CCx ~ 1.5). ResNet's above-floor bar uses the 13 cells
+rather than the original 6, so all three workloads show a clear lift and the
+figure no longer has an apparent outlier to explain.
+
+Caption point to keep: the above-floor bars are means over placements that
+genuinely differ (ResNet spans 0.91-2.84), not a tight effect with measurement
+scatter — above-floor per-placement gain has split-half reliability 0.94, so the
+spread is real heterogeneity between placements.
+
+Not added, and why: the ResNet (8,1,8) below-floor arms (an all-ejection-bound
+variant would mix protocols, since that packing's above-floor data is the E1
+grid, and its 12 cells span 0.65-1.17); the N@95 runs (a DPN property, so T1/F1);
+the E-binding grids (F3's material).
